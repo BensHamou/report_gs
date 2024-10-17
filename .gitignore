@@ -1,0 +1,11 @@
+account/__pycache__/
+vgs
+report/__pycache__/
+report_gs/__pycache__/
+
+*.pyc
+
+account/migrations/*
+!account/migrations/__init__.py
+report/migrations/*
+!report/migrations/__init__.py
