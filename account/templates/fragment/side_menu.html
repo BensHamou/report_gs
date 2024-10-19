@@ -1,0 +1,223 @@
+{% load static %}
+<nav class="col-lg-2 col-md-3 side_menu p-3 d-flex flex-column">
+    <div class="text-center my-4 user-info">
+        <img src="{% static 'img/admin_profile.png' %}" class="rounded-circle img-fluid user-img" alt="User Image">
+        <p class="mt-2 bonjour-text d-none d-md-block">Bonjour,</p>
+        <p class="username-text d-none d-md-block">{{ request.user.fullname }}</p>
+    </div>
+
+    <ul class="nav flex-column flex-grow-1 d-none d-md-flex">
+        <li class="nav-item mb-2">
+            <a class="nav-link active" href="{% url 'sites' %}">
+                <i class="margiin fas fa-house"></i> 
+                <span class="menu-text">Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-plus"></i> 
+                <span class="menu-text">Entré</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-minus"></i> 
+                <span class="menu-text">Sortie</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-chart-bar"></i> 
+                <span class="menu-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                <i class="margiin fas fa-gear"></i> 
+                <span class="menu-text">Paramètres</span>
+            </a>
+            <ul class="collapse list-unstyled" id="parametersSubmenu">
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'sites' %}">Sites</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'lines' %}">Lines</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'warehouses' %}">Magasins</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'zones' %}">Zones</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'shifts' %}">Shifts</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'shifts' %}">Produits</a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'users' %}">
+                <i class="margiin far fa-user"></i> 
+                <span class="menu-text">Utilisateurs</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'logout' %}">
+                <i class="margiin fas fa-sign-out-alt"></i> 
+                <span class="menu-text">Se déconnecter</span>
+            </a>
+        </li>
+    </ul>
+
+    <ul class="nav flex-row flex-wrap d-md-none">
+        <li class="nav-item mb-2">
+            <a class="nav-link active" href="{% url 'sites' %}">
+                <i class="margiin fas fa-house"></i> 
+                <span class="menu-text">Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-plus"></i> 
+                <span class="menu-text">Entré</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-minus"></i> 
+                <span class="menu-text">Sortie</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'sites' %}">
+                <i class="margiin fas fa-chart-bar"></i> 
+                <span class="menu-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                <i class="margiin fas fa-gear"></i> 
+                <span class="menu-text">Paramètres</span>
+            </a>
+            <ul class="collapse list-unstyled" id="parametersSubmenu">
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'sites' %}">Sites</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'lines' %}">Lines</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'warehouses' %}">Magasins</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'zones' %}">Zones</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'shifts' %}">Shifts</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a href="{% url 'shifts' %}">Produits</a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'users' %}">
+                <i class="margiin far fa-user"></i> 
+                <span class="menu-text">Utilisateurs</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link" href="{% url 'logout' %}">
+                <i class="margiin fas fa-sign-out-alt"></i> 
+                <span class="menu-text">Se déconnecter</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="mt-auto text-center">
+        <img src="{% static 'img/footer_logo.png' %}" class="img-fluid footer-logo" alt="Logo">
+    </div>
+</nav>
+
+{% block styles %}
+<style>
+    .side_menu {
+        background-color: #151f31;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .bonjour-text, .username-text {
+        font-family: "Montserrat";
+        font-size: 1.1rem;
+        color: #ffffff;
+    }
+
+    .nav-item a {
+        font-size: 1.2rem;
+        font-weight: 400;
+        line-height: 1.2rem;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        white-space: nowrap; 
+    }
+    
+    .margiin {
+        margin-right: 10px;
+    }
+
+    @media (min-width: 769px) {
+        .side_menu {
+            min-height: 100vh;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .side_menu {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .side_menu .text-center {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .side_menu img {
+            width: 50px;
+            height: 50px;
+        }
+        .bonjour-text, .username-text {
+            font-size: 0.8rem;
+            display: none;
+        }
+        .footer-logo {
+            display: none;
+        }
+    }
+    
+    .footer-logo {
+        width: 120px;
+        margin-bottom: 20px;
+    }
+    #parametersSubmenu {
+        padding-left: 35px; /* Indent the entire submenu */
+    }
+    
+    #parametersSubmenu li {
+        margin-left: 25px; /* Further indent each item for hierarchy */
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %}

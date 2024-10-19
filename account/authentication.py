@@ -15,7 +15,7 @@ class ApiBackend(BaseBackend):
                 if check_password(password, user.password):
                     return user
                 else:
-                    messages.error(request, "LOGIN : Mot de passe incorrect.")
+                    messages.error(request, "LOGINPWD : Mot de passe incorrect.")
                     return None
             
             auth = HTTPBasicAuth(user.email, password)
@@ -26,11 +26,11 @@ class ApiBackend(BaseBackend):
                 messages.error(request, "LOGIN : Problème avec la connexion au serveur.")
             else:
                 if not response.json().get('authenticated'):
-                    messages.error(request, "LOGIN : Mot de passe incorrect.")
+                    messages.error(request, "LOGINPWD : Mot de passe incorrect.")
                 else:
                     return user
         except User.DoesNotExist:
-            messages.error(request, "LOGIN : Utilisateur pas trouvé.")
+            messages.error(request, "LOGINUSR : Utilisateur pas trouvé.")
         return None
     
     def get_user(self, user_id):

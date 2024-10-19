@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PUMA GS{% endblock %}</title>
+    <style>
+        *{
+            font-family: "Open Sans", serif;
+        }
+        {% block styles %}
+        {% endblock %}
+    </style>
+    {% load bootstrap5 %} 
+    {% bootstrap_css %} 
+    {% bootstrap_javascript %}
+    {% load static %}
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/select.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sweetalert.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+
+</head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                {% include 'side_menu.html' %}
+                <main class="col-lg-10 col-md-9 col-sm-12 p-4">
+                    {% block content %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="{% static 'js/select.js' %}"></script>
+        <script src="{% static 'js/sweetalert.min.js' %}"></script>
+        <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
+        <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/dist/bootstrap-switch-button.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        
+        {% block scripts %}
+        {% endblock %}
+    </body>
+</html>

@@ -1,0 +1,49 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erreur 403</title>
+    {% load bootstrap5 %} 
+    {% bootstrap_css %} 
+    {% bootstrap_javascript %}
+    {% load static %} 
+    <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
+    <link rel="icon" type="image/ico" href="{% static 'img/favicon.ico' %}">
+</head>
+<style>
+  body{
+    background: url('{% static "img/background.png" %}'); 
+    background-position: center; 
+    background-repeat: no-repeat; 
+    background-size: cover; 
+    height: 100%;
+  }
+  .error{
+    background: rgba(31, 57, 101, 0.6); 
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);  
+    height: 100%; 
+    backdrop-filter: blur(3.7px); 
+    -webkit-backdrop-filter: blur(3.7px);
+  }
+  .error_div{
+    background: rgba(31, 57, 101, 0.95); 
+    color: white; 
+    border-radius: 5px;
+    padding: 75px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  }
+</style>
+<body>
+  <div class="error d-flex justify-content-center align-items-center">
+    <div class="error_div">
+      <p class="display-6 mb-5">
+        <i class="far fa-circle-xmark"></i>
+        Désolé, Vous n'avez pas l'autorisation d'accéder à cette page.
+      </p>
+      <p class="display-6 mb-5">Veuillez contacter l'administrateur</p>
+      <p class="text-muted lead">(Erreur 403)</p>
+    </div>
+  </div>
+</body>
+</html>

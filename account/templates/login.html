@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f5f5;
+            color: #151f31;
+        }
+
+        .container-fluid {
+            height: 100%;
+        }
+
+        .first-part {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .logo {
+            max-width: 60%;
+            height: auto;
+            margin-top: 8vh;
+            margin-bottom: 20vh;
+        }
+
+        .form-container {
+            margin: 0 auto;
+            min-width: 30vw;
+            align-items: start;
+            padding: 0;
+        }
+
+        .welcome-text {
+            font-family: Montserrat;
+            font-size: 50px;
+            font-weight: 500;
+            line-height: 60.95px;
+            text-align: left;
+        }
+
+        .subtext {
+            font-family: Montserrat;
+            font-size: 26px;
+            font-weight: 400;
+            line-height: 31.69px;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            text-align: end;
+        }
+
+        .form-input{
+            margin-bottom: 1rem;
+        }
+
+        .banner {
+            background-color: #151f31;
+            color: white;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .second-part {
+                display: none;
+            }
+
+            .first-part {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row h-100">
+            <div class="col-lg-8 col-md-10 col-sm-12 first-part p-0 p-sm-4">
+                <div class="form-container">
+                    <img src="{% static 'img/login_logo.png' %}" alt="Logo" class="logo">
+                    <div class="welcome-text">Bienvenue</div>
+                    <div class="subtext">Se connecter à votre compte</div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class='form-input'>
+                            {{ form.username }}
+                            {% for message in messages %}
+                                {% if message|startwith:'LOGINUSR : ' %}
+                                    <div class="error-message text-danger">{{ message|loginerror:'LOGINUSR : ' }}</div>
+                                {% endif %}
+                            {% endfor %}   
+                        </div>
+                        <div class='form-input'>
+                            {{ form.password }}
+                            {% for message in messages %}
+                                {% if message|startwith:'LOGINPWD : ' %}
+                                    <div class="error-message text-danger">{{ message|loginerror:'LOGINPWD : ' }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="mt-5 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-secondary">Se connecter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-2 col-sm-0 second-part m-0 p-0">
+                <div class="banner pb-5">
+                    <img src="{% static 'img/footer_logo.png' %}" class="img-fluid footer-logo" alt="Logo">
+                </div>
+            </div>
+            <div class="col-lg-1 col-md-0 col-sm-0"></div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
