@@ -75,7 +75,7 @@ class LineForm(BaseModelForm):
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe N° Lot')))
-    shifts = forms.SelectMultiple(attrs=getAttrs('select'))
+    shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-select'}), required=False)
 
 class WarehouseForm(BaseModelForm):
     class Meta:

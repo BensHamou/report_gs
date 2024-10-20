@@ -3,6 +3,7 @@
 {% block title %}
 {% if line %} Modification de la ligne {{ line.designation }} {% else %} Création d'une ligne {% endif %}
 {% endblock %}
+{% load static %} 
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
@@ -66,19 +67,18 @@
                     <small class="text-danger">{{ form.prefix_nlot.errors }}</small>
                 {% endif %}
             </div>
-
             <div class="col-lg-6 col-md-12 mb-2">
                 <div class="form-outline">
-                  <label class="form-label labelCustom" for="shifts">Shifts</label>
-                  <div id="shift" class="form-control select">
-                    <input id="shift_input" type="text" data-bs-toggle="dropdown" />
-                    <div class="dropdown-menu"></div>
-                    <select name="shifts" multiple hidden id="hidden_shifts_select">
-                      {% for shift in form.fields.shifts.queryset %}
-                        <option value="{{ shift.id }}" {% if shift.id in selectedShifts %} selected {% endif %}>{{ shift.designation }}</option>
-                      {% endfor %}                      
-                    </select>
-                  </div>
+                    <label class="form-label" for="shifts">Shifts</label>
+                    <div id="shift" class="form-control select">
+                        <input id="shift_input" type="text" data-bs-toggle="dropdown" />
+                        <div class="dropdown-menu"></div>
+                        <select name="shifts" multiple hidden id="hidden_shifts_select">
+                            {% for shift in form.fields.shifts.queryset %}
+                                <option value="{{ shift.id }}" {% if shift.id in selectedShifts %} selected {% endif %}>{{ shift.designation }}</option>
+                            {% endfor %}                      
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

@@ -269,6 +269,7 @@ def createLineView(request):
         form = LineForm(request.POST)
         if form.is_valid():
             form.save(user=request.user)
+            form.save_m2m()
             url_path = reverse('lines')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -287,6 +288,7 @@ def editLineView(request, id):
         form = LineForm(request.POST, instance=line)
         if form.is_valid():
             form.save(user=request.user)
+            form.save_m2m()
             url_path = reverse('lines')
             return redirect(getRedirectionURL(request, url_path))
         else:

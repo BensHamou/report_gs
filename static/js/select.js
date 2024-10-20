@@ -120,7 +120,7 @@ var bootstrap5 = (function (t, e) {
     
         const closeButtonContainer = document.createElement("span");
         closeButtonContainer.classList.add("position-absolute", "top-0", "start-100", "translate-middle", "badge", "rounded-pill");
-        closeButtonContainer.style.backgroundColor = "#d80000";
+        closeButtonContainer.style.backgroundColor = "#ff2929";
         closeButtonContainer.style.cursor = "pointer"; // Set the cursor to pointer on hover
     
         const closeButton = document.createElement("span");
