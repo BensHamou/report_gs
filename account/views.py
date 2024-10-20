@@ -23,7 +23,6 @@ def startwith(value, word):
 def is_login(messages):
     for message in messages:
         if str(message).startswith('LOGIN'):
-            print(message)
             return True
     return False
 
@@ -120,7 +119,7 @@ def editUserView(request, id):
     if request.method == 'POST':
         form = UserForm(request.POST, instance=user)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('users')
             return redirect(getRedirectionURL(request, url_path))
     context = {'form': form, 'user_': user, 'selectedLines': selectedLines}
@@ -211,7 +210,7 @@ def createSiteView(request):
     if request.method == 'POST':
         form = SiteForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('sites')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -227,7 +226,7 @@ def editSiteView(request, id):
     if request.method == 'POST':
         form = SiteForm(request.POST, instance=site)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('sites')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -269,7 +268,7 @@ def createLineView(request):
     if request.method == 'POST':
         form = LineForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('lines')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -287,7 +286,7 @@ def editLineView(request, id):
     if request.method == 'POST':
         form = LineForm(request.POST, instance=line)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('lines')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -331,7 +330,7 @@ def createZoneView(request):
     if request.method == 'POST':
         form = ZoneForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('zones')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -349,7 +348,7 @@ def editZoneView(request, id):
     if request.method == 'POST':
         form = ZoneForm(request.POST, instance=zone)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('zones')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -393,7 +392,7 @@ def createShiftView(request):
     if request.method == 'POST':
         form = ShiftForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('shifts')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -411,7 +410,7 @@ def editShiftView(request, id):
     if request.method == 'POST':
         form = ShiftForm(request.POST, instance=shift)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('shifts')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -455,7 +454,7 @@ def createWarehouseView(request):
     if request.method == 'POST':
         form = WarehouseForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('warehouses')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -473,7 +472,7 @@ def editWarehouseView(request, id):
     if request.method == 'POST':
         form = WarehouseForm(request.POST, instance=warehouse)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('warehouses')
             return redirect(getRedirectionURL(request, url_path))
         else:

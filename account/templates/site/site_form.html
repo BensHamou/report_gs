@@ -1,0 +1,82 @@
+{% extends "main.html" %}
+
+{% block title %}
+{% if site %} Modification du site {{ site.designation }} {% else %} Création d'un site {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'sites' %}{% if request.GET.page %}?page={{ request.GET.page }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+       class="text-decoration-none d-flex align-items-center" 
+       style="letter-spacing: 1.2px;">
+        <button class="btn btn-outline-dark me-2" style="border-color: #000; background-color: #fff; border-radius: 5px;">
+            <i class="fas fa-caret-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if site %} Modification du site {% else %} Création d'un site {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if site %} Modification du site {{ site.designation }} {% else %} Créez un nouveau site {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="site-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if site %} Sauvgarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="site-form">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-4">
+            <div class="col-lg-12 col-md-12 mb-2">
+                <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
+                {{ form.designation }}
+                {% if form.designation.errors %}
+                    <small class="text-danger">{{ form.designation.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="address" class="form-label" style="color: #5d5d5d;">Adresse</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <small class="text-danger">{{ form.address.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="email" class="form-label" style="color: #5d5d5d;">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <small class="text-danger">{{ form.email.errors }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .page-title {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 30px;
+        font-weight: 400;
+        color: #0082cd;
+    }
+    form .form-label {
+        font-weight: 600;
+        font-size: 16px;
+    }
+    .btn-outline-dark {
+        border-width: 2px;
+    }
+</style>
+{% endblock %}

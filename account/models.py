@@ -14,14 +14,6 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        if not self.pk and user:
-            self.create_uid = user
-        self.write_uid = user
-        super(BaseModel, self).save(*args, **kwargs)
-
-
 class Shift(BaseModel):
     start_time = models.TimeField()
     end_time = models.TimeField()
@@ -36,9 +28,13 @@ class Shift(BaseModel):
             total_time += timedelta(hours=24)
 
         return round(total_time.total_seconds() / 3600, 2)
+    
+    @property
+    def designation(self):
+        return f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
 
     def __str__(self):
-        return f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+        return self.designation
 
 
 class Site(BaseModel):

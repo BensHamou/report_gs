@@ -5,17 +5,18 @@ from django.contrib.auth.forms import AuthenticationForm
 
 def getAttrs(type, placeholder='', other={}):
     ATTRIBUTES = {
-        'control': {'class': 'form-control', 'style': 'background-color: #ebecee;', 'placeholder': ''},
+        'control': {'class': 'form-control', 'style': 'background-color: #ffffff; padding-left: 30px;', 'placeholder': ''},
         'login': {'class': 'form-control', 'style': 'background-color: white; height: 45px; border: 1px solid #ccc; border-radius: 10px;', 'placeholder': ''},
-        'controlID': {'class': 'form-control search-input-id', 'autocomplete': "off", 'style': 'background-color: #ebecee; border-color: #ebecee;', 'placeholder': ''},
-        'controlSearch': {'class': 'form-control search-input', 'autocomplete': "off", 'style': 'background-color: #ebecee; border-color: #ebecee;', 'placeholder': ''},
-        'search': {'class': 'form-control form-input', 'style': 'background-color: #ebecee; border-color: transparent; color: #133356; height: 40px; text-indent: 33px; border-radius: 5px;', 'type': 'search', 'placeholder': '', 'id': 'search'},
-        'select': {'class': 'form-select', 'style': 'background-color: #ebecee;'},
-        'select2': {'class': 'form-select', 'style': 'background-color: #ebecee; width: 100%;'},
-        'date': {'type': 'date', 'class': 'form-control dateinput','style': 'background-color: #ebecee;'},
-        'textarea': {"rows": "3", 'style': 'width: 100%', 'class': 'form-control', 'placeholder': '', 'style': 'background-color: #ebecee;'}
+        'controlID': {'class': 'form-control search-input-id', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
+        'controlSearch': {'class': 'form-control search-input', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
+        'search': {'class': 'form-control form-input', 'style': 'background-color: #ffffff; border-color: transparent; color: #133356; height: 40px; text-indent: 33px; border-radius: 5px;', 'type': 'search', 'placeholder': '', 'id': 'search'},
+        'select': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px;'},
+        'select2': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
+        'date': {'type': 'date', 'class': 'form-control dateinput','style': 'background-color: #ffffff;'},
+        'time': {'type': 'time', 'class': 'form-control timeinput', 'style': 'background-color: #ffffff; padding-left: 30px;', 'placeholder': ''},
+        'textarea': {"rows": "3", 'style': 'width: 100%', 'class': 'form-control', 'placeholder': '', 'style': 'background-color: #ffffff;'}
     }
-    
+
     if type in ATTRIBUTES:
         attributes = ATTRIBUTES[type]
         if 'placeholder' in attributes:
@@ -26,7 +27,18 @@ def getAttrs(type, placeholder='', other={}):
     else:
         return {}
     
-class UserForm(ModelForm):
+class BaseModelForm(ModelForm):
+    def save(self, commit=True, user=None):
+        instance = super(BaseModelForm, self).save(commit=False)
+        if user:
+            if not instance.pk:
+                instance.create_uid = user
+            instance.write_uid = user
+        if commit:
+            instance.save()
+        return instance
+    
+class UserForm(BaseModelForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'is_admin', 'first_name', 'last_name', 'role', 'lines']
@@ -45,7 +57,7 @@ class UserForm(ModelForm):
         'data-offlabel': "User"
     }))
 
-class SiteForm(ModelForm):
+class SiteForm(BaseModelForm):
     class Meta:
         model = Site
         fields = ['designation', 'address', 'email']
@@ -54,18 +66,18 @@ class SiteForm(ModelForm):
     address = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Adresse')))
     email = forms.EmailField(widget=forms.EmailInput(attrs=getAttrs('control', 'Email')))
 
-class LineForm(ModelForm):
+class LineForm(BaseModelForm):
     class Meta:
         model = Line
         fields = ['designation', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'shifts']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
-    prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL A')))
-    prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe NLOT')))
+    prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
+    prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe N° Lot')))
     shifts = forms.SelectMultiple(attrs=getAttrs('select'))
 
-class WarehouseForm(ModelForm):
+class WarehouseForm(BaseModelForm):
     class Meta:
         model = Warehouse
         fields = ['designation', 'site']
@@ -73,7 +85,7 @@ class WarehouseForm(ModelForm):
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     site = forms.Select(attrs=getAttrs('select'))
 
-class ZoneForm(ModelForm):
+class ZoneForm(BaseModelForm):
     class Meta:
         model = Zone
         fields = ['designation', 'quarantine', 'temp', 'warehouse']
@@ -91,13 +103,14 @@ class ZoneForm(ModelForm):
     }))
     warehouse = forms.Select(attrs=getAttrs('select'))
 
-class ShiftForm(ModelForm):
+class ShiftForm(BaseModelForm):
     class Meta:
         model = Shift
         fields = ['start_time', 'end_time']
 
-    start_time = forms.TimeInput(attrs=getAttrs('control', 'Heure de début'))
-    end_time = forms.TimeInput(attrs=getAttrs('control', 'Heure de fin'))
+    start_time = forms.TimeField(label='Heure de début', widget=forms.TimeInput(attrs=getAttrs('time', 'Heure de début')))
+    end_time = forms.TimeField(label='Heure de fin', widget=forms.TimeInput(attrs=getAttrs('time', 'Heure de fin')))
+
 
 class CustomLoginForm(AuthenticationForm):
     

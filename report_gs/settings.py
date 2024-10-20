@@ -54,7 +54,8 @@ ROOT_URLCONF = "report_gs.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, 'account', 'templates', 'fragment')],
+        "DIRS": [os.path.join(BASE_DIR, 'account', 'templates', 'fragment'), os.path.join(BASE_DIR, 'account', 'templates', 'site'), 
+                 os.path.join(BASE_DIR, 'account', 'templates', 'line'), os.path.join(BASE_DIR, 'account', 'templates', 'shift')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

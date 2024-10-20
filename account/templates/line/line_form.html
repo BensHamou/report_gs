@@ -1,0 +1,87 @@
+{% extends "main.html" %}
+
+{% block title %}
+{% if line %} Modification de la ligne {{ line.designation }} {% else %} Création d'une ligne {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'lines' %}{% if request.GET.page %}?page={{ request.GET.page }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+       class="text-decoration-none d-flex align-items-center" 
+       style="letter-spacing: 1.2px;">
+        <button class="btn btn-outline-dark me-2" style="border-color: #000; background-color: #fff; border-radius: 5px;">
+            <i class="fas fa-caret-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if line %} Modification de la ligne {% else %} Création d'une ligne {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if line %} Modification de la ligne {{ line.designation }} {% else %} Créez une nouvelle ligne {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="line-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if line %} Sauvgarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="line-form">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-4">
+            <div class="col-lg-12 col-md-12 mb-2">
+                <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
+                {{ form.designation }}
+                {% if form.designation.errors %}
+                    <small class="text-danger">{{ form.designation.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="prefix_bl" class="form-label" style="color: #5d5d5d;">Préfixe BL</label>
+                {{ form.prefix_bl }}
+                {% if form.prefix_bl.errors %}
+                    <small class="text-danger">{{ form.prefix_bl.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="prefix_bl_a" class="form-label" style="color: #5d5d5d;">Préfixe BL Annex</label>
+                {{ form.prefix_bl_a }}
+                {% if form.prefix_bl_a.errors %}
+                    <small class="text-danger">{{ form.prefix_bl_a.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="prefix_nlot" class="form-label" style="color: #5d5d5d;">Préfixe N° Lot</label>
+                {{ form.prefix_nlot }}
+                {% if form.prefix_nlot.errors %}
+                    <small class="text-danger">{{ form.prefix_nlot.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <div class="form-outline">
+                  <label class="form-label labelCustom" for="shifts">Shifts</label>
+                  <div id="shift" class="form-control select">
+                    <input id="shift_input" type="text" data-bs-toggle="dropdown" />
+                    <div class="dropdown-menu"></div>
+                    <select name="shifts" multiple hidden id="hidden_shifts_select">
+                      {% for shift in form.fields.shifts.queryset %}
+                        <option value="{{ shift.id }}" {% if shift.id in selectedShifts %} selected {% endif %}>{{ shift.designation }}</option>
+                      {% endfor %}                      
+                    </select>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
