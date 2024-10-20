@@ -8,7 +8,7 @@
 
     <ul class="nav flex-column flex-grow-1 d-none d-md-flex">
         <li class="nav-item mb-2">
-            <a class="nav-link active" href="{% url 'sites' %}">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                 <i class="margiin fas fa-house"></i> 
                 <span class="menu-text">Dashboard</span>
             </a>
@@ -32,28 +32,28 @@
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+            <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                 <i class="margiin fas fa-gear"></i> 
                 <span class="menu-text">Paramètres</span>
             </a>
             <ul class="collapse list-unstyled" id="parametersSubmenu">
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'sites' %}">Sites</a>
+                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}">Sites</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'lines' %}">Lignes</a>
+                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}">Lignes</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'warehouses' %}">Magasins</a>
+                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}">Magasins</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'zones' %}">Zones</a>
+                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}">Zones</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'shifts' %}">Shifts</a>
+                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'shifts' %}">Produits</a>
+                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Produits</a>
                 </li>
             </ul>
         </li>
@@ -73,7 +73,7 @@
 
     <ul class="nav flex-row flex-wrap d-md-none">
         <li class="nav-item mb-2">
-            <a class="nav-link active" href="{% url 'sites' %}">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                 <i class="margiin fas fa-house"></i> 
                 <span class="menu-text">Dashboard</span>
             </a>
@@ -97,28 +97,28 @@
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+            <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                 <i class="margiin fas fa-gear"></i> 
                 <span class="menu-text">Paramètres</span>
             </a>
             <ul class="collapse list-unstyled" id="parametersSubmenu">
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'sites' %}">Sites</a>
+                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}">Sites</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'lines' %}">Lignes</a>
+                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}">Lignes</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'warehouses' %}">Magasins</a>
+                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}">Magasins</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'zones' %}">Zones</a>
+                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}">Zones</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'shifts' %}">Shifts</a>
+                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a href="{% url 'shifts' %}">Produits</a>
+                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Produits</a>
                 </li>
             </ul>
         </li>
@@ -143,11 +143,15 @@
 
 {% block styles %}
 <style>
-    .side_menu {
-        background-color: #151f31;
-        display: flex;
-        flex-direction: column;
-    }
+.side_menu {
+    background-color: #151f31;
+    display: flex;
+    flex-direction: column;
+    position: sticky;  /* Sticky position */
+    top: 0;            /* Keeps it at the top of the viewport */
+    height: 100vh;     /* Full viewport height */
+    overflow-y: auto;  /* Scrollable if side_menu content exceeds the height */
+}
 
     .user-img {
         width: 100px;
@@ -169,6 +173,11 @@
         align-items: center;
         white-space: nowrap; 
     }
+
+    .nav-item a.active {
+        color: #007bff;
+        font-weight: bold;
+    }
     
     .margiin {
         margin-right: 10px;
@@ -182,7 +191,8 @@
     
     @media (max-width: 768px) {
         .side_menu {
-            max-height: 60vh;
+            position: static;
+            max-height: 45vh;
             overflow-y: auto;
         }
         .side_menu .text-center {

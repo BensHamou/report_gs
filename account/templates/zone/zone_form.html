@@ -1,0 +1,80 @@
+{% extends "main.html" %}
+
+{% block title %}
+    {% if zone %} Modification de la Zone {% else %} Création d'une Zone {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'zones' %}{% if request.GET.page %}?page={{ request.GET.page }}{% endif %}{% if request.GET.page_size %}&page_size={{ request.GET.page_size }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+       class="text-decoration-none d-flex align-items-center" 
+       style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if zone %} Modification de la zone {% else %} Création d'une zone {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if zone %} Modification de la zone {{ zone.designation }} {% else %} Créez une nouvelle zone {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="zone-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if zone %} Sauvegarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="zone-form">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-4">
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
+                {{ form.designation }}
+                {% if form.designation.errors %}
+                    <small class="text-danger">{{ form.designation.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="warehouse" class="form-label" style="color: #5d5d5d;">Magasin</label>
+                {{ form.warehouse }}
+                {% if form.warehouse.errors %}
+                    <small class="text-danger">{{ form.warehouse.errors }}</small>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6 col-sm-6">
+                <div class="form-outline">
+                    <label class="form-label" for="quarantine" style="color: #5d5d5d;">Zone Quarantaine?</label>
+                    </br>
+                    {{ form.quarantine }}
+                    {% if form.quarantine.errors %}
+                        <small class="text-danger">{{ form.quarantine.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6 col-sm-6">
+                <div class="form-outline">
+                    <label class="form-label" for="temp" style="color: #5d5d5d;">Zone Temporaire?</label>
+                    </br>
+                    {{ form.temp }}
+                    {% if form.temp.errors %}
+                        <small class="text-danger">{{ form.temp.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -83,7 +83,8 @@ class WarehouseForm(BaseModelForm):
         fields = ['designation', 'site']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
-    site = forms.Select(attrs=getAttrs('select'))
+    site = forms.ModelChoiceField(queryset=Site.objects.all(), widget=forms.Select(attrs=getAttrs('select2')), empty_label="Site")
+
 
 class ZoneForm(BaseModelForm):
     class Meta:
@@ -101,7 +102,7 @@ class ZoneForm(BaseModelForm):
         'data-onstyle': 'secondary', 
         'data-toggle': 'switchbutton'
     }))
-    warehouse = forms.Select(attrs=getAttrs('select'))
+    warehouse = forms.ModelChoiceField(queryset=Warehouse.objects.all(), widget=forms.Select(attrs=getAttrs('select2')), empty_label="Magasins")
 
 class ShiftForm(BaseModelForm):
     class Meta:

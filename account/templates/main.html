@@ -50,16 +50,31 @@
             display: inline-flex;
             align-items: center;
         }
-    
-        .tag-item input {
-            display: none; /* Hide the default checkbox */
-        }
-    
-        .tag-item:hover {
-            background-color: #d0d0d0; /* Darker grey on hover */
-        }
         .page-item{
             color: white;
+        }
+        .select2-search {
+            background-color: #ffffff !important;
+        }
+        .select2-search input {
+            background-color: #ffffff !important;
+        }
+        
+        .select2-results {
+            background-color: #ffffff !important;
+        }
+        
+        .select2-container--bootstrap-5 .select2-selection {
+            border-color: #ced4da !important;
+            background-color: #ffffff !important;
+        }
+        .nav-link.active {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .nav-link.activeP {
+            color: #2082ec;
+            font-weight: bold;
         }
         {% block styles %}
         {% endblock %}
@@ -69,15 +84,15 @@
     {% bootstrap_javascript %}
     {% load static %}
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/js/bootstrap-select.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <link rel="stylesheet" href="{% static 'fontawesomefree/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/select.css' %}">
     <link rel="stylesheet" href="{% static 'css/sweetalert.css' %}">
     <link rel="icon" type="image/ico" href="{% static 'img/favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/css/bootstrap-switch-button.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 </head>
     <body>
@@ -98,7 +113,12 @@
         <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
         <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap-switch-button@1.1.0/dist/bootstrap-switch-button.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        {% block scripts %}
-        {% endblock %}
+        <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/js/bootstrap-select.min.js"></script>
+        <script>
+            document.querySelectorAll(".select").forEach((el) => new bootstrap5.Select(el));
+            $(document).ready(function() {$('.form-select').select2({theme: 'bootstrap-5', allowClear: true});});
+            {% block scripts %}
+            {% endblock %}
+          </script>
     </body>
 </html>
