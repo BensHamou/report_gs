@@ -15,7 +15,7 @@ Paramètre Shifts
 
         <div class="row justify-content-between align-items-center mb-3">
             <div class="col-6">
-                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Rechercher..." class="form-control" style="width: 40%; margin-right: 10px;">
+                {{ filteredData.form.search }}
             </div>
             <div class="col-6 d-flex justify-content-end">
                 <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin-right: 10px;">
@@ -45,8 +45,9 @@ Paramètre Shifts
                         <td class="table-text">{{ shift.end_time }}</td>
                         <td class="table-text">{{ shift.passed_time }}Hs</td>
                         <td class="text-center p-0 m-0">
-                            <a href="{% url 'edit_shift' shift.id %}" class="btn" style="color: #5d5d5d;">
-                                <i class="far fa-pen-to-square"></i>
+                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_shift' shift.id %}')" 
+                                class="btn" style="color: #5d5d5d;">
+                                    <i class="far fa-pen-to-square"></i>
                             </a>
                             <a href="javascript:void(0);" onclick="confirmShiftDel('{{ shift.id }}', '{{ shift.designation }}')"
                                 class="btn" style="color: #5d5d5d;">

@@ -13,7 +13,7 @@ urlpatterns = [
     path("user/refresh/", refreshUserList, name="refresh_users"),
     path("user/edit/<int:id>", editUserView, name="edit_user"),
     path("user/delete/<int:id>", deleteUserView, name="delete_user"),
-    path('user/profile/<int:id>', userProfileView, name='details'),
+    # path('user/profile/<int:id>', userProfileView, name='details'),
     
     path('login/', CustomLoginView.as_view(), name='login'),
     path('accounts/login/', CustomLoginView.as_view(), name='login'),

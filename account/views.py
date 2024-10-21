@@ -1,56 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.template.defaulttags import register
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy, reverse
 from django.core.paginator import Paginator
 from django.contrib.auth import logout
 from django.contrib import messages 
+from .decorators import *
 from .filters import *
 from .models import *
 from .forms import *
 import requests
 import json
-import uuid
 
-# DECORATORS
 
-@register.filter
-def startwith(value, word):
-    return str(value).startswith(word)
-
-@register.filter
-def is_login(messages):
-    for message in messages:
-        if str(message).startswith('LOGIN'):
-            return True
-    return False
-
-@register.filter
-def loginerror(value, word):
-    return str(value)[len(word):]
-
-def login_success(request):
-    return redirect("home")
-
-def admin_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'Admin' or request.user.is_admin:
-            return view_func(request, *args, **kwargs)
-        else:
-            return render(request, '403.html', status=403)
-    return wrapper
-
-def admin_only_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'Admin':
-            return view_func(request, *args, **kwargs)
-        else:
-            return render(request, '403.html', status=403)
-    return wrapper
-
-def page_not_found(request, exception):
-    return render(request, '404.html', status=404)
+# USERS
 
 @login_required(login_url='login')
 @admin_only_required
@@ -58,35 +21,17 @@ def homeView(request):
     context = { 'content': 'content' }
     return render(request, 'home.html', context)
 
-# REDIRECTION
-def getRedirectionURL(request, url_path):
-    params = {
-        'page': request.GET.get('page', '1'),
-        'page_size': request.GET.get('page_size', '12'),
-        'search': request.GET.get('search', ''),
-        'state': request.GET.get('state', ''),
-        'start_date': request.GET.get('start_date', ''),
-        'end_date': request.GET.get('end_date', ''),
-        'site': request.GET.get('site', ''),
-        'distru': request.GET.get('distru', '')
-    }
-    cache_param = str(uuid.uuid4())
-    query_string = '&'.join([f'{key}={value}' for key, value in params.items() if value])
-    return f'{url_path}?cache={cache_param}&{query_string}'
-
-# USERS
-
 @login_required(login_url='login')
 @admin_only_required
 def listNewUserView(request):
     users = User.objects.filter(role='Nouveau').order_by('-date_created')
     filteredData = UserFilter(request.GET, queryset=users)
     users = filteredData.qs
-    paginator = Paginator(users, 10) 
+    paginator = Paginator(users, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    context = { 'page': page, 'users': filteredData }
-    return render(request, 'users_list.html', context)
+    context = { 'page': page, 'filteredData': filteredData }
+    return render(request, 'list_users.html', context)
 
 @login_required(login_url='login')
 @admin_only_required
@@ -120,10 +65,11 @@ def editUserView(request, id):
         form = UserForm(request.POST, instance=user)
         if form.is_valid():
             form.save(user=request.user)
+            form.save_m2m()
             url_path = reverse('users')
             return redirect(getRedirectionURL(request, url_path))
     context = {'form': form, 'user_': user, 'selectedLines': selectedLines}
-    return render(request, 'edit_user.html', context)
+    return render(request, 'user_form.html', context)
 
 @login_required(login_url='login')
 @admin_only_required
@@ -139,29 +85,11 @@ def listUserView(request):
     users = User.objects.exclude(role='Nouveau').exclude(username='admin').order_by('-date_modified')
     filteredData = UserFilter(request.GET, queryset=users)
     users = filteredData.qs
-    selectedUsines = request.GET.getlist('usine')
-
-    if len(selectedUsines) > 0:
-        users = users.filter(usines__in=selectedUsines)
-
-    paginator = Paginator(users, 10)
+    paginator = Paginator(users, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-
-    context = {
-        'page': page, 'filtredData': filteredData, 'selectedUsines': selectedUsines,
-    }
-    return render(request, 'users_list.html', context)
-
-@login_required(login_url='login')
-@admin_only_required
-def userProfileView(request, id):
-  user = User.objects.get(id=id)
-  context = {
-    'user_details': user,
-  }
-  return render(request, 'user_details.html', context)
-
+    context = {'page': page, 'filteredData': filteredData}
+    return render(request, 'list_users.html', context)
 
 # AUTHENTIFICATION
 
@@ -183,12 +111,12 @@ def logoutView(request):
 @admin_required
 def listSiteView(request):
     sites = Site.objects.all().order_by('-date_modified')
-    filtered_data = SiteFilter(request.GET, queryset=sites)
-    sites = filtered_data.qs
+    filteredData = SiteFilter(request.GET, queryset=sites)
+    sites = filteredData.qs
     paginator = Paginator(sites, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    context = {'page': page, 'sites': sites}
+    context = {'page': page, 'filteredData': filteredData}
     return render(request, 'list_sites.html', context)
 
 @login_required(login_url='login')

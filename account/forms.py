@@ -9,7 +9,7 @@ def getAttrs(type, placeholder='', other={}):
         'login': {'class': 'form-control', 'style': 'background-color: white; height: 45px; border: 1px solid #ccc; border-radius: 10px;', 'placeholder': ''},
         'controlID': {'class': 'form-control search-input-id', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
         'controlSearch': {'class': 'form-control search-input', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
-        'search': {'class': 'form-control form-input', 'style': 'background-color: #ffffff; border-color: transparent; color: #133356; height: 40px; text-indent: 33px; border-radius: 5px;', 'type': 'search', 'placeholder': '', 'id': 'search'},
+        'search': {'class': 'form-control', 'style': 'width: 40%; margin-right: 10px;', 'type': 'text', 'placeholder': '', 'id': 'search'},
         'select': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px;'},
         'select2': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
         'date': {'type': 'date', 'class': 'form-control dateinput','style': 'background-color: #ffffff;'},
@@ -47,12 +47,12 @@ class UserForm(BaseModelForm):
     last_name = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Nom de famille')))
     first_name = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Prénom')))
     email = forms.EmailField(widget=forms.EmailInput(attrs=getAttrs('control', 'Email')))
-    lines = forms.SelectMultiple(attrs=getAttrs('select'))
+    lines = forms.ModelMultipleChoiceField(queryset=Line.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-select select3'}), required=False)
     role = forms.ChoiceField(choices=User.ROLE_CHOICES, widget=forms.Select(attrs=getAttrs('select')))
     is_admin = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
-        'type': 'checkbox', 
-        'data-onstyle': 'primary', 
-        'data-toggle': 'switchbutton',  
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
         'data-onlabel': "Admin", 
         'data-offlabel': "User"
     }))
@@ -75,7 +75,7 @@ class LineForm(BaseModelForm):
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe N° Lot')))
-    shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-select'}), required=False)
+    shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-select select3'}), required=False)
 
 class WarehouseForm(BaseModelForm):
     class Meta:
@@ -95,12 +95,16 @@ class ZoneForm(BaseModelForm):
     quarantine = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox', 
         'data-onstyle': 'secondary', 
-        'data-toggle': 'switchbutton'
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui", 
+        'data-offlabel': "Non"
     }))
     temp = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox', 
         'data-onstyle': 'secondary', 
-        'data-toggle': 'switchbutton'
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui", 
+        'data-offlabel': "Non"
     }))
     warehouse = forms.ModelChoiceField(queryset=Warehouse.objects.all(), widget=forms.Select(attrs=getAttrs('select2')), empty_label="Magasins")
 

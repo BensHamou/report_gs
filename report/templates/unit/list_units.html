@@ -1,7 +1,7 @@
 {% extends "main.html" %}
 
 {% block title %}
-Paramètre Lignes
+    Paramètre Unités
 {% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@ Paramètre Lignes
     <form method="GET" class="w-100">
         <div class="row justify-content-between align-items-center mb-3">
             <div class="col-12">
-                <p class="page-title">Paramètre Lignes <i class="fas fa-gear" style='font-size: 24px'></i></p>
+                <p class="page-title">Paramètre Unités <i class="fas fa-gear" style='font-size: 24px'></i></p>
             </div>
         </div>
 
@@ -20,7 +20,7 @@ Paramètre Lignes
             <div class="col-6 d-flex justify-content-end">
                 <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin-right: 10px;">
                 <button type="submit" class="btn btn-primary" style="background-color: #1d71b8;">Appliquer</button>
-                <a href="{% url 'create_line' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
+                <a href="{% url 'create_unit' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
             </div>
         </div>
     </form>
@@ -31,25 +31,21 @@ Paramètre Lignes
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
                     <th class="table-header">Désignation</th>
-                    <th class="table-header">Préfixe BL</th>
-                    <th class="table-header">Préfixe BL Annex</th>
-                    <th class="table-header">Préfixe N° Lot</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% if page %}
-                    {% for line in page %}
+                    {% for unit in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text">{{ line.id }}</td>
-                        <td class="table-text">{{ line.designation }}</td>
-                        <td class="table-text">{{ line.prefix_bl }}</td>
-                        <td class="table-text">{{ line.prefix_bl_a }}</td>
-                        <td class="table-text">{{ line.prefix_nlot }}</td>
+                        <td class="table-text">{{ unit.id }}</td>
+                        <td class="table-text">{{ unit.designation }}</td>
                         <td class="text-center p-0 m-0">
-                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_line' line.id %}')" 
-                            class="btn" style="color: #5d5d5d;"><i class="far fa-pen-to-square"></i></a>
-                            <a href="javascript:void(0);" onclick="confirmLineDel('{{ line.id }}', '{{ line.designation }}')"
+                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_unit' unit.id %}')" 
+                                class="btn" style="color: #5d5d5d;">
+                                <i class="far fa-pen-to-square"></i>
+                            </a>
+                            <a href="javascript:void(0);" onclick="confirmUnitDel('{{ unit.id }}', '{{ unit.designation }}')"
                                 class="btn" style="color: #5d5d5d;">
                                 <i class="far fa-trash-can"></i>
                             </a>
@@ -58,23 +54,22 @@ Paramètre Lignes
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="5" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
+                        <td colspan="3" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
                     </tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
-    
     {% if page.has_other_pages %}
         {% include 'pagination.html' %}
     {% endif %}
 </div>
 
 <script>
-    function confirmLineDel(lineId, lineName) {
+    function confirmUnitDel(unitId, unitName) {
         swal({
             title: `Confirmation de la suppression.`,
-            text: `Etes-vous sûr que vous voulez supprimer ${lineName}?`,
+            text: `Etes-vous sûr que vous voulez supprimer ${unitName}?`,
             type: "warning",
             showCancelButton: true,
             confirmButtonColor: "#DD6B55",
@@ -84,7 +79,7 @@ Paramètre Lignes
             closeOnCancel: true
         }, function (isConfirm) {
             if (isConfirm) {
-                window.location.href = "{% url 'delete_line' 123456789 %}".replace(/123456789/, lineId);
+                window.location.href = "{% url 'delete_unit' 123456789 %}".replace(/123456789/, unitId);
             }
         });
     }

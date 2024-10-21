@@ -1,0 +1,102 @@
+{% extends "main.html" %}
+
+{% block title %}
+{% if user %} Modification de l'utilisateur {{ user.fullname }} {% else %} Création d'un utilisateur {% endif %}
+{% endblock %}
+{% load static %} 
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+        onclick="window.location=constructUrl('{% url 'users' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if user %} Modification de l'utilisateur {% else %} Création d'un utilisateur {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if user %} Modification de l'utilisateur {{ user.fullname }} {% else %} Créez un nouvel utilisateur {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="user-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if user %} Sauvegarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="user-form">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-4">
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Nom d'utilisateur</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <small class="text-danger">{{ form.username.errors }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Nom de famille</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <small class="text-danger">{{ form.last_name.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Prénom</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <small class="text-danger">{{ form.first_name.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <small class="text-danger">{{ form.email.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Rôle</label>
+                {{ form.role }}
+                {% if form.role.errors %}
+                    <small class="text-danger">{{ form.role.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6 col-md-12 mb-2">
+                <div class="form-outline">
+                    <label class="form-label" for="is_admin" style="color: #5d5d5d;">Admin?</label>
+                    </br>
+                    {{ form.is_admin }}
+                    {% if form.is_admin.errors %}
+                        <small class="text-danger">{{ form.is_admin.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-12 col-md-12 mb-2">
+                <label class="form-label" style="color: #5d5d5d;">Lignes</label>
+                {{ form.lines }}
+                {% if form.lines.errors %}
+                    <small class="text-danger">{{ form.lines.errors }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

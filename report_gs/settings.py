@@ -56,7 +56,10 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [os.path.join(BASE_DIR, 'account', 'templates', 'fragment'), os.path.join(BASE_DIR, 'account', 'templates', 'site'), 
                  os.path.join(BASE_DIR, 'account', 'templates', 'line'), os.path.join(BASE_DIR, 'account', 'templates', 'shift'),
-                 os.path.join(BASE_DIR, 'account', 'templates', 'warehouse'), os.path.join(BASE_DIR, 'account', 'templates', 'zone'),],
+                 os.path.join(BASE_DIR, 'account', 'templates', 'user'), os.path.join(BASE_DIR, 'account', 'templates', 'zone'),
+                 os.path.join(BASE_DIR, 'account', 'templates', 'warehouse'), os.path.join(BASE_DIR, 'report', 'templates', 'family'),
+                 os.path.join(BASE_DIR, 'report', 'templates', 'product'), os.path.join(BASE_DIR, 'report', 'templates', 'unit'),
+                ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

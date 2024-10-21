@@ -53,15 +53,32 @@
                     <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Produits</a>
+                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}">Unités</a>
                 </li>
             </ul>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'users' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
                 <i class="margiin far fa-user"></i> 
                 <span class="menu-text">Utilisateurs</span>
             </a>
+            <ul class="collapse list-unstyled" id="usersSubmenu">
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}">Active</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}">Nouveau</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}">Actualisez</a>
+                </li>
+            </ul>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'logout' %}">
@@ -118,15 +135,32 @@
                     <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Produits</a>
+                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}">Unités</a>
                 </li>
             </ul>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'users' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
                 <i class="margiin far fa-user"></i> 
                 <span class="menu-text">Utilisateurs</span>
             </a>
+            <ul class="collapse list-unstyled" id="usersSubmenu">
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}">Active</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}">Nouveau</a>
+                </li>
+                <li class="ml-3 mb-2">
+                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}">Actualisez</a>
+                </li>
+            </ul>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'logout' %}">
@@ -143,15 +177,15 @@
 
 {% block styles %}
 <style>
-.side_menu {
-    background-color: #151f31;
-    display: flex;
-    flex-direction: column;
-    position: sticky;  /* Sticky position */
-    top: 0;            /* Keeps it at the top of the viewport */
-    height: 100vh;     /* Full viewport height */
-    overflow-y: auto;  /* Scrollable if side_menu content exceeds the height */
-}
+    .side_menu {
+        background-color: #151f31;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
 
     .user-img {
         width: 100px;
@@ -223,6 +257,13 @@
     }
     
     #parametersSubmenu li {
+        margin-left: 25px; /* Further indent each item for hierarchy */
+    }
+    #usersSubmenu {
+        padding-left: 35px; /* Indent the entire submenu */
+    }
+    
+    #usersSubmenu li {
         margin-left: 25px; /* Further indent each item for hierarchy */
     }
 </style>

@@ -76,6 +76,23 @@
             color: #2082ec;
             font-weight: bold;
         }
+        .listBadgeText{
+            color: #1d71b8;
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 20px;
+        }
+        .listBadge{
+            background-color: #cccccc;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
         {% block styles %}
         {% endblock %}
     </style>
@@ -106,6 +123,7 @@
             </div>
         </div>
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
         <script src="{% static 'js/sweetalert.min.js' %}"></script>
         <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
@@ -117,6 +135,16 @@
         <script>
             document.querySelectorAll(".select").forEach((el) => new bootstrap5.Select(el));
             $(document).ready(function() {$('.form-select').select2({theme: 'bootstrap-5', allowClear: true});});
+            $(document).ready(function() {$('.select3').select2({theme: 'bootstrap-5', allowClear: false});});
+
+            function constructUrl(baseUrl) {
+                let url = baseUrl + '?';
+                const params = new URLSearchParams(window.location.search);
+                for (const [key, value] of params.entries()) {
+                    url += `${key}=${value}&`;
+                }
+                return url.slice(0, -1); // Remove the trailing '&'
+            }
             {% block scripts %}
             {% endblock %}
           </script>

@@ -1,0 +1,103 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    {% if family %} Modification de la Famille {% else %} Création d'une Famille {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'families' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if family %} Modification de la famille {% else %} Création d'une famille {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if family %} Modification de la famille {{ family.designation }} {% else %} Créez une nouvelle famille {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="family-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if family %} Sauvegarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="family-form" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px; padding-bottom: 20px;">
+        <div class="d-flex flex-column align-items-center image-container"> 
+            <img id="imagePreview" src="{% if family and family.image %}{{ family.image.url }}{% else %}{% static 'img/empty_family.png' %}{% endif %}" 
+                alt="Image Preview" style="width: 300px; height: 300px; margin-bottom: 15px; border-radius: 5px; object-fit: cover; cursor: pointer;"/>
+            {{ form.image }}
+        </div>
+        {% if form.image.errors %}
+            <small class="text-danger">{{ form.image.errors }}</small>
+        {% endif %}
+        <div class="row mb-4 justify-content-center">
+            <div class="col-lg-6 col-md-12 mb-2">
+                <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
+                {{ form.designation }}
+                {% if form.designation.errors %}
+                    <small class="text-danger">{{ form.designation.errors }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    const imagePreview = document.getElementById("imagePreview");
+    const imageInput = document.getElementById("id_image");
+
+    imagePreview.addEventListener("click", () => {
+        imageInput.click();
+    });
+
+    imageInput.onchange = function (e) {
+        const [file] = e.target.files;
+
+        if (file) {
+            imagePreview.src = URL.createObjectURL(file);
+        } else {
+            imagePreview.src = "{% if family and family.image %}{{ family.image.url }}{% else %}{% static 'img/empty_family.png' %}{% endif %}";
+        }
+    };
+    
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const imageDivs = document.querySelectorAll('.image-container');
+        imageDivs.forEach(div => {
+          const children = Array.from(div.childNodes);
+          children.forEach(child => {
+            if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== "") {
+              child.remove(); 
+            }
+          });
+        });
+    });
+</script>
+
+<style>
+    .image-container img:hover {  /* Apply hover to the image only */
+        filter: brightness(0.8); 
+        transform: scale(1.05);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, filter 0.2s; 
+    }
+
+    .image-container > a,
+    .image-container > br { 
+        display: none; 
+    }
+    
+</style>
+{% endblock %}
