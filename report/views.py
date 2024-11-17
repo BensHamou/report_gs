@@ -82,8 +82,6 @@ def listFamilyView(request):
     paginator = Paginator(families, page_size)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    print(filteredData)
-    
     context = {'page': page, 'filteredData': filteredData}
     return render(request, 'list_families.html', context)
 
@@ -142,8 +140,6 @@ def listProductView(request):
     paginator = Paginator(products, page_size)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    print(filteredData)
-    
     context = {'page': page, 'filteredData': filteredData}
     return render(request, 'list_products.html', context)
 

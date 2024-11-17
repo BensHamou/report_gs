@@ -11,7 +11,8 @@ def getAttrs(type, placeholder='', other={}):
         'controlSearch': {'class': 'form-control search-input', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
         'search': {'class': 'form-control', 'style': 'width: 40%; margin-right: 10px;', 'type': 'text', 'placeholder': '', 'id': 'search'},
         'select': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px;'},
-        'select2': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
+        'select2': {'class': 'form-select select2', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
+        'select3': {'class': 'form-select select3', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
         'date': {'type': 'date', 'class': 'form-control dateinput','style': 'background-color: #ffffff;'},
         'time': {'type': 'time', 'class': 'form-control timeinput', 'style': 'background-color: #ffffff; padding-left: 30px;', 'placeholder': ''},
         'textarea': {"rows": "3", 'style': 'width: 100%', 'class': 'form-control', 'placeholder': '', 'style': 'background-color: #ffffff;'}
@@ -69,13 +70,14 @@ class SiteForm(BaseModelForm):
 class LineForm(BaseModelForm):
     class Meta:
         model = Line
-        fields = ['designation', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'shifts']
+        fields = ['designation', 'site', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'shifts']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe N° Lot')))
-    shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-select select3'}), required=False)
+    site = forms.ModelChoiceField(queryset=Site.objects.all(), widget=forms.Select(attrs=getAttrs('select3')), empty_label="Site")
+    shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs=getAttrs('select3')), required=False)
 
 class WarehouseForm(BaseModelForm):
     class Meta:

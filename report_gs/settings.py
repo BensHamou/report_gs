@@ -76,14 +76,22 @@ WSGI_APPLICATION = "report_gs.wsgi.application"
 
 
 DATABASES = {
+    # 'default': {
+    #    'ENGINE': 'django.db.backends.postgresql',
+    #    'NAME': 'PumaGS',
+    #    'USER': 'puma_gs',
+    #    'PASSWORD': 'puma_gs',
+    #    'HOST': '10.10.10.101',
+    #    'PORT': '5434',
+    # },
     'default': {
-       'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'PumaGS',
-       'USER': 'puma_gs',
-       'PASSWORD': 'puma_gs',
-       'HOST': '10.10.10.101',
-       'PORT': '5434',
-    }
+     'ENGINE': 'django.db.backends.postgresql',
+     'NAME': 'PumaGS',
+     'USER': 'puma_gs',
+     'PASSWORD': 'puma_gs',
+     'HOST': '127.0.0.1',
+     'PORT': '5432',
+    },
 }
 
 

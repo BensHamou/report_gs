@@ -134,8 +134,11 @@
         <script src="{% static 'js/select.js' %}"></script>
         <script>
             document.querySelectorAll(".select").forEach((el) => new bootstrap5.Select(el));
-            $(document).ready(function() {$('.form-select').select2({theme: 'bootstrap-5', allowClear: true});});
-            $(document).ready(function() {$('.select3').select2({theme: 'bootstrap-5', allowClear: false});});
+            $(document).ready(function() {
+                $('.select2').select2({theme: 'bootstrap-5', allowClear: true});
+                $('.select3').select2({theme: 'bootstrap-5', allowClear: false});
+                $('[data-toggle="tooltip"]').tooltip();
+            });
 
             function constructUrl(baseUrl) {
                 let url = baseUrl + '?';
@@ -143,7 +146,7 @@
                 for (const [key, value] of params.entries()) {
                     url += `${key}=${value}&`;
                 }
-                return url.slice(0, -1); // Remove the trailing '&'
+                return url.slice(0, -1);
             }
             {% block scripts %}
             {% endblock %}

@@ -31,6 +31,11 @@
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
                     <th class="table-header">Désignation</th>
+                    <th class="table-header">Famille</th>
+                    <th class="table-header">Type</th>
+                    <th class="table-header">Unité</th>
+                    <th class="table-header">Quantité par palette</th>
+                    <th class="table-header">Délais d'expiration</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
@@ -40,6 +45,11 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text">{{ product.id }}</td>
                         <td class="table-text">{{ product.designation }}</td>
+                        <td class="table-text">{{ product.family }}</td>
+                        <td class="table-text">{{ product.type }}</td>
+                        <td class="table-text">{{ product.unit }}</td>
+                        <td class="table-text">{{ product.qte_per_pal }}</td>
+                        <td class="table-text">{{ product.delais_expiration }} jours</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_product' product.id %}')" 
                                 class="btn" style="color: #5d5d5d;">
@@ -54,7 +64,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="4" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
+                        <td colspan="8" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
                     </tr>
                 {% endif %}
             </tbody>

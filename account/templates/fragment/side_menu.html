@@ -1,5 +1,5 @@
 {% load static %}
-<nav class="col-lg-2 col-md-3 side_menu p-3 d-flex flex-column">
+<nav class="col-lg-2 col-md-3 p-3 d-flex flex-column side_menu">
     <div class="text-center my-4 user-info">
         <img src="{% static 'img/admin_profile.png' %}" class="rounded-circle img-fluid user-img" alt="User Image">
         <p class="mt-2 bonjour-text d-none d-md-block">Bonjour,</p>
@@ -38,28 +38,28 @@
             </a>
             <ul class="collapse list-unstyled" id="parametersSubmenu">
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}">Sites</a>
+                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}" style="margin-left: 30px;">Sites</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}">Lignes</a>
+                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}" style="margin-left: 30px;">Lignes</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}">Magasins</a>
+                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}" style="margin-left: 30px;">Magasins</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}">Zones</a>
+                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}" style="margin-left: 30px;">Zones</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
+                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}" style="margin-left: 30px;">Shifts</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
+                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}" style="margin-left: 30px;">Produits</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
+                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}" style="margin-left: 30px;">Familles</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}">Unités</a>
+                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}" style="margin-left: 30px;">Unités</a>
                 </li>
             </ul>
         </li>
@@ -70,13 +70,13 @@
             </a>
             <ul class="collapse list-unstyled" id="usersSubmenu">
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}">Active</a>
+                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}" style="margin-left: 30px;">Active</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}">Nouveau</a>
+                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}" style="margin-left: 30px;">Nouveau</a>
                 </li>
                 <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}">Actualisez</a>
+                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}" style="margin-left: 30px;">Actualisez</a>
                 </li>
             </ul>
         </li>
@@ -92,31 +92,26 @@
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                 <i class="margiin fas fa-house"></i> 
-                <span class="menu-text">Dashboard</span>
             </a>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'sites' %}">
                 <i class="margiin fas fa-plus"></i> 
-                <span class="menu-text">Entré</span>
             </a>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'sites' %}">
                 <i class="margiin fas fa-minus"></i> 
-                <span class="menu-text">Sortie</span>
             </a>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'sites' %}">
                 <i class="margiin fas fa-chart-bar"></i> 
-                <span class="menu-text">Rapports</span>
             </a>
         </li>
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                 <i class="margiin fas fa-gear"></i> 
-                <span class="menu-text">Paramètres</span>
             </a>
             <ul class="collapse list-unstyled" id="parametersSubmenu">
                 <li class="ml-3 mb-2">
@@ -148,7 +143,6 @@
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
                 <i class="margiin far fa-user"></i> 
-                <span class="menu-text">Utilisateurs</span>
             </a>
             <ul class="collapse list-unstyled" id="usersSubmenu">
                 <li class="ml-3 mb-2">
@@ -165,7 +159,6 @@
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'logout' %}">
                 <i class="margiin fas fa-sign-out-alt"></i> 
-                <span class="menu-text">Se déconnecter</span>
             </a>
         </li>
     </ul>
@@ -185,6 +178,7 @@
         top: 0;
         height: 100vh;
         overflow-y: auto;
+        overflow-x: hidden;
     }
 
     .user-img {
@@ -216,18 +210,15 @@
     .margiin {
         margin-right: 10px;
     }
-
-    @media (min-width: 769px) {
-        .side_menu {
-            min-height: 100vh;
-        }
-    }
     
     @media (max-width: 768px) {
         .side_menu {
             position: static;
-            max-height: 45vh;
             overflow-y: auto;
+            flex-direction: column;
+            align-items: center;
+            height: auto;
+            overflow: visible;
         }
         .side_menu .text-center {
             display: flex;
@@ -246,25 +237,6 @@
         .footer-logo {
             display: none;
         }
-    }
-    
-    .footer-logo {
-        width: 120px;
-        margin-bottom: 20px;
-    }
-    #parametersSubmenu {
-        padding-left: 35px; /* Indent the entire submenu */
-    }
-    
-    #parametersSubmenu li {
-        margin-left: 25px; /* Further indent each item for hierarchy */
-    }
-    #usersSubmenu {
-        padding-left: 35px; /* Indent the entire submenu */
-    }
-    
-    #usersSubmenu li {
-        margin-left: 25px; /* Further indent each item for hierarchy */
     }
 </style>
 {% endblock %}

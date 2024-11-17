@@ -69,6 +69,7 @@ class Line(BaseModel):
     prefix_bl = models.CharField(max_length=50)
     prefix_bl_a = models.CharField(max_length=50)
     prefix_nlot = models.CharField(max_length=50)
+    site = models.ForeignKey(Site, related_name='lines', on_delete=models.CASCADE)
     shifts = models.ManyToManyField(Shift, related_name='lines', blank=True)
 
     def __str__(self):

@@ -46,7 +46,7 @@ Paramètre Utilisateurs
                         <td class="d-none d-md-table-cell">
                             {% for line in user.lines.all %}
                                 <span class="badge listBadge">
-                                    <p class="lead p-0 m-0 listBadgeText">{{ line.designation }}</p>
+                                    <p class="p-0 m-0 listBadgeText">{{ line.designation }}</p>
                                 </span>
                             {% empty %}
                                 <span class="badge" style="color: #bcc2cf;">Pas de lignes associées.</span>

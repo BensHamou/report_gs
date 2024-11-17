@@ -1,7 +1,7 @@
 {% extends "main.html" %}
 
 {% block title %}
-    {% if warehouse %} Modification du Warehouse {% else %} Création d'un Warehouse {% endif %}
+    {% if warehouse %} Modification du Magasin {% else %} Création d'un Magasin {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -18,11 +18,11 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if warehouse %} Modification du warehouse {% else %} Création d'un warehouse {% endif %}</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if warehouse %} Modification du magasin {% else %} Création d'un magasin {% endif %}</h4>
     </div>
 
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">{% if warehouse %} Modification du warehouse {{ warehouse.designation }} {% else %} Créez un nouveau warehouse {% endif %}</p>
+        <p style="font-size: 18px; color: #133356;">{% if warehouse %} Modification du magasin {{ warehouse.designation }} {% else %} Créez un nouveau magasin {% endif %}</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
         <button type="submit" form="warehouse-form" class="btn btn-primary" style="background-color: #1d71b8;">
