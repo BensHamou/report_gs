@@ -71,18 +71,17 @@ Paramètre Sites
 <script>
     function confirmSiteDel(siteId, siteName) {
         swal({
-            title: `Confirmation de la suppression.`,
+            title: "Confirmation de la suppression.",
             text: `Etes-vous sûr que vous voulez supprimer ${siteName}?`,
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
             confirmButtonText: "Oui",
             cancelButtonText: "Non",
-            closeOnConfirm: true,
-            closeOnCancel: true
-        }, function (isConfirm) {
-            if (isConfirm) {
-                window.location.href = "{% url 'delete_site' 123456789 %}".replace(/123456789/, siteId);
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                window.location.href = "{% url 'delete_site' 0 %}".replace('0', siteId);
             }
         });
     }

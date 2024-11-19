@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db.models import Q
 from django.db import models
 import os
+import math
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -117,7 +118,9 @@ class LineDetail(BaseModel):
 
     @property
     def palette(self):
-        return self.move_line.product.qte_per_pal and self.qte // self.move_line.product.qte_per_pal or 0
+        if self.move_line.product.qte_per_pal and self.qte:
+            return math.ceil(self.qte / self.move_line.product.qte_per_pal)
+        return 0
 
     class Meta:
         constraints = [

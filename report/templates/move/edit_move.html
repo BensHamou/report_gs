@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Modifier Stock
+    Modifier Entré Stock
 {% endblock %}
 
 {% block content %}
@@ -20,77 +20,387 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">Modifier Stock</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Modifier Entré Stock</h4>
     </div>
     <div class="col-6">
         <p style="font-size: 18px; color: #133356;">Mettre à jour les informations</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" form="edit_stock-form" class="btn btn-primary" style="background-color: #1d71b8;">
+        <button type="button" id="submit-form" class="btn btn-primary" style="background-color: #1d71b8;">
             Sauvegarder
         </button>
     </div>
 </div>
 
 <div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
-    <form method="POST" id="edit_stock-form">
+    <form method="POST" id="move_in-form">
         {% csrf_token %}
         <div class="row">
             <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
                 <div class="row">
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
-                        <input type="text" name="lot_number" id="lot_number" value="{{ stock.lot_number }}" 
-                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="text" name="lot_number" id="lot_number" class="form-control" value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="production_date" class="form-label">Production Date</label>
-                        <input type="date" name="production_date" id="production_date" value="{{ stock.production_date }}" 
-                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="date" name="production_date" id="production_date" class="form-control" value="{{ move_line.move.date|date:'Y-m-d' }}" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="global_qte" class="form-label">Quantity Globale</label>
-                        <input type="number" name="global_qte" id="global_qte" value="{{ stock.global_qte }}" readonly 
-                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="number" name="global_qte" id="global_qte" class="form-control" readonly value="{{ move_line.global_qte }}" style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="palette_total" class="form-label">Nombre Palettes</label>
-                        <input type="number" name="palette_total" id="palette_total" value="{{ stock.palette_total }}" readonly 
-                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="number" name="palette_total" id="palette_total" class="form-control" readonly value="{{ move_line.palette_total }}" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    {% if show_line_field %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="line" class="form-label">Ligne</label>
+                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <option value="">-- Ligne --</option>
+                            {% for line in lines %}
+                                <option value="{{ line.id }}" {% if line.id == move_line.move.line.id %}selected{% endif %}>{{ line.designation }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="line" value="{{ move_line.line_id }}">
+                    {% endif %}
+                    {% if is_admin %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="gestionaire" class="form-label">Gestionaire</label>
+                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <option value="">-- Gestionaire --</option>
+                            {% for gestionaire in gestionaires %}
+                                <option value="{{ gestionaire.id }}" {% if gestionaire.id == move_line.move.gestionaire.id %}selected{% endif %}>{{ gestionaire.fullname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="shift" class="form-label">Shift</label>
+                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <option value="">-- Shift --</option>
+                            {% for shift in default_shifts %}
+                                <option value="{{ shift.id }}" {% if shift.id == move_line.move.shift.id %}selected{% endif %}>{{ shift.designation }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="expire_date" class="form-label">Date d'expiration</label>
+                        <input type="date" name="expire_date" id="expire_date" class="form-control" readonly value="{{ move_line.expire_date }}" style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                 </div>
             </div>
             <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
                 <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
-                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" 
-                     style="max-width: 200px; height: auto; border-radius: 8px;">
+                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
             </div>
+        </div>
+        <div class="row mt-4" id="details-container">
+            {% for detail in line_details %}
+            <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                    <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <option value="">-- Magasin --</option>
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.id }}" {% if warehouse.id == detail.warehouse_id %}selected{% endif %}>{{ warehouse.designation }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
+                    <select name="zone_{{ forloop.counter0 }}" class="form-control zone" id="zone_{{ forloop.counter0 }}" required>
+                        <option value="">-- Zone --</option>
+                        {% for zone in zones %}
+                            <option value="{{ zone.id }}" {% if zone.id == detail.zone_id %}selected{% endif %}>{{ zone.designation }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantity</label>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex">
+                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantity" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            {% if forloop.first %}
+                            <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                                <i class="fas fa-plus" style="color: #0082cd"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn ms-2" style="background-color: #eaedf9" data-delete-row>
+                                <i class="fas fa-trash-alt" style="color: #0082cd;"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </form>
 </div>
 
 <script>
+    let rowId = 1;
+
+    document.getElementById('details-container').addEventListener('click', function (e) {
+        if (e.target.closest('#add-row')) {
+            const container = document.getElementById('details-container');
+            const newRow = document.querySelector('.form-row').cloneNode(true);
+            newRow.dataset.rowId = rowId;
+
+            newRow.querySelectorAll('select, input').forEach((input) => {
+                const oldId = input.id;
+                const newId = oldId.replace(/_\d+$/, `_${rowId}`);
+                input.id = newId;
+                input.name = input.name.replace(/_\d+$/, `_${rowId}`);
+                input.value = '';
+            });
+
+            const btn = newRow.querySelector('#add-row');
+            btn.id = '';
+            btn.className = 'btn ms-2';
+            btn.innerHTML = '<i class="fas fa-trash-alt" style="color: #0082cd;"></i>';
+            btn.setAttribute('data-delete-row', '');
+
+            container.appendChild(newRow);
+            rowId++;
+        }
+        if (e.target.closest('[data-delete-row]')) {
+            const row = e.target.closest('.form-row');
+            row.remove();
+        }
+    });
+
+    const lineField = document.getElementById('line');
+    lineField?.addEventListener('change', function () {
+        const lineId = this.value;
+        fetch(`{% url 'get_shifts_and_users_for_line' %}?line_id=${lineId}`)
+            .then(response => response.json())
+            .then(data => {
+                const shiftSelect = document.getElementById('shift');
+                shiftSelect.innerHTML = '<option value="">-- Shift --</option>';
+
+                data.shifts.forEach(shift => {
+                    const option = document.createElement('option');
+                    option.value = shift.id;
+                    option.textContent = shift.name;
+                    shiftSelect.appendChild(option);
+                });
+
+                const gestionaireSelect = document.getElementById('gestionaire');
+                if (gestionaireSelect) {
+                    gestionaireSelect.innerHTML = '<option value="">-- Gestionaire --</option>';
+
+                    data.users.forEach(gestionaire => {
+                        const option = document.createElement('option');
+                        option.value = gestionaire.id;
+                        option.textContent = gestionaire.name;
+                        gestionaireSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching shifts or gestionaires:', error));
+
+        fetch(`{% url 'get_warehouses_for_line' %}?line_id=${lineId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.form-row .warehouse').forEach(warehouseSelect => {
+                    warehouseSelect.innerHTML = '<option value="">-- Magasin --</option>';
+                    data.warehouses.forEach(warehouse => {
+                        const option = document.createElement('option');
+                        option.value = warehouse.id;
+                        option.textContent = warehouse.name;
+                        warehouseSelect.appendChild(option);
+                    });
+                });
+                document.querySelectorAll('.form-row .zone').forEach(zoneSelect => {
+                    zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
+                });
+            })
+            .catch(error => console.error('Error fetching warehouses:', error));
+    });
+
+    document.getElementById('details-container').addEventListener('change', function (e) {
+        if (e.target.matches('.warehouse')) {
+            const warehouseId = e.target.value;
+            const zoneSelect = e.target.closest('.form-row').querySelector('.zone');
+
+            fetch(`{% url 'get_zones_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
+                    data.zones.forEach(zone => {
+                        const option = document.createElement('option');
+                        option.value = zone.id;
+                        option.textContent = zone.name;
+                        zoneSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching zones:', error));
+        }
+    });
+
+    const lines = {{ lines|length }};
+    const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
+    if (lines === 1) {
+        const lineSelect = document.getElementById('line');
+        lineSelect.value = {{ lines.0.id }};
+        lineWrapper.style.display = 'none';
+        lineSelect.dispatchEvent(new Event('change'));
+    }
+
+    const isGestionaire = '{{ request.user.role }}' === 'Gestionaire';
+    const gestionaireWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="gestionaire"]').parentElement;
+    if (isGestionaire) {
+        gestionaireWrapper.style.display = 'none';
+    }
     document.addEventListener("DOMContentLoaded", () => {
         const productionDateField = document.getElementById("production_date");
         const expireDateField = document.getElementById("expire_date");
         const globalQteField = document.getElementById("global_qte");
         const paletteTotalField = document.getElementById("palette_total");
-
+        const detailsContainer = document.getElementById("details-container");
+    
         const productDelaisExpiration = {{ product.delais_expiration }};
         const qtePerPalette = {{ product.qte_per_pal }};
-
-        // Update Expiration Date
-        productionDateField.addEventListener("change", () => {
+    
+        const calculateExpireDate = () => {
             const productionDate = new Date(productionDateField.value);
             if (!isNaN(productionDate)) {
                 const expireDate = new Date(productionDate);
                 expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
                 expireDateField.value = expireDate.toISOString().split("T")[0];
             }
+        };
+    
+        const calculateGlobalQte = () => {
+            let totalQte = 0;
+            detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
+                totalQte += parseFloat(qteInput.value) || 0;
+            });
+            globalQteField.value = totalQte;
+        };
+        
+        const calculatePaletteTotal = () => {
+            let totalPalettes = 0;
+            detailsContainer.querySelectorAll(".form-row").forEach((row) => {
+                const qteInput = row.querySelector(".qte");
+                const qte = parseFloat(qteInput.value) || 0;
+                const totalPalettesForRow = Math.ceil(qte / qtePerPalette);
+                totalPalettes += totalPalettesForRow;
+            });
+            paletteTotalField.value = totalPalettes;
+        };
+    
+        productionDateField.addEventListener("change", () => {
+            calculateExpireDate();
+        });
+    
+        detailsContainer.addEventListener("input", (e) => {
+            if (e.target.matches(".qte")) {
+                calculateGlobalQte();
+                calculatePaletteTotal();
+            }
         });
 
-        // Additional dynamic calculations if necessary
+        document.querySelectorAll('.form-row').forEach(function(row) {
+            const warehouseId = row.dataset.warehouseId;
+            const zoneSelect = row.querySelector('.zone');
+            if (warehouseId) {
+                fetch(`{% url 'get_zones_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
+                        data.zones.forEach(zone => {
+                            const option = document.createElement('option');
+                            option.value = zone.id;
+                            option.textContent = zone.name;
+                            zoneSelect.appendChild(option);
+                        });
+                        const defaultZoneId = row.dataset.zoneId;
+                        if (defaultZoneId) {
+                            zoneSelect.value = defaultZoneId;
+                        }
+                    })
+                    .catch(error => console.error('Error fetching zones:', error));
+            }
+        });
+    
+        calculateExpireDate();
+        calculateGlobalQte();
+        calculatePaletteTotal();
+    });
+
+    document.getElementById('submit-form').addEventListener('click', function() {
+        let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+        let formIsValid = true;
+    
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                formIsValid = false;
+                field.classList.add('is-invalid');
+                
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('invalid-feedback');
+                    errorMessage.textContent = 'Ce champ est requis.';
+                    if(!field.classList.contains('qte')) {
+                        field.parentNode.appendChild(errorMessage);
+                    }
+                }
+            } else {
+                field.classList.remove('is-invalid');
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
+        if (!formIsValid) {
+            swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+        } else {
+            swal({
+                title: "Confirmer la modification",
+                text: "Êtes-vous sûr de vouloir enregistrer ces modifications ?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+                confirmButtonText: "Oui",
+                cancelButtonText: "Non",
+            })
+            .then((willConfirm) => {
+                console.log(willConfirm);
+                if (willConfirm) {
+                    const form = document.getElementById('move_in-form');
+                    const formData = new FormData(form);
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'update_move_line' move_line.id %}",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            if (response.success) {
+                                swal("Succès!", response.message, "success").then(function() {
+                                    window.location.href = "{% url 'move_lines' %}";
+                                });
+                            } else {
+                                swal("Erreur", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            swal("Erreur", "Une erreur s'est produite, veuillez réessayer.", "error");
+                        }
+                    });
+                }
+            });
+        }
     });
 </script>
-
 {% endblock %}

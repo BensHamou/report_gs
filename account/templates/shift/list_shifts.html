@@ -72,18 +72,17 @@ Paramètre Shifts
 <script>
     function confirmShiftDel(shiftId, shiftName) {
         swal({
-            title: `Confirmation de la suppression.`,
+            title: "Confirmation de la suppression.",
             text: `Etes-vous sûr que vous voulez supprimer ${shiftName}?`,
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
             confirmButtonText: "Oui",
             cancelButtonText: "Non",
-            closeOnConfirm: true,
-            closeOnCancel: true
-        }, function (isConfirm) {
-            if (isConfirm) {
-                window.location.href = "{% url 'delete_shift' 123456789 %}".replace(/123456789/, shiftId);
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                window.location.href = "{% url 'delete_shift' 0 %}".replace('0', shiftId);
             }
         });
     }

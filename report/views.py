@@ -229,9 +229,9 @@ def move_in_form_view(request, product_id):
                     raise ValueError("Missing required fields.")
 
                 move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date, 
-                                           state='Brouillon', type='Entré')
+                                           state='Brouillon', type='Entré', create_uid=request.user, write_uid=request.user)
 
-                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product=product, move=move)
+                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product=product, move=move, create_uid=request.user, write_uid=request.user)
 
                 row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
                 for row_id in row_ids:
@@ -240,7 +240,7 @@ def move_in_form_view(request, product_id):
                     qte = request.POST.get(f'qte_{row_id}')
 
                     if warehouse_id and zone_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte))
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), create_uid=request.user, write_uid=request.user)
 
                 messages.success(request, "Move successfully created.")
                 return redirect('moves')
@@ -294,7 +294,6 @@ def get_zones_for_warehouse(request):
 
     return JsonResponse({'zones': zone_data})
 
-
 def move_list(request):
     moves = MoveLine.objects.all().order_by('-date_modified')
     filteredData = FamilyFilter(request.GET, queryset=moves)
@@ -309,38 +308,31 @@ def move_list(request):
 
 def move_edit(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
-    
+    move = move_line.move
+    line_details = move_line.details.all()
     user = request.user
     user_lines = user.lines.all()
     is_admin = user.role == 'Admin'
-    
-    default_line = user_lines.first() if user_lines.count() == 1 else None
+    default_line = move_line.move.line
     show_line_field = user_lines.count() > 1
-    if is_admin:
-        gestionaires = None if user.lines.count() > 1 else user.lines.first().users.filter(Q(role='Gestionaire') | Q(role='Admin'))
-    else:
-        gestionaires = None
+    gestionaires = default_line.users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+    default_shifts = move.line.shifts.all()
 
-    if request.method == 'POST':
-        pass
-
-    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'zone', 'qte'), extra=2)
-
-    formset = MoveLineDetailFormSet(queryset=move_line.details.all())
-
-    return render(
-        request,
-        'edit_move.html',
-        {
-            'product': move_line.product,
-            'formset': formset,
-            'lines': user_lines if show_line_field else None,
-            'gestionaires': gestionaires,
-            'default_line': default_line,
-            'is_admin': is_admin,
-            'show_line_field': show_line_field,
-        },
-    )
+    context = {
+        'move': move_line.move,
+        'move_line': move_line,
+        'line_details': line_details,
+        'product': move_line.product,
+        'default_shifts': default_shifts,
+        'lines': user_lines if show_line_field else None,
+        'gestionaires': gestionaires,
+        'default_line': default_line,
+        'is_admin': is_admin,
+        'show_line_field': show_line_field,
+        'warehouses': default_line.site.warehouses.all(),
+        'zones': Zone.objects.all(),
+    }
+    return render(request, 'edit_move.html', context)
 
 def move_delete(request, move_line_id):
     move = get_object_or_404(MoveLine, id=move_line_id)
@@ -349,3 +341,96 @@ def move_delete(request, move_line_id):
         messages.success(request, "Move deleted successfully.")
         return redirect('move_lines')
     return render(request, 'move_form.html', {'move': move})
+
+def create_move(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                line_id = request.POST.get('line')
+                shift_id = request.POST.get('shift')
+                gestionaire_id = request.POST.get('gestionaire')
+                lot_number = request.POST.get('lot_number')
+                production_date = request.POST.get('production_date')
+                product = request.POST.get('product')
+                print()
+
+                if not (line_id and shift_id and gestionaire_id):
+                    return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
+
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number)
+                if existing_move_line.exists():
+                    return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+
+                move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
+                                           state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
+                
+                print('HERE', move)
+
+                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product_id=product, move=move, 
+                                                    create_uid=request.user, write_uid=request.user)
+
+                row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
+                for row_id in row_ids:
+                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                    zone_id = request.POST.get(f'zone_{row_id}')
+                    qte = request.POST.get(f'qte_{row_id}')
+
+                    if warehouse_id and zone_id and qte:
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, 
+                                                  qte=int(qte), create_uid=request.user, write_uid=request.user)
+
+                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.'}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
+
+def update_move(request, move_line_id):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                line_id = request.POST.get('line')
+                shift_id = request.POST.get('shift')
+                gestionaire_id = request.POST.get('gestionaire')
+                lot_number = request.POST.get('lot_number')
+                production_date = request.POST.get('production_date')
+
+                if not (line_id and shift_id and gestionaire_id):
+                    return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoire.'}, status=200)
+
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number).exclude(id=move_line_id)
+                if existing_move_line.exists():
+                    return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+
+                move_line = MoveLine.objects.get(id=move_line_id)
+                move = Move.objects.get(id=move_line.move.id)
+
+                move.line_id = line_id
+                move.shift_id = shift_id
+                move.gestionaire_id = gestionaire_id
+                move.date = production_date
+                move.write_uid = request.user
+                move.save()
+
+                move_line.lot_number = lot_number
+                move_line.write_uid = request.user
+                move_line.save()
+
+                LineDetail.objects.filter(move_line=move_line).delete()
+
+                row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
+                for row_id in row_ids:
+                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                    zone_id = request.POST.get(f'zone_{row_id}')
+                    qte = request.POST.get(f'qte_{row_id}')
+
+                    if warehouse_id and zone_id and qte:
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, write_uid=request.user, 
+                                                  create_uid=move_line.create_uid, date_created=move_line.date_created, qte=int(qte))
+
+                return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
+        except Move.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Entré non trouvée.'}, status=200)
+        except MoveLine.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Entré non trouvée.'}, status=200)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)

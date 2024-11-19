@@ -68,18 +68,17 @@
 <script>
     function confirmUnitDel(unitId, unitName) {
         swal({
-            title: `Confirmation de la suppression.`,
+            title: "Confirmation de la suppression.",
             text: `Etes-vous sûr que vous voulez supprimer ${unitName}?`,
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
             confirmButtonText: "Oui",
             cancelButtonText: "Non",
-            closeOnConfirm: true,
-            closeOnCancel: true
-        }, function (isConfirm) {
-            if (isConfirm) {
-                window.location.href = "{% url 'delete_unit' 123456789 %}".replace(/123456789/, unitId);
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                window.location.href = "{% url 'delete_unit' 0 %}".replace('0', unitId);
             }
         });
     }

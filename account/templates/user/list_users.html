@@ -83,17 +83,16 @@ Paramètre Utilisateurs
 <script>
     function confirmUserDel(userId, userName) {
         swal({
-            title: `Confirmation de la suppression.`,
+            title: "Confirmation de la suppression.",
             text: `Etes-vous sûr que vous voulez supprimer ${userName}?`,
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
             confirmButtonText: "Oui",
             cancelButtonText: "Non",
-            closeOnConfirm: true,
-            closeOnCancel: true
-        }, function(isConfirm) {
-            if (isConfirm) {
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
                 window.location.href = "{% url 'delete_user' 0 %}".replace('0', userId);
             }
         });

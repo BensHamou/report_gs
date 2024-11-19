@@ -82,18 +82,17 @@
 <script>
     function confirmMoveLineDel(lineId, lineLot) {
         swal({
-            title: `Confirmation de la suppression.`,
-            text: `Etes-vous sûr que vous voulez supprimer ${lineLot}?`,
-            type: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#DD6B55",
+            title: "Confirmation de la suppression.",
+            text: `Etes-vous sûr que vous voulez supprimer l'entré : N° Lot - ${lineLot}?`,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
             confirmButtonText: "Oui",
             cancelButtonText: "Non",
-            closeOnConfirm: true,
-            closeOnCancel: true
-        }, function (isConfirm) {
-            if (isConfirm) {
-                window.location.href = "{% url 'delete_move_line' 123456789 %}".replace(/123456789/, lineId);
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                window.location.href = "{% url 'delete_move_line' 0 %}".replace('0', lineId);
             }
         });
     }

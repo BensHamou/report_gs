@@ -26,7 +26,7 @@
         <p style="font-size: 18px; color: #133356;">Remplir les informations</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" form="move_in-form" class="btn btn-primary" style="background-color: #1d71b8;">
+        <button type="button" id="submit-form" class="btn btn-primary" style="background-color: #1d71b8;">
             Sauvegarder
         </button>
     </div>
@@ -40,11 +40,11 @@
                 <div class="row">
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
-                        <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="production_date" class="form-label">Production Date</label>
-                        <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="global_qte" class="form-label">Quantity Globale</label>
@@ -57,7 +57,7 @@
                     {% if show_line_field %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="line" class="form-label">Ligne</label>
-                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Ligne --</option>
                             {% for line in lines %}
                             <option value="{{ line.id }}">{{ line.designation }}</option>
@@ -70,7 +70,7 @@
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="gestionaire" class="form-label">Gestionaire</label>
-                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Gestionaire --</option>
                             {% for gestionaire in gestionaires %}
                             <option value="{{ gestionaire.id }}">{{ gestionaire.fullname }}</option>
@@ -80,7 +80,7 @@
                     {% endif %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="shift" class="form-label">Shift</label>
-                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Shift --</option>
                         </select>
                     </div>
@@ -93,26 +93,27 @@
             <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
                 <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
                 <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                <input type="number" name="product" id="product" value="{{ product.id }}" hidden>
             </div>
         </div>
         <div class="row mt-4" id="details-container">
             <div class="row mb-3 form-row" data-row-id="0">
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_0" class="form-label">Magasin</label>
-                    <select name="warehouse_0" class="form-control warehouse" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;">
+                    <select name="warehouse_0" class="form-control warehouse" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="zone_0" class="form-label">Zone</label>
-                    <select name="zone_0" class="form-control zone" id="zone_0">
+                    <select name="zone_0" class="form-control zone" id="zone_0" required>
                         <option value="">-- Zone --</option>
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="qte_0" class="form-label">Quantity</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>
@@ -265,10 +266,16 @@
             });
             globalQteField.value = totalQte;
         };
-    
+        
         const calculatePaletteTotal = () => {
-            const globalQte = parseFloat(globalQteField.value) || 0;
-            paletteTotalField.value = Math.ceil(globalQte / qtePerPalette);
+            let totalPalettes = 0;
+            detailsContainer.querySelectorAll(".form-row").forEach((row) => {
+                const qteInput = row.querySelector(".qte");
+                const qte = parseFloat(qteInput.value) || 0;
+                const totalPalettesForRow = Math.ceil(qte / qtePerPalette);
+                totalPalettes += totalPalettesForRow;
+            });
+            paletteTotalField.value = totalPalettes;
         };
     
         productionDateField.addEventListener("change", () => {
@@ -285,6 +292,74 @@
         calculateExpireDate();
         calculateGlobalQte();
         calculatePaletteTotal();
+    });
+
+    document.getElementById('submit-form').addEventListener('click', function() {
+        let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+        let formIsValid = true;
+    
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                formIsValid = false;
+                field.classList.add('is-invalid');
+                
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('invalid-feedback');
+                    errorMessage.textContent = 'Ce champ est requis.';
+                    if(!field.classList.contains('qte')) {
+                        field.parentNode.appendChild(errorMessage);
+                    }
+                }
+            } else {
+                field.classList.remove('is-invalid');
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
+        if (!formIsValid) {
+            swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+        } else {
+            swal({
+                title: "Confirmer la modification",
+                text: "Êtes-vous sûr de vouloir enregistrer ces modifications ?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+                confirmButtonText: "Oui",
+                cancelButtonText: "Non",
+            })
+            .then((willConfirm) => {
+                console.log(willConfirm);
+                if (willConfirm) {
+                    const form = document.getElementById('move_in-form');
+                    const formData = new FormData(form);
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'create_move' %}",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            if (response.success) {
+                                swal("Succès!", response.message, "success").then(function() {
+                                    window.location.href = "{% url 'move_lines' %}";
+                                });
+                            } else {
+                                swal("Erreur", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            swal("Erreur", "Une erreur s'est produite, veuillez réessayer.", "error");
+                        }
+                    });
+                }
+            });
+        }
     });
 </script>
 
