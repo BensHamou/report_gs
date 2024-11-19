@@ -1,12 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from account.decorators import admin_required, getRedirectionURL
 from django.contrib.auth.decorators import login_required
+from django.forms import modelformset_factory
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 from .filters import *
 from .models import *
+from django.db import transaction
 from .forms import *
-from account.decorators import admin_required, getRedirectionURL
 
 # UNIT
 
@@ -188,3 +191,161 @@ def editProductView(request, id):
     context = {'form': form, 'product': product}
     return render(request, 'product_form.html', context)
 
+def families_view(request):
+    families = Family.objects.all()
+    return render(request, 'families.html', {'families': families})
+
+def products_view(request, family_id):
+    family = get_object_or_404(Family, id=family_id)
+    products = Product.objects.filter(family=family)
+    return render(request, 'products.html', {'products': products, 'family': family})
+
+def move_in_form_view(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'zone', 'qte'), extra=1)
+    
+    user = request.user
+    user_lines = user.lines.all()
+    is_admin = user.role == 'Admin'
+    
+    default_line = user_lines.first() if user_lines.count() == 1 else None
+    show_line_field = user_lines.count() > 1
+    if is_admin:
+        gestionaires = None if user.lines.count() > 1 else user.lines.first().users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+    else:
+        gestionaires = None
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                line_id = request.POST.get('line')
+                shift_id = request.POST.get('shift')
+                gestionaire_id = request.POST.get('gestionaire')
+                lot_number = request.POST.get('lot_number')
+                production_date = request.POST.get('production_date')
+
+                if not (line_id and shift_id and gestionaire_id):
+                    messages.error(request, "Line, Shift, and Gestionaire are required.")
+                    raise ValueError("Missing required fields.")
+
+                move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date, 
+                                           state='Brouillon', type='Entré')
+
+                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product=product, move=move)
+
+                row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
+                for row_id in row_ids:
+                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                    zone_id = request.POST.get(f'zone_{row_id}')
+                    qte = request.POST.get(f'qte_{row_id}')
+
+                    if warehouse_id and zone_id and qte:
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte))
+
+                messages.success(request, "Move successfully created.")
+                return redirect('moves')
+
+        except Exception as e:
+            messages.error(request, f"Error processing form: {str(e)}")
+            transaction.rollback()
+
+    formset = MoveLineDetailFormSet(queryset=LineDetail.objects.none())
+
+    return render(
+        request,
+        'form.html',
+        {
+            'product': product,
+            'formset': formset,
+            'lines': user_lines if show_line_field else None,
+            'gestionaires': gestionaires,
+            'default_line': default_line,
+            'is_admin': is_admin,
+            'show_line_field': show_line_field,
+        },
+    )
+
+def get_shifts_and_users_for_line(request):
+    line_id = request.GET.get('line_id')
+    line = get_object_or_404(Line, id=line_id)
+    
+    shifts = line.shifts.all()
+    users = line.users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+    
+    shift_data = [{'id': shift.id, 'name': shift.designation} for shift in shifts]
+    user_data = [{'id': user.id, 'name': user.fullname} for user in users]
+    
+    return JsonResponse({'shifts': shift_data, 'users': user_data})
+
+
+def get_warehouses_for_line(request):
+    line_id = request.GET.get('line_id')
+    line = Line.objects.get(id=line_id)
+    warehouses = Warehouse.objects.filter(site=line.site)
+    warehouse_data = [{'id': warehouse.id, 'name': warehouse.designation} for warehouse in warehouses]
+
+    return JsonResponse({'warehouses': warehouse_data})
+
+def get_zones_for_warehouse(request):
+    warehouse_id = request.GET.get('warehouse_id')
+    warehouse = Warehouse.objects.get(id=warehouse_id)
+    zones = Zone.objects.filter(warehouse=warehouse)
+    zone_data = [{'id': zone.id, 'name': zone.designation} for zone in zones]
+
+    return JsonResponse({'zones': zone_data})
+
+
+def move_list(request):
+    moves = MoveLine.objects.all().order_by('-date_modified')
+    filteredData = FamilyFilter(request.GET, queryset=moves)
+    moves = filteredData.qs
+    page_size_param = request.GET.get('page_size')
+    page_size = int(page_size_param) if page_size_param else 12
+    paginator = Paginator(moves, page_size)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+    context = {'page': page, 'filteredData': filteredData}
+    return render(request, 'move_list.html', context)
+
+def move_edit(request, move_line_id):
+    move_line = get_object_or_404(MoveLine, id=move_line_id)
+    
+    user = request.user
+    user_lines = user.lines.all()
+    is_admin = user.role == 'Admin'
+    
+    default_line = user_lines.first() if user_lines.count() == 1 else None
+    show_line_field = user_lines.count() > 1
+    if is_admin:
+        gestionaires = None if user.lines.count() > 1 else user.lines.first().users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+    else:
+        gestionaires = None
+
+    if request.method == 'POST':
+        pass
+
+    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'zone', 'qte'), extra=2)
+
+    formset = MoveLineDetailFormSet(queryset=move_line.details.all())
+
+    return render(
+        request,
+        'edit_move.html',
+        {
+            'product': move_line.product,
+            'formset': formset,
+            'lines': user_lines if show_line_field else None,
+            'gestionaires': gestionaires,
+            'default_line': default_line,
+            'is_admin': is_admin,
+            'show_line_field': show_line_field,
+        },
+    )
+
+def move_delete(request, move_line_id):
+    move = get_object_or_404(MoveLine, id=move_line_id)
+    if request.method == 'POST':
+        move.delete()
+        messages.success(request, "Move deleted successfully.")
+        return redirect('move_lines')
+    return render(request, 'move_form.html', {'move': move})

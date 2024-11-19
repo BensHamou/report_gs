@@ -59,6 +59,7 @@ TEMPLATES = [
                  os.path.join(BASE_DIR, 'account', 'templates', 'user'), os.path.join(BASE_DIR, 'account', 'templates', 'zone'),
                  os.path.join(BASE_DIR, 'account', 'templates', 'warehouse'), os.path.join(BASE_DIR, 'report', 'templates', 'family'),
                  os.path.join(BASE_DIR, 'report', 'templates', 'product'), os.path.join(BASE_DIR, 'report', 'templates', 'unit'),
+                 os.path.join(BASE_DIR, 'report', 'templates', 'move_in'), os.path.join(BASE_DIR, 'report', 'templates', 'move')
                 ],
         "APP_DIRS": True,
         "OPTIONS": {

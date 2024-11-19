@@ -1,0 +1,48 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    Entré Stock
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+        onclick="window.location=constructUrl('{% url 'families' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Entré Stock</h4>
+    </div>
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">Sélectionnez une famille</p>
+    </div>
+</div>
+
+<div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <div class="row">
+        {% for family in families %}
+        <div class="col-md-3 col-sm-6 col-12 mb-4 d-flex justify-content-center">
+            <a href="{% url 'products_view' family.id %}" class="text-decoration-none">
+                <div class="text-center" style="cursor: pointer;">
+                    <img src="{{ family.image.url }}" 
+                         alt="{{ family.name }}" 
+                         class="img-fluid" 
+                         style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px;">
+                    <p class="mt-2" style="color: #133356; font-size: 14px;">{{ family.designation }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

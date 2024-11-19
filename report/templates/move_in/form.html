@@ -1,0 +1,291 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    Entré Stock
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'products_view' product.family.id %}" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Produits</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Entré Stock</h4>
+    </div>
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">Remplir les informations</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="move_in-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            Sauvegarder
+        </button>
+    </div>
+</div>
+
+<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <form method="POST" id="move_in-form">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
+                <div class="row">
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="lot_number" class="form-label">N Lot</label>
+                        <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="production_date" class="form-label">Production Date</label>
+                        <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="global_qte" class="form-label">Quantity Globale</label>
+                        <input type="number" name="global_qte" id="global_qte" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="palette_total" class="form-label">Nombre Palettes</label>
+                        <input type="number" name="palette_total" id="palette_total" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    {% if show_line_field %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="line" class="form-label">Ligne</label>
+                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                            <option value="">-- Ligne --</option>
+                            {% for line in lines %}
+                            <option value="{{ line.id }}">{{ line.designation }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="line" value="{{ default_line.id }}">
+                    {% endif %}
+                    {% if is_admin %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="gestionaire" class="form-label">Gestionaire</label>
+                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                            <option value="">-- Gestionaire --</option>
+                            {% for gestionaire in gestionaires %}
+                            <option value="{{ gestionaire.id }}">{{ gestionaire.fullname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="shift" class="form-label">Shift</label>
+                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                            <option value="">-- Shift --</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="expire_date" class="form-label">Date d'expiration</label>
+                        <input type="date" name="expire_date" id="expire_date" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
+                <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
+                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+            </div>
+        </div>
+        <div class="row mt-4" id="details-container">
+            <div class="row mb-3 form-row" data-row-id="0">
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="warehouse_0" class="form-label">Magasin</label>
+                    <select name="warehouse_0" class="form-control warehouse" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;">
+                        <option value="">-- Magasin --</option>
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="zone_0" class="form-label">Zone</label>
+                    <select name="zone_0" class="form-control zone" id="zone_0">
+                        <option value="">-- Zone --</option>
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="qte_0" class="form-label">Quantity</label>
+                    <div class="d-flex">
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;">
+                        <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                            <i class="fas fa-plus" style="color: #0082cd"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<script>
+    let rowId = 1;
+
+    document.getElementById('details-container').addEventListener('click', function (e) {
+        if (e.target.closest('#add-row')) {
+            const container = document.getElementById('details-container');
+            const newRow = document.querySelector('.form-row').cloneNode(true);
+            newRow.dataset.rowId = rowId;
+
+            newRow.querySelectorAll('select, input').forEach((input) => {
+                const oldId = input.id;
+                const newId = oldId.replace(/_\d+$/, `_${rowId}`);
+                input.id = newId;
+                input.name = input.name.replace(/_\d+$/, `_${rowId}`);
+                input.value = '';
+            });
+
+            const btn = newRow.querySelector('#add-row');
+            btn.id = '';
+            btn.className = 'btn ms-2';
+            btn.innerHTML = '<i class="fas fa-trash-alt" style="color: #0082cd;"></i>';
+            btn.setAttribute('data-delete-row', '');
+
+            container.appendChild(newRow);
+            rowId++;
+        }
+    });
+
+    document.getElementById('details-container').addEventListener('click', function (e) {
+        if (e.target.closest('[data-delete-row]')) {
+            const row = e.target.closest('.form-row');
+            row.remove();
+        }
+    });
+
+    const lineField = document.getElementById('line');
+    lineField?.addEventListener('change', function () {
+        const lineId = this.value;
+        fetch(`{% url 'get_shifts_and_users_for_line' %}?line_id=${lineId}`)
+            .then(response => response.json())
+            .then(data => {
+                const shiftSelect = document.getElementById('shift');
+                shiftSelect.innerHTML = '<option value="">-- Shift --</option>';
+
+                data.shifts.forEach(shift => {
+                    const option = document.createElement('option');
+                    option.value = shift.id;
+                    option.textContent = shift.name;
+                    shiftSelect.appendChild(option);
+                });
+
+                const gestionaireSelect = document.getElementById('gestionaire');
+                if (gestionaireSelect) {
+                    gestionaireSelect.innerHTML = '<option value="">-- Gestionaire --</option>';
+
+                    data.users.forEach(gestionaire => {
+                        const option = document.createElement('option');
+                        option.value = gestionaire.id;
+                        option.textContent = gestionaire.name;
+                        gestionaireSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching shifts or gestionaires:', error));
+
+        fetch(`{% url 'get_warehouses_for_line' %}?line_id=${lineId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelectorAll('.form-row .warehouse').forEach(warehouseSelect => {
+                    warehouseSelect.innerHTML = '<option value="">-- Magasin --</option>';
+                    data.warehouses.forEach(warehouse => {
+                        const option = document.createElement('option');
+                        option.value = warehouse.id;
+                        option.textContent = warehouse.name;
+                        warehouseSelect.appendChild(option);
+                    });
+                });
+            })
+            .catch(error => console.error('Error fetching warehouses:', error));
+    });
+
+    document.getElementById('details-container').addEventListener('change', function (e) {
+        if (e.target.matches('.warehouse')) {
+            const warehouseId = e.target.value;
+            const zoneSelect = e.target.closest('.form-row').querySelector('.zone');
+
+            fetch(`{% url 'get_zones_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
+                    data.zones.forEach(zone => {
+                        const option = document.createElement('option');
+                        option.value = zone.id;
+                        option.textContent = zone.name;
+                        zoneSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching zones:', error));
+        }
+    });
+
+    const lines = {{ lines|length }};
+    const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
+    if (lines === 1) {
+        const lineSelect = document.getElementById('line');
+        lineSelect.value = {{ lines.0.id }};
+        lineWrapper.style.display = 'none';
+        lineSelect.dispatchEvent(new Event('change'));
+    }
+
+    const isGestionaire = '{{ request.user.role }}' === 'Gestionaire';
+    const gestionaireWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="gestionaire"]').parentElement;
+    if (isGestionaire) {
+        gestionaireWrapper.style.display = 'none';
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const productionDateField = document.getElementById("production_date");
+        const expireDateField = document.getElementById("expire_date");
+        const globalQteField = document.getElementById("global_qte");
+        const paletteTotalField = document.getElementById("palette_total");
+        const detailsContainer = document.getElementById("details-container");
+    
+        const productDelaisExpiration = {{ product.delais_expiration }};
+        const qtePerPalette = {{ product.qte_per_pal }};
+    
+        const calculateExpireDate = () => {
+            const productionDate = new Date(productionDateField.value);
+            if (!isNaN(productionDate)) {
+                const expireDate = new Date(productionDate);
+                expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
+                expireDateField.value = expireDate.toISOString().split("T")[0];
+            }
+        };
+    
+        const calculateGlobalQte = () => {
+            let totalQte = 0;
+            detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
+                totalQte += parseFloat(qteInput.value) || 0;
+            });
+            globalQteField.value = totalQte;
+        };
+    
+        const calculatePaletteTotal = () => {
+            const globalQte = parseFloat(globalQteField.value) || 0;
+            paletteTotalField.value = Math.ceil(globalQte / qtePerPalette);
+        };
+    
+        productionDateField.addEventListener("change", () => {
+            calculateExpireDate();
+        });
+    
+        detailsContainer.addEventListener("input", (e) => {
+            if (e.target.matches(".qte")) {
+                calculateGlobalQte();
+                calculatePaletteTotal();
+            }
+        });
+    
+        calculateExpireDate();
+        calculateGlobalQte();
+        calculatePaletteTotal();
+    });
+</script>
+
+{% endblock %}

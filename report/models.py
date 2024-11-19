@@ -1,7 +1,9 @@
-from django.db import models
-from account.models import BaseModel, Line
+from account.models import BaseModel, Line, Zone, Warehouse, Shift
 from django.template.defaultfilters import slugify
 from PIL import Image as PILImage
+from django.utils import timezone
+from django.db.models import Q
+from django.db import models
 import os
 
 def get_family_image_filename(instance, filename):
@@ -61,3 +63,67 @@ class Product(BaseModel):
 
     def __str__(self):
         return self.designation
+
+class Move(BaseModel):
+
+    MOVE_STATE = [
+        ('Brouillon', 'Brouillon'),
+        ('Confirmé', 'Confirmé'),
+        ('Annulé', 'Annulé')
+    ]
+    MOVE_TYPE = [('Entré', 'Entré'), ('Sortie', 'Sortie')]
+
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, related_name='moves')
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, related_name='moves')
+    gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
+
+    date = models.DateField(default=timezone.now)
+    n_bl_1 = models.PositiveIntegerField(blank=True, null=True)
+    n_bl_2 = models.PositiveIntegerField(blank=True, null=True)
+    n_bl_3 = models.PositiveIntegerField(blank=True, null=True)
+    n_bl_a = models.PositiveIntegerField(blank=True, null=True)
+    is_transfer = models.BooleanField(default=False)
+    mirrored_move = models.ForeignKey('self', on_delete=models.CASCADE, related_name='mirror', blank=True, null=True)
+    stayed_in_temp = models.PositiveIntegerField(default=0)
+
+    state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
+    type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
+
+    def __str__(self):
+        return f"{self.line.designation} - {self.date}"
+    
+class MoveLine(BaseModel):
+    lot_number = models.CharField(max_length=255)
+    code = models.CharField(max_length=255)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
+
+    @property
+    def qte(self):
+        return self.details.aggregate(total=models.Sum('qte'))['total'] or 0
+
+    @property
+    def palette(self):
+        return sum(detail.palette for detail in self.details.all()) or 0
+
+    def __str__(self):
+        return f"{self.product} - {self.qte} - {self.lot_number}"
+    
+class LineDetail(BaseModel):
+    move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='details')
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='details')
+    qte = models.PositiveIntegerField()
+
+    @property
+    def palette(self):
+        return self.move_line.product.qte_per_pal and self.qte // self.move_line.product.qte_per_pal or 0
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(check=models.Q(qte__gte=0), name="qte_positive"),
+        ]
+
+    def __str__(self):
+        return f"{self.move_line.product} - {self.qte}"
+    

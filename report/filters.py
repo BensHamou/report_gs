@@ -35,3 +35,13 @@ class ProductFilter(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ['search', 'family', 'unit']
+
+class MoveFilter(django_filters.FilterSet):
+    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
+
+    def filter_search(self, queryset, name, value):
+        return queryset.filter(Q(n_bl_1__icontains=value)).distinct()
+
+    class Meta:
+        model = Unit
+        fields = ['search']

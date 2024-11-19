@@ -1,0 +1,96 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    Modifier Stock
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'products_view' product.family.id %}" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Produits</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Modifier Stock</h4>
+    </div>
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">Mettre à jour les informations</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="edit_stock-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            Sauvegarder
+        </button>
+    </div>
+</div>
+
+<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <form method="POST" id="edit_stock-form">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
+                <div class="row">
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="lot_number" class="form-label">N Lot</label>
+                        <input type="text" name="lot_number" id="lot_number" value="{{ stock.lot_number }}" 
+                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="production_date" class="form-label">Production Date</label>
+                        <input type="date" name="production_date" id="production_date" value="{{ stock.production_date }}" 
+                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="global_qte" class="form-label">Quantity Globale</label>
+                        <input type="number" name="global_qte" id="global_qte" value="{{ stock.global_qte }}" readonly 
+                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-6 col-12 mb-2">
+                        <label for="palette_total" class="form-label">Nombre Palettes</label>
+                        <input type="number" name="palette_total" id="palette_total" value="{{ stock.palette_total }}" readonly 
+                               class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
+                <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
+                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" 
+                     style="max-width: 200px; height: auto; border-radius: 8px;">
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const productionDateField = document.getElementById("production_date");
+        const expireDateField = document.getElementById("expire_date");
+        const globalQteField = document.getElementById("global_qte");
+        const paletteTotalField = document.getElementById("palette_total");
+
+        const productDelaisExpiration = {{ product.delais_expiration }};
+        const qtePerPalette = {{ product.qte_per_pal }};
+
+        // Update Expiration Date
+        productionDateField.addEventListener("change", () => {
+            const productionDate = new Date(productionDateField.value);
+            if (!isNaN(productionDate)) {
+                const expireDate = new Date(productionDate);
+                expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
+                expireDateField.value = expireDate.toISOString().split("T")[0];
+            }
+        });
+
+        // Additional dynamic calculations if necessary
+    });
+</script>
+
+{% endblock %}

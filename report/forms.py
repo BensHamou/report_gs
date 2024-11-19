@@ -32,3 +32,4 @@ class ProductForm(BaseModelForm):
     class Meta:
         model = Product
         fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'family', 'unit', 'type']
+
