@@ -1,0 +1,97 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    Détails de l'Entrée Stock
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="{% url 'move_lines' %}" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Entés</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Détails de l'Entrée Stock</h4>
+    </div>
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">Voir les informations</p>
+    </div>
+</div>
+<div class="d-flex justify-content-end">
+    <button class="btn-cancel" onclick="cancelPayment('{{ payment.id }}')">Annuler</button>
+    <button class="btn-validate mr-2" onclick="validatePayment('{{ payment.id }}')">Valider</button>
+    <button class="btn-cancel" onclick="refusePayment('{{ payment.id }}')">Refuser</button>
+</div>
+
+<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <div class="row">
+        <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
+            <div class="row">
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="lot_number" class="form-label">N Lot</label>
+                    <p class="form-control">{{ move_line.lot_number }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="production_date" class="form-label">Production Date</label>
+                    <p class="form-control">{{ move_line.move.date|date:'d M Y' }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="qte" class="form-label">Quantité Globale</label>
+                    <p class="form-control">{{ move_line.qte }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="palette" class="form-label">Nombre Palettes</label>
+                    <p class="form-control">{{ move_line.palette }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="line" class="form-label">Ligne</label>
+                    <p class="form-control">{{ move_line.move.line.designation }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="gestionaire" class="form-label">Gestionaire</label>
+                    <p class="form-control">{{ move_line.move.gestionaire.fullname }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="shift" class="form-label">Shift</label>
+                    <p class="form-control">{{ move_line.move.shift.designation }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="expiry_date" class="form-label">Date d'expiration</label>
+                    <p class="form-control">{{ move_line.expiry_date|date:'d M Y' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
+            <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ move_line.product.designation }}</p>
+            <img src="{{ move_line.product.image.url }}" alt="{{ move_line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+        </div>
+    </div>
+    <div class="row mt-4" id="details-container">
+        {% for detail in move_line.details.all %}
+        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                <p class="form-control">{{ detail.warehouse.designation }}</p>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
+                <p class="form-control">{{ detail.zone.designation }}</p>
+            </div>
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
+                <p class="form-control">{{ detail.qte }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

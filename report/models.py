@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.db import models
 import os
 import math
+from datetime import timedelta
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -102,6 +103,10 @@ class MoveLine(BaseModel):
     @property
     def qte(self):
         return self.details.aggregate(total=models.Sum('qte'))['total'] or 0
+
+    @property
+    def expiry_date(self):
+        return self.move.date + timedelta(days=self.product.delais_expiration) 
 
     @property
     def palette(self):

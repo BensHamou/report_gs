@@ -215,40 +215,6 @@ def move_in_form_view(request, product_id):
     else:
         gestionaires = None
 
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                line_id = request.POST.get('line')
-                shift_id = request.POST.get('shift')
-                gestionaire_id = request.POST.get('gestionaire')
-                lot_number = request.POST.get('lot_number')
-                production_date = request.POST.get('production_date')
-
-                if not (line_id and shift_id and gestionaire_id):
-                    messages.error(request, "Line, Shift, and Gestionaire are required.")
-                    raise ValueError("Missing required fields.")
-
-                move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date, 
-                                           state='Brouillon', type='Entré', create_uid=request.user, write_uid=request.user)
-
-                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product=product, move=move, create_uid=request.user, write_uid=request.user)
-
-                row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
-                for row_id in row_ids:
-                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    zone_id = request.POST.get(f'zone_{row_id}')
-                    qte = request.POST.get(f'qte_{row_id}')
-
-                    if warehouse_id and zone_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), create_uid=request.user, write_uid=request.user)
-
-                messages.success(request, "Move successfully created.")
-                return redirect('moves')
-
-        except Exception as e:
-            messages.error(request, f"Error processing form: {str(e)}")
-            transaction.rollback()
-
     formset = MoveLineDetailFormSet(queryset=LineDetail.objects.none())
 
     return render(
@@ -434,3 +400,10 @@ def update_move(request, move_line_id):
             return JsonResponse({'success': False, 'message': 'Entré non trouvée.'}, status=200)
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
+        
+def move_line_detail(request, move_line_id):
+    move_line = get_object_or_404(MoveLine, id=move_line_id)
+
+    context = {'move_line': move_line}
+    
+    return render(request, 'details_move.html', context)
