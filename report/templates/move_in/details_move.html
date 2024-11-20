@@ -23,18 +23,26 @@
         <h4 class="mb-4 page-title" style="color: #0082cd;">Détails de l'Entrée Stock</h4>
     </div>
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">Voir les informations</p>
+        <p style="font-size: 18px; color: #133356;">Voir les informations ({{ move_line.move.state }})</p>
     </div>
-</div>
-<div class="d-flex justify-content-end">
-    <button class="btn-cancel" onclick="cancelPayment('{{ payment.id }}')">Annuler</button>
-    <button class="btn-validate mr-2" onclick="validatePayment('{{ payment.id }}')">Valider</button>
-    <button class="btn-cancel" onclick="refusePayment('{{ payment.id }}')">Refuser</button>
+    <div class="col-6 d-flex justify-content-end">
+        {% if can_edit %}
+            <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" onclick="window.location=constructUrl('{% url 'edit_move_line' move_line.id %}')" 
+             style="background-color: #1d71b8;">
+                <span class="d-none d-sm-inline">Modifier</span>
+                <i class="fas fa-edit d-inline d-sm-none"></i>
+            </button>
+        {% endif %}
+        <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-toggle="modal" data-target="#validationsModal" style="background-color: #1d71b8;">
+            <span class="d-none d-sm-inline p-3">Cycle</span>
+            <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
+        </button>
+    </div>
 </div>
 
 <div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
     <div class="row">
-        <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
+        <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
             <div class="row">
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="lot_number" class="form-label">N Lot</label>
@@ -70,7 +78,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
+        <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">
             <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ move_line.product.designation }}</p>
             <img src="{{ move_line.product.image.url }}" alt="{{ move_line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
         </div>
@@ -78,15 +86,15 @@
     <div class="row mt-4" id="details-container">
         {% for detail in move_line.details.all %}
         <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
-            <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="col-lg-4 col-md-4 col-sm-12">
                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                 <p class="form-control">{{ detail.warehouse.designation }}</p>
             </div>
-            <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="col-lg-4 col-md-4 col-sm-12">
                 <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
                 <p class="form-control">{{ detail.zone.designation }}</p>
             </div>
-            <div class="col-lg-4 col-md-6 col-sm-12">
+            <div class="col-lg-4 col-md-4 col-sm-12">
                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                 <p class="form-control">{{ detail.qte }}</p>
             </div>
@@ -94,4 +102,88 @@
         {% endfor %}
     </div>
 </div>
+<div class="d-flex justify-content-center" style="padding: 15px;">
+    {% if can_confirm %}
+        <button class="btn-validate mr-2" onclick="confirmMoveLine('{{ move_line.id }}')">Confirmer</button>
+    {% endif %}
+    {% if can_confirm %}
+        <button class="btn-cancel" onclick="cancelMoveLine('{{ move_line.id }}')">Annuler</button>
+    {% endif %}
+</div>
+{% include 'modal.html' %}
+<script>
+    function confirmMoveLine(moveLineId) {
+        swal({
+            title: "Confirmer l'entrée",
+            text: "Êtes-vous sûr de vouloir confirmer cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'confirm_move_line' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+    
+    function cancelMoveLine(moveLineId) {
+        swal({
+            title: "Annuler l'entrée",
+            text: "Êtes-vous sûr de vouloir annuler cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willCancel) => {
+            if (willCancel) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'cancel_move_line' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+    
+</script>
+
 {% endblock %}

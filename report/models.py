@@ -134,4 +134,21 @@ class LineDetail(BaseModel):
 
     def __str__(self):
         return f"{self.move_line.product} - {self.qte}"
+
+
+class Validation(BaseModel):
+    MOVE_STATE = [
+        ('Brouillon', 'Brouillon'),
+        ('Confirmé', 'Confirmé'),
+        ('Annulé', 'Annulé')
+    ]
+    old_state = models.CharField(choices=MOVE_STATE, max_length=40)
+    new_state = models.CharField(choices=MOVE_STATE, max_length=40)
+    date = models.DateTimeField(auto_now_add=True) 
+    actor = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True, related_name='validations', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
+    refusal_reason = models.TextField(blank=True, null=True)
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='validations')
+
+    def __str__(self):
+        return f"Validation - {str(str(self.move.id).zfill(4))} - {str(self.date)} ({self.old_state} -> {self.new_state})" 
     

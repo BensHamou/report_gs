@@ -56,3 +56,11 @@ def getRedirectionURL(request, url_path):
     cache_param = str(uuid.uuid4())
     query_string = '&'.join([f'{key}={value}' for key, value in params.items() if value])
     return f'{url_path}?cache={cache_param}&{query_string}'
+
+def admin_or_gs_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.role == 'Admin' or request.user.role == 'Gestionaire'):
+            return view_func(request, *args, **kwargs)
+        else:
+            return render(request, '403.html', status=403)
+    return wrapper

@@ -1,14 +1,14 @@
+from account.decorators import admin_required, getRedirectionURL, admin_or_gs_required
 from django.shortcuts import render, get_object_or_404, redirect
-from account.decorators import admin_required, getRedirectionURL
 from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
+from django.db import transaction
 from django.urls import reverse
 from .filters import *
 from .models import *
-from django.db import transaction
 from .forms import *
 
 # UNIT
@@ -191,15 +191,21 @@ def editProductView(request, id):
     context = {'form': form, 'product': product}
     return render(request, 'product_form.html', context)
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def families_view(request):
     families = Family.objects.all()
     return render(request, 'families.html', {'families': families})
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def products_view(request, family_id):
     family = get_object_or_404(Family, id=family_id)
     products = Product.objects.filter(family=family)
     return render(request, 'products.html', {'products': products, 'family': family})
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def move_in_form_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'zone', 'qte'), extra=1)
@@ -231,6 +237,8 @@ def move_in_form_view(request, product_id):
         },
     )
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def get_shifts_and_users_for_line(request):
     line_id = request.GET.get('line_id')
     line = get_object_or_404(Line, id=line_id)
@@ -243,7 +251,8 @@ def get_shifts_and_users_for_line(request):
     
     return JsonResponse({'shifts': shift_data, 'users': user_data})
 
-
+@login_required(login_url='login')
+@admin_or_gs_required
 def get_warehouses_for_line(request):
     line_id = request.GET.get('line_id')
     line = Line.objects.get(id=line_id)
@@ -252,6 +261,8 @@ def get_warehouses_for_line(request):
 
     return JsonResponse({'warehouses': warehouse_data})
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def get_zones_for_warehouse(request):
     warehouse_id = request.GET.get('warehouse_id')
     warehouse = Warehouse.objects.get(id=warehouse_id)
@@ -260,6 +271,8 @@ def get_zones_for_warehouse(request):
 
     return JsonResponse({'zones': zone_data})
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def move_list(request):
     moves = MoveLine.objects.all().order_by('-date_modified')
     filteredData = FamilyFilter(request.GET, queryset=moves)
@@ -272,6 +285,8 @@ def move_list(request):
     context = {'page': page, 'filteredData': filteredData}
     return render(request, 'move_list.html', context)
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def move_edit(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
     move = move_line.move
@@ -300,6 +315,8 @@ def move_edit(request, move_line_id):
     }
     return render(request, 'edit_move.html', context)
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def move_delete(request, move_line_id):
     move = get_object_or_404(MoveLine, id=move_line_id)
     if request.method == 'POST':
@@ -308,6 +325,8 @@ def move_delete(request, move_line_id):
         return redirect('move_lines')
     return render(request, 'move_form.html', {'move': move})
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def create_move(request):
     if request.method == 'POST':
         try:
@@ -350,6 +369,8 @@ def create_move(request):
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
 
+@login_required(login_url='login')
+@admin_or_gs_required
 def update_move(request, move_line_id):
     if request.method == 'POST':
         try:
@@ -400,10 +421,71 @@ def update_move(request, move_line_id):
             return JsonResponse({'success': False, 'message': 'Entré non trouvée.'}, status=200)
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
-        
+
+@login_required(login_url='login')
+@admin_or_gs_required        
 def move_line_detail(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
 
-    context = {'move_line': move_line}
+    can_edit, can_cancel, can_confirm = False, False, False
+
+    if request.user.role == 'Admin':
+        can_edit = True
+        can_cancel = move_line.move.state == 'Brouillon'
+        can_confirm = move_line.move.state == 'Brouillon'
+    elif request.user.role == 'Gestionaire' and move_line.move.gestionaire == request.user:
+        can_edit = move_line.move.state == 'Brouillon'
+        can_cancel = move_line.move.state == 'Brouillon'
+        can_confirm = move_line.move.state == 'Brouillon'
+
+
+    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm}
     
     return render(request, 'details_move.html', context)
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def confirmMoveLine(request, move_line_id):
+    if request.method == 'POST':
+        move_line, success, validation = changeState(request, move_line_id, 'Confirmé')
+        if success:
+            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
+        else:
+            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+    return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def cancelMoveLine(request, move_line_id):
+    if request.method == 'POST':
+        move_line, success, validation = changeState(request, move_line_id, 'Annulé')
+        if success:
+            return JsonResponse({'success': True, 'message': 'Move anulé avec succès.', 'move_line_id': move_line.id})
+        else:
+            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+    return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
+
+def createValidation(request, move, new_state, refusal_reason=None):
+    old_state = move.state
+    move.state = new_state
+    actor = request.user
+    validation = Validation(old_state=old_state, new_state=new_state, actor=actor, refusal_reason=refusal_reason, move=move)
+    move.save()
+    validation.save()
+    messages.success(request, f'Move set to {new_state} successfully')
+    return validation
+
+def changeState(request, pk, action):
+    try:
+        move_line = MoveLine.objects.get(id=pk)
+        move = Move.objects.get(id=move_line.move.id)
+    except MoveLine.DoesNotExist:
+        messages.success(request, 'Le Move n\'existe pas')
+        return move_line, False, None
+    if move.state == action:
+        return move_line, True, None
+    reason = request.POST.get('refusal_reason', None)
+    if move.state == 'Refusé' and action == 'Confirmé':
+        reason = 'Correrction.'
+    validation = createValidation(request, move, action, reason)
+    return move_line, True, validation

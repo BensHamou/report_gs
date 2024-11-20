@@ -32,5 +32,8 @@ urlpatterns = [
     path('move-line/update/<int:move_line_id>/', update_move, name='update_move_line'),
     path('move-line/detail/<int:move_line_id>/', move_line_detail, name='move_line_detail'),
 
+    path('move-line/confirm/<int:move_line_id>/', confirmMoveLine, name='confirm_move_line'),
+    path('move-line/cancel/<int:move_line_id>/', cancelMoveLine, name='cancel_move_line'),
+
 ]
 

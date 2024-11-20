@@ -388,7 +388,7 @@
                         success: function(response) {
                             if (response.success) {
                                 swal("Succès!", response.message, "success").then(function() {
-                                    window.location.href = "{% url 'move_lines' %}";
+                                    window.location.href = "{% url 'move_line_detail' move_line.id %}";
                                 });
                             } else {
                                 swal("Erreur", response.message, "error");
