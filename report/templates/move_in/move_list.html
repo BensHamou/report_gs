@@ -46,7 +46,7 @@
                     {% for line in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.id }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.lot_number %}{{ line.lot_number }}{% else %}/{% endif %}</td>
+                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.lot_number %}{{ line.n_lot }}{% else %}/{% endif %}</td>
                         <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="cursor: pointer; color: {% if line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{{ line.move.type }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>

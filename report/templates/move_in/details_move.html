@@ -37,6 +37,12 @@
             <span class="d-none d-sm-inline p-3">Cycle</span>
             <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
         </button>
+        {% if can_print %}
+            <button type="button" class="btn btn-secondary ml-lg-3 mt-lg-0 mt-2" data-toggle="modal" data-target="#printModal" data-move-line-id="{{ move_line.id }}">
+                <span class="d-none d-sm-inline p-3">Imprimer</span>
+                <i class="fas fa-print d-inline d-sm-none p-3"></i>
+            </button>
+        {% endif %}
     </div>
 </div>
 
@@ -45,8 +51,8 @@
         <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
             <div class="row">
                 <div class="col-lg-6 col-12 mb-2">
-                    <label for="lot_number" class="form-label">N Lot</label>
-                    <p class="form-control">{{ move_line.lot_number }}</p>
+                    <label for="n_lot" class="form-label">N Lot</label>
+                    <p class="form-control">{{ move_line.n_lot }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="production_date" class="form-label">Production Date</label>
@@ -111,6 +117,8 @@
     {% endif %}
 </div>
 {% include 'modal.html' %}
+{% include 'print_modal.html' %}
+
 <script>
     function confirmMoveLine(moveLineId) {
         swal({
@@ -183,7 +191,15 @@
             }
         });
     }
-    
+
+    $(document).on('show.bs.modal', '#printModal', function (event) {
+        const button = $(event.relatedTarget);
+        const moveLineId = button.data('move-line-id');
+        
+        const qrCodeImg = $('#qr-code-image');
+        qrCodeImg.attr('src', `/generate-qr-code/${moveLineId}/`);
+    });
+
 </script>
 
 {% endblock %}

@@ -1,15 +1,16 @@
 from account.decorators import admin_required, getRedirectionURL, admin_or_gs_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
 from django.forms import modelformset_factory
 from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 from .filters import *
 from .models import *
 from .forms import *
+import qrcode
 
 # UNIT
 
@@ -349,9 +350,7 @@ def create_move(request):
                 move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 
-                print('HERE', move)
-
-                move_line = MoveLine.objects.create(lot_number=lot_number, code="Generated_Code", product_id=product, move=move, 
+                move_line = MoveLine.objects.create(lot_number=lot_number, code="/", product_id=product, move=move, 
                                                     create_uid=request.user, write_uid=request.user)
 
                 row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
@@ -427,7 +426,7 @@ def update_move(request, move_line_id):
 def move_line_detail(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
 
-    can_edit, can_cancel, can_confirm = False, False, False
+    can_edit, can_cancel, can_confirm, can_print = False, False, False, move_line.move.state == 'Confirmé'
 
     if request.user.role == 'Admin':
         can_edit = True
@@ -439,7 +438,7 @@ def move_line_detail(request, move_line_id):
         can_confirm = move_line.move.state == 'Brouillon'
 
 
-    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm}
+    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_print': can_print}
     
     return render(request, 'details_move.html', context)
 
@@ -449,6 +448,9 @@ def confirmMoveLine(request, move_line_id):
     if request.method == 'POST':
         move_line, success, validation = changeState(request, move_line_id, 'Confirmé')
         if success:
+            qr_data = f"MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date}"
+            move_line.code = qr_data
+            move_line.save()
             return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
@@ -464,6 +466,24 @@ def cancelMoveLine(request, move_line_id):
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def generateQRCode(request, move_line_id):
+    try:
+        move_line = MoveLine.objects.get(id=move_line_id)
+        qr_data = move_line.code
+        qr = qrcode.QRCode(box_size=10, border=4)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill='black', back_color='white')
+
+        response = HttpResponse(content_type="image/png")
+        img.save(response, "PNG")
+        return response
+
+    except MoveLine.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Move non trouvé.'})
 
 def createValidation(request, move, new_state, refusal_reason=None):
     old_state = move.state

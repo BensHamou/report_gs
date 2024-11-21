@@ -1,0 +1,80 @@
+<div class="modal fade" id="printModal" tabindex="-1" role="dialog" aria-labelledby="printModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="printModalLabel">Imprimer l'Étiquette</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center">
+        <div id="qr-code-section" class="mb-4">
+          <img id="qr-code-image" src="" alt="QR Code" style="max-width: 40%; height: auto;">
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6 text-left">
+            <p>Produit</p>
+            <p id="product-name">{{ move_line.product.designation }}</p>
+            <p>N° Lot</p>
+            <p id="lot-number">{{ move_line.lot_number }}</p>
+          </div>
+          <div class="col-md-6 text-left">
+            <p>Date Expiration</p>
+            <p id="expiry-date">{{ move_line.expiry_date }}</p>
+            <p>Date Production</p>
+            <p id="production-date">{{ move_line.move.date }}</p>
+            <table class="table borderless-table text-center">
+              <thead>
+                <tr>
+                  <th>Magasin</th>
+                  <th>Zone</th>
+                  {% comment %} <th>Qte</th> {% endcomment %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for detail in move_line.details.all %}
+                  <tr>
+                    <td id="magasin">{{ detail.warehouse }}</td>
+                    <td id="zone">{{ detail.zone }}</td>
+                    {% comment %} <td id="qte">{{ detail.qte }}</td> {% endcomment %}
+                  </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">Pas d'enregistrements.</td>
+                    </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label for="ticket-count">Nombre d'étiquettes:</label>
+          <input type="number" id="ticket-count" class="form-control w-50 mx-auto" value="{{ move_line.palette }}" min="1">
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+        <button type="button" class="btn btn-primary" id="print-button">Imprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  .borderless-table th,
+  .borderless-table td {
+    border: none !important;
+  }
+
+  .borderless-table th {
+    font-weight: bold;
+  }
+
+  .borderless-table td {
+    padding: 0.5rem;
+  }
+
+  
+</style>

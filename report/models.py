@@ -112,6 +112,10 @@ class MoveLine(BaseModel):
     def palette(self):
         return sum(detail.palette for detail in self.details.all()) or 0
 
+    @property
+    def n_lot(self):
+        return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{self.move.date.year}'
+    
     def __str__(self):
         return f"{self.product} - {self.qte} - {self.lot_number}"
     

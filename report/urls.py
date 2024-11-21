@@ -34,6 +34,8 @@ urlpatterns = [
 
     path('move-line/confirm/<int:move_line_id>/', confirmMoveLine, name='confirm_move_line'),
     path('move-line/cancel/<int:move_line_id>/', cancelMoveLine, name='cancel_move_line'),
+    
+    path('generate-qr-code/<int:move_line_id>/', generateQRCode, name='generate_qr_code'),
 
 ]
 
