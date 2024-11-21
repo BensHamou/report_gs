@@ -51,7 +51,7 @@ class Warehouse(BaseModel):
     site = models.ForeignKey(Site, related_name='warehouses', on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.designation
+        return f'{self.designation} - {self.site}'
 
 
 class Zone(BaseModel):
@@ -61,7 +61,7 @@ class Zone(BaseModel):
     warehouse = models.ForeignKey(Warehouse, related_name='zones', on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.designation
+        return f'{self.designation} - {self.warehouse}'
 
 
 class Line(BaseModel):
@@ -73,7 +73,7 @@ class Line(BaseModel):
     shifts = models.ManyToManyField(Shift, related_name='lines', blank=True)
 
     def __str__(self):
-        return self.designation
+        return f'{self.designation} - {self.site}'
 
 
 class Setting(BaseModel):
