@@ -35,8 +35,8 @@
               <tbody>
                 {% for detail in move_line.details.all %}
                   <tr>
-                    <td id="magasin">{{ detail.warehouse }}</td>
-                    <td id="zone">{{ detail.zone }}</td>
+                    <td id="magasin">{{ detail.warehouse.designation }}</td>
+                    <td id="zone">{{ detail.zone.designation }}</td>
                     {% comment %} <td id="qte">{{ detail.qte }}</td> {% endcomment %}
                   </tr>
                 {% empty %}

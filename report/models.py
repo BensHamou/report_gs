@@ -2,7 +2,7 @@ from account.models import BaseModel, Line, Zone, Warehouse, Shift
 from django.template.defaultfilters import slugify
 from PIL import Image as PILImage
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Sum, Q
 from django.db import models
 import os
 import math
@@ -63,6 +63,28 @@ class Product(BaseModel):
     qte_per_pal = models.PositiveIntegerField()
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
 
+    def get_stock_details(self, site):
+        move_lines = MoveLine.objects.filter(product=self, move__state='Confirmé', move__line__site=site)
+
+        stock_aggregate = move_lines.filter(move__type='Entré').aggregate(total_in=Sum('details__qte'))
+        stock_aggregate.update(move_lines.filter(move__type='Sortie').aggregate(total_out=Sum('details__qte')))
+        net_stock = (stock_aggregate['total_in'] or 0) - (stock_aggregate['total_out'] or 0)
+
+        valid_zones = Zone.objects.filter(temp=False, quarantine=False, warehouse__site=site)
+        
+        availability = (
+            LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', zone__in=valid_zones)
+            .values('warehouse__designation', 'zone__designation')
+            .annotate(qte_in=Sum('qte', filter=Q(move_line__move__type='Entré')), qte_out=Sum('qte', filter=Q(move_line__move__type='Sortie')))
+            .annotate(net_qte=(models.F('qte_in') or 0 - models.F('qte_out') or 0))
+            .filter(net_qte__gt=0)
+        )
+
+        return {
+            'net_stock': net_stock,
+            'availability': list(availability),
+        }
+    
     def __str__(self):
         return self.designation
 

@@ -275,8 +275,8 @@ def get_zones_for_warehouse(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_list(request):
-    moves = MoveLine.objects.all().order_by('-date_modified')
-    filteredData = FamilyFilter(request.GET, queryset=moves)
+    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id')).order_by('-date_modified')    
+    filteredData = MoveLineFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
     page_size = int(page_size_param) if page_size_param else 12
