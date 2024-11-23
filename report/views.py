@@ -275,7 +275,7 @@ def get_zones_for_warehouse(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_list(request):
-    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id')).order_by('-date_modified')    
+    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id'), move__is_transfer=False).order_by('-date_modified')    
     filteredData = MoveLineFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
@@ -350,7 +350,7 @@ def create_move(request):
                 move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 
-                move_line = MoveLine.objects.create(lot_number=lot_number, code="/", product_id=product, move=move, 
+                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move=move, 
                                                     create_uid=request.user, write_uid=request.user)
 
                 row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
@@ -383,11 +383,12 @@ def update_move(request, move_line_id):
                 if not (line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoire.'}, status=200)
 
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number).exclude(id=move_line_id)
+                move_line = MoveLine.objects.get(id=move_line_id)
+
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line).exclude(id=move_line_id)
                 if existing_move_line.exists():
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
 
-                move_line = MoveLine.objects.get(id=move_line_id)
                 move = Move.objects.get(id=move_line.move.id)
 
                 move.line_id = line_id
@@ -437,8 +438,10 @@ def move_line_detail(request, move_line_id):
         can_cancel = move_line.move.state == 'Brouillon'
         can_confirm = move_line.move.state == 'Brouillon'
 
+    lines = Line.objects.all()
 
-    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_print': can_print}
+
+    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_print': can_print, 'lines': lines}
     
     return render(request, 'details_move.html', context)
 
@@ -448,9 +451,9 @@ def confirmMoveLine(request, move_line_id):
     if request.method == 'POST':
         move_line, success, validation = changeState(request, move_line_id, 'Confirmé')
         if success:
-            qr_data = f"MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date}"
-            move_line.code = qr_data
-            move_line.save()
+            for detail in move_line.details.all():
+                detail.code = f"ID:{detail.id}MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date};Qte:{detail.qte}"
+                detail.save()
             return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
@@ -469,10 +472,10 @@ def cancelMoveLine(request, move_line_id):
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def generateQRCode(request, move_line_id):
+def generateQRCode(request, detail_id):
     try:
-        move_line = MoveLine.objects.get(id=move_line_id)
-        qr_data = move_line.code
+        line_detail = LineDetail.objects.get(id=detail_id)
+        qr_data = line_detail.code
         qr = qrcode.QRCode(box_size=10, border=4)
         qr.add_data(qr_data)
         qr.make(fit=True)
@@ -509,3 +512,48 @@ def changeState(request, pk, action):
         reason = 'Correrction.'
     validation = createValidation(request, move, action, reason)
     return move_line, True, validation
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def transfer_quantity(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                destination_line_id = request.POST.get('line')
+                destination_warehouse_id = request.POST.get('destination_warehouse')
+                destination_zone_id = request.POST.get('destination_zone')
+                destination_lot_number = request.POST.get('destination_lot')
+                transfer_quantity = int(request.POST.get('destination_qte', 0))
+                source_id = request.POST.get('source_id')
+
+                if not all([destination_line_id, destination_warehouse_id, destination_zone_id, destination_lot_number, transfer_quantity]):
+                    return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=400)
+
+                if transfer_quantity <= 0:
+                    return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=400)
+
+                source_line_detail = LineDetail.objects.get(id=source_id)
+                source_move_line = source_line_detail.move_line
+
+                if transfer_quantity > source_line_detail.qte:
+                    return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=400)
+
+                source_line_detail.qte -= transfer_quantity
+                source_line_detail.save()
+
+                new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
+                                               is_transfer=True, mirrored_move=source_line_detail, type='Entré', write_uid=request.user, 
+                                               create_uid=request.user)
+
+                new_move_line = MoveLine.objects.create(lot_number=destination_lot_number, product=source_move_line.product, 
+                                                        move=new_move, write_uid=request.user, create_uid=request.user)
+
+                LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                                          qte=transfer_quantity, write_uid=request.user, create_uid=request.user)
+
+                return JsonResponse({'success': True, 'message': 'Le transfert a été effectué avec succès.'}, status=200)
+
+        except LineDetail.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Détail de ligne source introuvable.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erreur lors du transfert : {str(e)}'}, status=500)

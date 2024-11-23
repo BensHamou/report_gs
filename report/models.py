@@ -74,7 +74,7 @@ class Product(BaseModel):
         
         availability = (
             LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', zone__in=valid_zones)
-            .values('warehouse__designation', 'zone__designation')
+            .values('warehouse__designation', 'zone__designation', 'warehouse__id', 'zone__id')
             .annotate(qte_in=Sum('qte', filter=Q(move_line__move__type='Entré')), qte_out=Sum('qte', filter=Q(move_line__move__type='Sortie')))
             .annotate(net_qte=(models.F('qte_in') or 0 - models.F('qte_out') or 0))
             .filter(net_qte__gt=0)
@@ -98,7 +98,7 @@ class Move(BaseModel):
     MOVE_TYPE = [('Entré', 'Entré'), ('Sortie', 'Sortie')]
 
     line = models.ForeignKey(Line, on_delete=models.CASCADE, related_name='moves')
-    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, related_name='moves')
+    shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
 
     date = models.DateField(default=timezone.now)
@@ -107,7 +107,7 @@ class Move(BaseModel):
     n_bl_3 = models.PositiveIntegerField(blank=True, null=True)
     n_bl_a = models.PositiveIntegerField(blank=True, null=True)
     is_transfer = models.BooleanField(default=False)
-    mirrored_move = models.ForeignKey('self', on_delete=models.CASCADE, related_name='mirror', blank=True, null=True)
+    mirrored_move = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='mirror', blank=True, null=True)
     stayed_in_temp = models.PositiveIntegerField(default=0)
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
@@ -118,7 +118,6 @@ class Move(BaseModel):
     
 class MoveLine(BaseModel):
     lot_number = models.CharField(max_length=255)
-    code = models.CharField(max_length=255)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
 
@@ -146,6 +145,7 @@ class LineDetail(BaseModel):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='details')
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
+    code = models.CharField(max_length=255, null=True, blank=True)
 
     @property
     def palette(self):

@@ -37,12 +37,6 @@
             <span class="d-none d-sm-inline p-3">Cycle</span>
             <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
         </button>
-        {% if can_print %}
-            <button type="button" class="btn btn-secondary ml-lg-3 mt-lg-0 mt-2" data-toggle="modal" data-target="#printModal" data-move-line-id="{{ move_line.id }}">
-                <span class="d-none d-sm-inline p-3">Imprimer</span>
-                <i class="fas fa-print d-inline d-sm-none p-3"></i>
-            </button>
-        {% endif %}
     </div>
 </div>
 
@@ -100,11 +94,39 @@
                 <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
                 <p class="form-control">{{ detail.zone.designation }}</p>
             </div>
-            <div class="col-lg-4 col-md-4 col-sm-12">
+            <div class="col-lg-{% if can_print %}2{% else %}4{% endif %} col-md-{% if can_print %}2{% else %}4{% endif %} col-sm-12">
                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                 <p class="form-control">{{ detail.qte }}</p>
             </div>
-        </div>
+            
+            {% if can_print %}
+            <div class="col-lg-1 col-md-1 col-sm-12">
+                <label for="print_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-success d-block" data-toggle="modal" data-target="#printModal" data-line-detail-id="{{ detail.id }}" 
+                        data-product-name="{{ detail.move_line.product.designation }}"
+                        data-lot-number="{{ detail.move_line.lot_number }}"
+                        data-expiry-date="{{ detail.move_line.expiry_date }}"
+                        data-production-date="{{ detail.move_line.move.date }}"
+                        data-magasin="{{ detail.warehouse.designation }}"
+                        data-zone="{{ detail.zone.designation }}"
+                        data-palettes="{{ detail.move_line.palette }}">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-12">
+                <label for="transfer_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-secondary ml-lg-2 mt-lg-0 mt-2" data-toggle="modal" data-target="#transferModal" 
+                        data-line-detail-id="{{ detail.id }}" 
+                        data-line-id="{{ detail.move_line.move.line.id }}" 
+                        data-magasin="{{ detail.warehouse.designation }}"
+                        data-lot="{{ detail.move_line.lot_number }}"
+                        data-zone="{{ detail.zone.designation }}"
+                        data-max-qte="{{ detail.qte }}">
+                  <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+            {% endif %}
+            </div>
         {% endfor %}
     </div>
 </div>
@@ -118,6 +140,7 @@
 </div>
 {% include 'modal.html' %}
 {% include 'print_modal.html' %}
+{% include 'transfer_modal.html' %}
 
 <script>
     function confirmMoveLine(moveLineId) {
@@ -194,11 +217,104 @@
 
     $(document).on('show.bs.modal', '#printModal', function (event) {
         const button = $(event.relatedTarget);
-        const moveLineId = button.data('move-line-id');
+        const modal = $(this);
+
+        modal.find('#modal-product-name').text(button.data('product-name'));
+        modal.find('#modal-lot-number').text(button.data('lot-number'));
+        modal.find('#modal-expiry-date').text(button.data('expiry-date'));
+        modal.find('#modal-production-date').text(button.data('production-date'));
+        modal.find('#modal-magasin').text(button.data('magasin'));
+        modal.find('#modal-zone').text(button.data('zone'));
+        modal.find('#ticket-count').val(button.data('palettes')).attr('max', button.data('palettes'));;
+        const detail_id = button.data('line-detail-id');
         
         const qrCodeImg = $('#qr-code-image');
-        qrCodeImg.attr('src', `/generate-qr-code/${moveLineId}/`);
+        qrCodeImg.attr('src', `/generate-qr-code/${detail_id}/`);
     });
+
+    $(document).on('show.bs.modal', '#transferModal', function (event) {
+        const button = $(event.relatedTarget);
+        const modal = $(this);
+    
+        modal.find('#source-warehouse').text(button.data('magasin'));
+        modal.find('#source-zone').text(button.data('zone'));
+        modal.find('#source-lot').text(button.data('lot'));
+        modal.find('#source-qte').text(button.data('max-qte'));
+        modal.find('#source-id').val(button.data('line-detail-id'));
+        modal.find('#destination-qte').val('').attr('max', button.data('qte'));
+    
+        const lineId = button.data('line-id');
+        const lineSelect = modal.find('#line');
+        lineSelect.val(lineId);
+    
+        $.ajax({
+            url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
+            success: function (data) {
+                const warehouseSelect = modal.find('#destination-warehouse');
+                warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+                data.warehouses.forEach(function (warehouse) {
+                    warehouseSelect.append(new Option(warehouse.name, warehouse.id));
+                });
+    
+                modal.find('#destination-zone').empty().append('<option value="">-- Sélectionnez --</option>');
+            },
+            error: function () {
+                console.error('Error fetching warehouses for ligne:', lineId);
+            }
+        });
+    });
+    
+    $(document).on('change', '#destination-warehouse', function () {
+        const warehouseId = $(this).val();
+        const zoneSelect = $('#destination-zone');
+    
+        if (!warehouseId) {
+            zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            return;
+        }
+    
+        $.ajax({
+            url: `/get_zones_for_warehouse/`,
+            data: { warehouse_id: warehouseId },
+            success: function (data) {
+                zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+                data.zones.forEach(function (zone) {
+                    zoneSelect.append(new Option(zone.name, zone.id));
+                });
+            },
+            error: function () {
+                console.error('Error fetching zones for warehouse:', warehouseId);
+            }
+        });
+    });
+    
+    $(document).on('change', '#line', function () {
+        const lineId = $(this).val();
+        const warehouseSelect = $('#destination-warehouse');
+        const zoneSelect = $('#destination-zone');
+    
+        if (!lineId) {
+            warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            return;
+        }
+    
+        $.ajax({
+            url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
+            success: function (data) {
+                warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+                data.warehouses.forEach(function (warehouse) {
+                    warehouseSelect.append(new Option(warehouse.name, warehouse.id));
+                });
+    
+                zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            },
+            error: function () {
+                console.error('Error fetching warehouses for ligne:', lineId);
+            }
+        });
+    });
+    
 
 </script>
 
