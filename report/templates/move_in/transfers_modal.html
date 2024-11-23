@@ -1,0 +1,43 @@
+<div class="modal fade" id="transfersModal" tabindex="-1" aria-labelledby="transfersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="transfersModalLabel">Transferts</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <table class="table table-bordered table-hover">
+                  <thead class="thead-dark">
+                      <tr>
+                          <th>Site</th>
+                          <th>Ligne</th>
+                          <th>Magasin</th>
+                          <th>Zone</th>
+                          <th>Quantité</th>
+                          <th>Date</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for transfer in detail.transfers.all %}
+                      <tr>
+                          <td>{{ transfer.site.name }}</td>
+                          <td>{{ transfer.line.name }}</td>
+                          <td>{{ transfer.magasin }}</td>
+                          <td>{{ transfer.zone }}</td>
+                          <td>{{ transfer.qte }}</td>
+                          <td>{{ transfer.date|date:"d/m/Y H:i" }}</td>
+                      </tr>
+                      {% empty %}
+                      <tr>
+                          <td colspan="6" class="text-center">Aucun transfert trouvé.</td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+          </div>
+      </div>
+  </div>
+</div>

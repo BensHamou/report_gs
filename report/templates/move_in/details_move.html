@@ -101,31 +101,49 @@
             
             {% if can_print %}
             <div class="col-lg-1 col-md-1 col-sm-12">
-                <label for="print_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
-                <button type="button" class="btn btn-success d-block" data-toggle="modal" data-target="#printModal" data-line-detail-id="{{ detail.id }}" 
-                        data-product-name="{{ detail.move_line.product.designation }}"
-                        data-lot-number="{{ detail.move_line.lot_number }}"
-                        data-expiry-date="{{ detail.move_line.expiry_date }}"
-                        data-production-date="{{ detail.move_line.move.date }}"
-                        data-magasin="{{ detail.warehouse.designation }}"
-                        data-zone="{{ detail.zone.designation }}"
-                        data-palettes="{{ detail.move_line.palette }}">
-                    <i class="fas fa-print"></i>
-                </button>
-            </div>
-            <div class="col-lg-1 col-md-1 col-sm-12">
-                <label for="transfer_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
-                <button type="button" class="btn btn-secondary ml-lg-2 mt-lg-0 mt-2" data-toggle="modal" data-target="#transferModal" 
-                        data-line-detail-id="{{ detail.id }}" 
-                        data-line-id="{{ detail.move_line.move.line.id }}" 
-                        data-magasin="{{ detail.warehouse.designation }}"
-                        data-lot="{{ detail.move_line.lot_number }}"
-                        data-zone="{{ detail.zone.designation }}"
-                        data-max-qte="{{ detail.qte }}">
-                  <i class="fas fa-exchange-alt"></i>
-                </button>
+                <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
+                <div class="btn-group d-block">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#printModal" 
+                                    data-line-detail-id="{{ detail.id }}" 
+                                    data-product-name="{{ detail.move_line.product.designation }}"
+                                    data-lot-number="{{ detail.move_line.lot_number }}"
+                                    data-expiry-date="{{ detail.move_line.expiry_date }}"
+                                    data-production-date="{{ detail.move_line.move.date }}"
+                                    data-magasin="{{ detail.warehouse.designation }}"
+                                    data-zone="{{ detail.zone.designation }}"
+                                    data-palettes="{{ detail.move_line.palette }}">
+                                <i class="fas fa-print"></i> Imprimer
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transferModal" 
+                                    data-line-detail-id="{{ detail.id }}" 
+                                    data-line-id="{{ detail.move_line.move.line.id }}" 
+                                    data-magasin="{{ detail.warehouse.designation }}"
+                                    data-lot="{{ detail.move_line.lot_number }}"
+                                    data-zone="{{ detail.zone.designation }}"
+                                    data-max-qte="{{ detail.qte }}">
+                                <i class="fas fa-exchange-alt"></i> Transférer
+                            </button>
+                        </li>
+                        {% if detail.transfers %}
+                        <li>
+                            <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#transfersModal" 
+                                    data-line-detail-id="{{ detail.id }}">
+                                <i class="fas fa-sync-alt"></i> Transferts
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
             {% endif %}
+            
             </div>
         {% endfor %}
     </div>
@@ -141,7 +159,11 @@
 {% include 'modal.html' %}
 {% include 'print_modal.html' %}
 {% include 'transfer_modal.html' %}
+{% include 'transfers_modal.html' %}
 
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" ></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
 <script>
     function confirmMoveLine(moveLineId) {
         swal({
@@ -314,7 +336,74 @@
             }
         });
     });
+    document.getElementById('transfer-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const requiredFields = form.querySelectorAll('input[required], select[required]');
+        let formIsValid = true;
     
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                formIsValid = false;
+                field.classList.add('is-invalid');
+    
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('invalid-feedback');
+                    errorMessage.textContent = 'Ce champ est requis.';
+                    field.parentNode.appendChild(errorMessage);
+                }
+            } else {
+                field.classList.remove('is-invalid');
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
+    
+        if (!formIsValid) {
+            swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+        } else {
+            swal({
+                title: "Confirmer le transfert",
+                text: "Êtes-vous sûr de vouloir transférer cette quantité ?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+                buttons: {
+                    cancel: "Non",
+                    confirm: "Oui"
+                },
+            }).then((willConfirm) => {
+                if (willConfirm) {
+                    const formData = new FormData(form);
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'transfer_move_line' %}",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            if (response.success) {
+                                swal("Succès!", response.message, "success").then(function() {
+                                    window.location.reload(); 
+                                });
+                            } else {
+                                swal("Erreur", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            swal("Erreur", "Une erreur s'est produite, veuillez réessayer.", "error");
+                        }
+                    });
+                }
+            });
+        }
+    });
 
 </script>
 

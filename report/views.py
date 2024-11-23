@@ -275,7 +275,7 @@ def get_zones_for_warehouse(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_list(request):
-    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id'), move__is_transfer=False).order_by('-date_modified')    
+    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id')).order_by('-date_modified')    
     filteredData = MoveLineFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
@@ -538,8 +538,8 @@ def transfer_quantity(request):
                 if transfer_quantity > source_line_detail.qte:
                     return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=400)
 
-                source_line_detail.qte -= transfer_quantity
-                source_line_detail.save()
+                # source_line_detail.qte -= transfer_quantity
+                # source_line_detail.save()
 
                 new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
                                                is_transfer=True, mirrored_move=source_line_detail, type='Entré', write_uid=request.user, 

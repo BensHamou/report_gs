@@ -107,7 +107,7 @@ class Move(BaseModel):
     n_bl_3 = models.PositiveIntegerField(blank=True, null=True)
     n_bl_a = models.PositiveIntegerField(blank=True, null=True)
     is_transfer = models.BooleanField(default=False)
-    mirrored_move = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='mirror', blank=True, null=True)
+    mirrored_move = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='transfers', blank=True, null=True)
     stayed_in_temp = models.PositiveIntegerField(default=0)
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')

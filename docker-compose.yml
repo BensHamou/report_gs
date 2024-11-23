@@ -24,7 +24,7 @@ services:
       - "8172:8172"
     volumes:
       - ./report_gs:/report_gs
-
+      - ./media:/app/media
     command: >
       sh -c " python manage.py makemigrations &&
               python manage.py migrate &&
@@ -39,6 +39,7 @@ services:
       - DB_PORT=5432
 volumes:
   db_data:
+  media_volume:
 networks:
   default:
     driver: bridge

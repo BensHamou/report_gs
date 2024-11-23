@@ -38,5 +38,8 @@ urlpatterns = [
     
     path('generate-qr-code/<int:detail_id>/', generateQRCode, name='generate_qr_code'),
 
+    path('transfer-move-line/', transfer_quantity, name='transfer_move_line'),
+
+
 ]
 
