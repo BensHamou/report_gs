@@ -61,11 +61,11 @@ class Product(BaseModel):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='products')
     delais_expiration = models.PositiveIntegerField()
     qte_per_pal = models.PositiveIntegerField()
+    alert_stock = models.PositiveIntegerField()
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
 
     def get_stock_details(self, site):
         move_lines = MoveLine.objects.filter(product=self, move__state='Confirmé', move__line__site=site)
-
         stock_aggregate = move_lines.filter(move__type='Entré').aggregate(total_in=Sum('details__qte'))
         stock_aggregate.update(move_lines.filter(move__type='Sortie').aggregate(total_out=Sum('details__qte')))
         net_stock = (stock_aggregate['total_in'] or 0) - (stock_aggregate['total_out'] or 0)
@@ -80,10 +80,18 @@ class Product(BaseModel):
             .filter(net_qte__gt=0)
         )
 
-        return {
-            'net_stock': net_stock,
-            'availability': list(availability),
-        }
+        return {'net_stock': net_stock, 'availability': list(availability)}
+
+    def qte_in_stock(self, site):
+        return self.get_stock_details(site)['net_stock'] / 1000
+
+    def state_stock(self, site):
+        qte = self.qte_in_stock(site)
+        if qte > self.alert_stock / 1000:
+            return 'En stock'
+        elif qte < self.alert_stock / 1000 and qte > 0:
+            return 'Stock bas'
+        return 'Rupture'
     
     def __str__(self):
         return self.designation

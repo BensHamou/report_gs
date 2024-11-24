@@ -86,6 +86,14 @@
                         <small class="text-danger">{{ form.delais_expiration.errors }}</small>
                     {% endif %}
                 </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="alert_stock" class="form-label" style="color: #5d5d5d;">Alerte Stock</label>
+                    {{ form.alert_stock }}
+                    {% if form.alert_stock.errors %}
+                        <small class="text-danger">{{ form.alert_stock.errors }}</small>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="col-lg-6 col-md-12 text-center">

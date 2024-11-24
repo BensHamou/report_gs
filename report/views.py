@@ -9,6 +9,7 @@ from django.db import transaction
 from django.urls import reverse
 from .filters import *
 from .models import *
+from account.models import *
 from .forms import *
 import qrcode
 
@@ -137,14 +138,44 @@ def editFamilyView(request, id):
 @admin_required
 def listProductView(request):
     products = Product.objects.all().order_by('-date_modified')
+    sites = Line.objects.filter(id__in=request.user.lines.all()).values('site_id', 'site__designation').distinct()
+
+    selected_site_id = request.GET.get('site')
+    selected_site = None
+
+    if selected_site_id:
+        selected_site = Site.objects.get(id=selected_site_id)
+    else:
+        selected_site = Site.objects.get(id=sites.first()['site_id']) if sites.exists() else None
+
     filteredData = ProductFilter(request.GET, queryset=products)
     products = filteredData.qs
+
+    products_with_stock = []
+    if selected_site:
+        for product in products:
+            products_with_stock.append({
+                'id': product.id,
+                'designation': product.designation,
+                'qte_in_stock': product.qte_in_stock(selected_site),
+                'state_stock': product.state_stock(selected_site),
+            })
+    else:
+        products_with_stock = [{'id': product.id, 'designation': product.designation, 'qte_in_stock': None, 'state_stock': 'Site non sélectionné'} for product in products]
+
     page_size_param = request.GET.get('page_size')
     page_size = int(page_size_param) if page_size_param else 12
-    paginator = Paginator(products, page_size)
+    paginator = Paginator(products_with_stock, page_size)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    context = {'page': page, 'filteredData': filteredData}
+
+    context = {
+        'page': page,
+        'filteredData': filteredData,
+        'allowed_sites': sites,
+        'selected_site': selected_site,
+        'default_site': sites.first() if sites.exists() else None,
+    }
     return render(request, 'list_products.html', context)
 
 @login_required(login_url='login')

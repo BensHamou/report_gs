@@ -28,8 +28,9 @@ class ProductForm(BaseModelForm):
     family = forms.ModelChoiceField(queryset=Family.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
     unit = forms.ModelChoiceField(queryset=Unit.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Unité")
     type = forms.ChoiceField(choices=Product.PRODUCT_CHOICES, widget=forms.Select(attrs=getAttrs('control')))
+    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
 
     class Meta:
         model = Product
-        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'family', 'unit', 'type']
+        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'family', 'unit', 'type', 'alert_stock']
         
