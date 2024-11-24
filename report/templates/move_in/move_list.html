@@ -14,11 +14,13 @@
         </div>
 
         <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-6">
+            <div class="col-lg-4 col-md-12 col-sm-12">
                 {{ filteredData.form.search }}
             </div>
-            <div class="col-6 d-flex justify-content-end">
-                <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin-right: 10px;">
+            <div class="col-lg-8 col-md-12 col-sm-12 d-flex justify-content-end">
+                {{ filteredData.form.state }}
+                {{ filteredData.form.type }}
+                <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin: 0 10px;">
                 <button type="submit" class="btn btn-primary" style="background-color: #1d71b8;">Appliquer</button>
                 <a href="{% url 'families_view' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
             </div>
@@ -47,7 +49,7 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.id }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.lot_number %}{{ line.n_lot }}{% else %}/{% endif %}</td>
-                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="cursor: pointer; color: {% if line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{{ line.move.type }}</td>
+                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="cursor: pointer; color: {% if line.move.is_transfer %}blue{% elif line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{% if line.move.is_transfer %}Transfer{% else %}{{ line.move.type }}{% endif %}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.line.site }}</td>

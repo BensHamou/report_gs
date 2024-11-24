@@ -68,10 +68,12 @@
                     <label for="gestionaire" class="form-label">Gestionaire</label>
                     <p class="form-control">{{ move_line.move.gestionaire.fullname }}</p>
                 </div>
+                {% if move_line.move.shift %}
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="shift" class="form-label">Shift</label>
                     <p class="form-control">{{ move_line.move.shift.designation }}</p>
                 </div>
+                {% endif %}
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="expiry_date" class="form-label">Date d'expiration</label>
                     <p class="form-control">{{ move_line.expiry_date|date:'d M Y' }}</p>
@@ -96,14 +98,17 @@
             </div>
             <div class="col-lg-{% if can_print %}2{% else %}4{% endif %} col-md-{% if can_print %}2{% else %}4{% endif %} col-sm-12">
                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
-                <p class="form-control">{{ detail.qte }}</p>
+                <p class="form-control" 
+                {% if detail.transfers.exists %}style="color: red"{% endif %}
+                {% if detail.move_line.move.is_transfer %}style="color: blue"{% endif %}
+                >{{ detail.qte }}</p>
             </div>
             
             {% if can_print %}
             <div class="col-lg-1 col-md-1 col-sm-12">
                 <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                 <div class="btn-group d-block">
-                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-ellipsis"></i>
                     </button>
                     <ul class="dropdown-menu">
@@ -111,7 +116,7 @@
                             <button class="dropdown-item" type="button" data-toggle="modal" data-target="#printModal" 
                                     data-line-detail-id="{{ detail.id }}" 
                                     data-product-name="{{ detail.move_line.product.designation }}"
-                                    data-lot-number="{{ detail.move_line.lot_number }}"
+                                    data-lot-number="{{ detail.move_line.n_lot }}"
                                     data-expiry-date="{{ detail.move_line.expiry_date }}"
                                     data-production-date="{{ detail.move_line.move.date }}"
                                     data-magasin="{{ detail.warehouse.designation }}"
@@ -125,15 +130,15 @@
                                     data-line-detail-id="{{ detail.id }}" 
                                     data-line-id="{{ detail.move_line.move.line.id }}" 
                                     data-magasin="{{ detail.warehouse.designation }}"
-                                    data-lot="{{ detail.move_line.lot_number }}"
+                                    data-lot="{{ detail.move_line.n_lot }}"
                                     data-zone="{{ detail.zone.designation }}"
                                     data-max-qte="{{ detail.qte }}">
                                 <i class="fas fa-exchange-alt"></i> Transférer
                             </button>
                         </li>
-                        {% if detail.transfers %}
+                        {% if detail.transfers.exists %}
                         <li>
-                            <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#transfersModal" 
+                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transfersModal" 
                                     data-line-detail-id="{{ detail.id }}">
                                 <i class="fas fa-sync-alt"></i> Transferts
                             </button>
@@ -281,9 +286,50 @@
                 modal.find('#destination-zone').empty().append('<option value="">-- Sélectionnez --</option>');
             },
             error: function () {
-                console.error('Error fetching warehouses for ligne:', lineId);
+                swal("Erreur!", "Error fetching warehouses for ligne.", "error");
             }
         });
+    });
+
+    $(document).on('show.bs.modal', '#transfersModal', function (event)  {
+        const button = $(event.relatedTarget);
+        const modal = $(this);
+
+        transfersTableBody.innerHTML = `<tr>
+            <td colspan="7" class="text-center">Chargement...</td>
+        </tr>`;
+
+        fetch(`/get-detail-transfers/${button.data('line-detail-id')}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.transfers && data.transfers.length > 0) {
+                    transfersTableBody.innerHTML = data.transfers.map(transfer => `
+                        <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                            <td class="table-text">${transfer.site}</td>
+                            <td class="table-text">${transfer.line}</td>
+                            <td class="table-text">${transfer.magasin}</td>
+                            <td class="table-text">${transfer.zone}</td>
+                            <td class="table-text">${transfer.qte}</td>
+                            <td class="table-text">${new Date(transfer.date).toLocaleString()}</td>
+                            <td class="table-text">${transfer.state}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    transfersTableBody.innerHTML = `
+                        <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                            <td colspan="7" class="text-center table-text">Aucun transfert trouvé.</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                swal("Erreur!", "Error fetching transfers.", "error");
+                transfersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center">Erreur de chargement des transferts.</td>
+                    </tr>
+                `;
+            });
     });
     
     $(document).on('change', '#destination-warehouse', function () {
@@ -305,7 +351,7 @@
                 });
             },
             error: function () {
-                console.error('Error fetching zones for warehouse:', warehouseId);
+                swal("Erreur!", "Error fetching zones for warehouse.", "error");
             }
         });
     });
@@ -332,10 +378,11 @@
                 zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             },
             error: function () {
-                console.error('Error fetching warehouses for ligne:', lineId);
+                swal("Erreur!", "Error fetching warehouses for line.", "error");
             }
         });
     });
+
     document.getElementById('transfer-form').addEventListener('submit', function(event) {
         event.preventDefault();
         const form = event.target;

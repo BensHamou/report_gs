@@ -192,6 +192,10 @@ def editProductView(request, id):
     context = {'form': form, 'product': product}
     return render(request, 'product_form.html', context)
 
+
+# MOVES
+
+
 @login_required(login_url='login')
 @admin_or_gs_required
 def families_view(request):
@@ -320,11 +324,12 @@ def move_edit(request, move_line_id):
 @admin_or_gs_required
 def move_delete(request, move_line_id):
     move = get_object_or_404(MoveLine, id=move_line_id)
-    if request.method == 'POST':
+    try:
         move.delete()
-        messages.success(request, "Move deleted successfully.")
-        return redirect('move_lines')
-    return render(request, 'move_form.html', {'move': move})
+        messages.success(request, "Move supprimée avec succès.")
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la suppression du move : {e}")
+    return redirect(getRedirectionURL(request, reverse('move_lines')))
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -454,6 +459,13 @@ def confirmMoveLine(request, move_line_id):
             for detail in move_line.details.all():
                 detail.code = f"ID:{detail.id}MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date};Qte:{detail.qte}"
                 detail.save()
+            if move_line.move.is_transfer:
+                for detail in move_line.details.all():
+                    source_line_detail = detail.mirrored_move
+                    source_line_detail.qte -= detail.qte
+                    source_line_detail.code = f"ID:{source_line_detail.id}MoveLine:{source_line_detail.move_line.id};Product:{source_line_detail.move_line.product.designation};Date:{source_line_detail.move_line.move.date};Qte:{source_line_detail.qte}"
+                    source_line_detail.save()
+
             return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
@@ -531,25 +543,29 @@ def transfer_quantity(request):
 
                 if transfer_quantity <= 0:
                     return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=400)
-
+                
                 source_line_detail = LineDetail.objects.get(id=source_id)
                 source_move_line = source_line_detail.move_line
 
                 if transfer_quantity > source_line_detail.qte:
                     return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=400)
+                
+                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id, move__is_transfer=True, 
+                                                             move__state='Brouillon').first()
 
-                # source_line_detail.qte -= transfer_quantity
-                # source_line_detail.save()
+                if existing_move_line:
+                    LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                                              qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
+                else:
+                    new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
+                                                is_transfer=True, type='Entré', write_uid=request.user, 
+                                                create_uid=request.user)
 
-                new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
-                                               is_transfer=True, mirrored_move=source_line_detail, type='Entré', write_uid=request.user, 
-                                               create_uid=request.user)
+                    new_move_line = MoveLine.objects.create(lot_number=destination_lot_number, product=source_move_line.product, 
+                                                            move=new_move, write_uid=request.user, create_uid=request.user)
 
-                new_move_line = MoveLine.objects.create(lot_number=destination_lot_number, product=source_move_line.product, 
-                                                        move=new_move, write_uid=request.user, create_uid=request.user)
-
-                LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
-                                          qte=transfer_quantity, write_uid=request.user, create_uid=request.user)
+                    LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                                            qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
 
                 return JsonResponse({'success': True, 'message': 'Le transfert a été effectué avec succès.'}, status=200)
 
@@ -557,3 +573,15 @@ def transfer_quantity(request):
             return JsonResponse({'success': False, 'message': 'Détail de ligne source introuvable.'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors du transfert : {str(e)}'}, status=500)
+
+def get_transfers(request, detail_id):
+    detail = get_object_or_404(LineDetail, id=detail_id)
+
+    data = []
+
+    for t in detail.transfers.all():
+        move = t.move_line.move
+        data.append({ 'site': move.line.site.designation, 'line': move.line.designation, 'magasin': t.warehouse.designation, 
+                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'state': move.state})
+        
+    return JsonResponse({'transfers': data})
