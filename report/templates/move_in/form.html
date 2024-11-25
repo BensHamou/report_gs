@@ -347,7 +347,7 @@
                         success: function(response) {
                             if (response.success) {
                                 swal("Succès!", response.message, "success").then(function() {
-                                    window.location.href = "{% url 'move_lines' %}";
+                                    window.location.href = "{% url 'move_line_detail' 0 %}".replace('0', response.new_record);
                                 });
                             } else {
                                 swal("Erreur", response.message, "error");
@@ -359,7 +359,7 @@
                     });
                 }
             });
-        }
+        }new_record
     });
 </script>
 

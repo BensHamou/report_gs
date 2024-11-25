@@ -14,15 +14,21 @@
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'families_view' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'families_view,products_view,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'families_view' %}">
                 <i class="margiin fas fa-plus"></i> 
                 <span class="menu-text">Entré</span>
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'move_lines' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'move_lines' %} activeP {% endif %}" href="{% url 'move_lines' %}">
                 <i class="margiin fas fa-chart-bar"></i> 
                 <span class="menu-text">Rapports</span>
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link {% if request.resolver_match.url_name in 'tarnsfer_list' %} activeP {% endif %}" href="{% url 'tarnsfer_list' %}">
+                <i class="margiin fas fa-exchange-alt"></i> 
+                <span class="menu-text">Transfers</span>
             </a>
         </li>
         <li class="nav-item mb-2">
@@ -89,13 +95,18 @@
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'families_view' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'families_view,products_view,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'families_view' %}">
                 <i class="margiin fas fa-plus"></i> 
             </a>
         </li>
         <li class="nav-item mb-2">
-            <a class="nav-link" href="{% url 'move_lines' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'move_lines' %} activeP {% endif %}" href="{% url 'move_lines' %}">
                 <i class="margiin fas fa-chart-bar"></i> 
+            </a>
+        </li>
+        <li class="nav-item mb-2">
+            <a class="nav-link {% if request.resolver_match.url_name in 'tarnsfer_list' %} activeP {% endif %}" href="{% url 'tarnsfer_list' %}">
+                <i class="margiin fas fa-exchange-alt"></i> 
             </a>
         </li>
         <li class="nav-item mb-2">

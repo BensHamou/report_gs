@@ -93,6 +93,10 @@ class Product(BaseModel):
             return 'Stock bas'
         return 'Rupture'
     
+    def last_entry_date(self, site):
+        last_entry = MoveLine.objects.filter(product=self, move__type='Entré', move__state='Confirmé', move__line__site=site).order_by('-move__date').first()
+        return last_entry.move.date if last_entry else None
+    
     def __str__(self):
         return self.designation
 

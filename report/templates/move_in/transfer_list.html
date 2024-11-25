@@ -1,0 +1,74 @@
+{% extends "main.html" %}
+
+{% block title %}
+    Rapports
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <form method="GET" class="w-100">
+        <div class="row justify-content-between align-items-center mb-3">
+            <div class="col-12">
+                <p class="page-title">Transfert <i class="fas fa-exchange-alt" style='font-size: 24px'></i></p>
+            </div>
+        </div>
+
+        <div class="row justify-content-between align-items-center mb-3">
+            <div class="col-lg-4 col-md-12 col-sm-12 mb-2 mb-lg-0">
+                {{ filteredData.form.search }}
+            </div>
+            <div class="col-lg-8 col-md-12 col-sm-12">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 col-12 d-flex justify-content-start mb-2 mb-lg-0">
+                        <div>
+                            {{ filteredData.form.state }}
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-12 d-flex justify-content-end">
+                        <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control me-2" style="width: auto;">
+                        <button type="submit" class="btn btn-primary me-2" style="background-color: #1d71b8;">Appliquer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <table class="table table-borderless">
+            <thead>
+                <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
+                    <th class="table-header">Site</th>
+                    <th class="table-header">Magasin source</th>
+                    <th class="table-header">Zone source</th>
+                    <th class="table-header">Magasin destination</th>
+                    <th class="table-header">Zone destination</th>
+                    <th class="table-header">N° Lot</th>
+                    <th class="table-header">Quantité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if page %}
+                    {% for line in page %}
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                        <td class="table-text">{{ line.move_line.move.line.site }}</td>
+                        <td class="table-text">{{ line.mirrored_move.warehouse.designation }}</td>
+                        <td class="table-text">{{ line.mirrored_move.zone.designation }}</td>
+                        <td class="table-text">{{ line.warehouse.designation }}</td>
+                        <td class="table-text">{{ line.zone.designation }}</td>
+                        <td class="table-text">{{ line.move_line.n_lot }}</td>
+                        <td class="table-text">{{ line.qte }} {{ line.move_line.product.unit }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if page.has_other_pages %}
+        {% include 'pagination.html' %}
+    {% endif %}
+</div>
+{% endblock %}

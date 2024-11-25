@@ -159,9 +159,10 @@ def listProductView(request):
                 'designation': product.designation,
                 'qte_in_stock': product.qte_in_stock(selected_site),
                 'state_stock': product.state_stock(selected_site),
+                'last_entry_date': product.last_entry_date(selected_site),
             })
     else:
-        products_with_stock = [{'id': product.id, 'designation': product.designation, 'qte_in_stock': None, 'state_stock': 'Site non sélectionné'} for product in products]
+        products_with_stock = [{'id': product.id, 'designation': product.designation, 'qte_in_stock': None, 'state_stock': 'Site non sélectionné', 'last_entry_date': None} for product in products]
 
     page_size_param = request.GET.get('page_size')
     page_size = int(page_size_param) if page_size_param else 12
@@ -323,6 +324,20 @@ def move_list(request):
 
 @login_required(login_url='login')
 @admin_or_gs_required
+def tarnsfer_list(request):
+    transfers = LineDetail.objects.filter(move_line__move__line__in=request.user.lines.all().values('id'), move_line__move__is_transfer=True).order_by('-date_modified')    
+    filteredData = LineDetailFilter(request.GET, queryset=transfers)
+    transfers = filteredData.qs
+    page_size_param = request.GET.get('page_size')
+    page_size = int(page_size_param) if page_size_param else 12
+    paginator = Paginator(transfers, page_size)
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+    context = {'page': page, 'filteredData': filteredData}
+    return render(request, 'transfer_list.html', context)
+
+@login_required(login_url='login')
+@admin_or_gs_required
 def move_edit(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
     move = move_line.move
@@ -374,8 +389,6 @@ def create_move(request):
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
                 product = request.POST.get('product')
-                print()
-
                 if not (line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
 
@@ -399,7 +412,7 @@ def create_move(request):
                         LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, 
                                                   qte=int(qte), create_uid=request.user, write_uid=request.user)
 
-                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.'}, status=200)
+                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
 
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)

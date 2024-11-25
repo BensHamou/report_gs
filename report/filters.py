@@ -52,7 +52,7 @@ class MoveLineFilter(django_filters.FilterSet):
         ('Annulé', 'Annulé')
     ]
     
-    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
+    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..', other={'style': 'width: 80%; margin-right: 10px;'})))
     type = django_filters.ChoiceFilter(method='filter_by_type', choices=TYPE_CHOICES, empty_label=None, initial='all', widget=forms.Select(attrs=getAttrs('select')))
     state = django_filters.ChoiceFilter(method='filter_by_state', choices=STATE_REPORT, empty_label=None, initial='Tous', widget=forms.Select(attrs=getAttrs('select')))
 
@@ -85,3 +85,34 @@ class MoveLineFilter(django_filters.FilterSet):
     class Meta:
         model = MoveLine
         fields = ['search', 'type', 'state']
+
+class LineDetailFilter(django_filters.FilterSet):
+
+    STATE_REPORT = [
+        ('Tous', 'Tous'),
+        ('Brouillon', 'Brouillon'),
+        ('Confirmé', 'Confirmé'),
+        ('Annulé', 'Annulé')
+    ]
+    
+    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..', other={'style': 'width: 80%; margin-right: 10px;'})))
+    state = django_filters.ChoiceFilter(method='filter_by_state', choices=STATE_REPORT, empty_label=None, initial='Tous', widget=forms.Select(attrs=getAttrs('select')))
+
+    def filter_search(self, queryset, name, value):
+        return queryset.filter(Q(move_line__product__designation__icontains=value)
+                               |Q(move_line__lot_number__icontains=value)
+                               |Q(move_line__move__date__icontains=value)
+                               |Q(move_line__move__gestionaire__fullname__icontains=value)
+                               |Q(warehouse__designation__icontains=value)
+                               |Q(zone__designation__icontains=value)
+                               ).distinct()
+    
+    def filter_by_state(self, queryset, name, value):
+        if value == 'Tous':
+            return queryset.filter(move_line__move__state__in=['Brouillon', 'Confirmé', 'Annulé'])
+        else:
+            return queryset.filter(move_line__move__state=value)
+
+    class Meta:
+        model = LineDetail
+        fields = ['search', 'state']

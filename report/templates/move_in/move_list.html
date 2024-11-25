@@ -14,15 +14,25 @@
         </div>
 
         <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-lg-4 col-md-12 col-sm-12">
+            <div class="col-lg-4 col-md-12 col-sm-12 mb-2 mb-lg-0">
                 {{ filteredData.form.search }}
             </div>
-            <div class="col-lg-8 col-md-12 col-sm-12 d-flex justify-content-end">
-                {{ filteredData.form.state }}
-                {{ filteredData.form.type }}
-                <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin: 0 10px;">
-                <button type="submit" class="btn btn-primary" style="background-color: #1d71b8;">Appliquer</button>
-                <a href="{% url 'families_view' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
+            <div class="col-lg-8 col-md-12 col-sm-12">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 col-12 d-flex justify-content-start mb-2 mb-lg-0">
+                        <div class="me-2">
+                            {{ filteredData.form.state }}
+                        </div>
+                        <div>
+                            {{ filteredData.form.type }}
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-12 d-flex justify-content-end">
+                        <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control me-2" style="width: auto;">
+                        <button type="submit" class="btn btn-primary me-2" style="background-color: #1d71b8;">Appliquer</button>
+                        <a href="{% url 'families_view' %}" class="btn btn-primary" style="background-color: #1d71b8;">Nouveau</a>
+                    </div>
+                </div>
             </div>
         </div>
     </form>

@@ -54,7 +54,7 @@
 </div>
 <script>
     document.getElementById('print-button').addEventListener('click', function () {
-        const ticketCount = 1;
+        const ticketCount = parseInt(document.getElementById('ticket-count').value) || 1;
         const qrCodeImage = document.getElementById('qr-code-image');
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -75,7 +75,7 @@
                 let printContent = '';
     
                 for (let i = 0; i < ticketCount; i++) {
-                    printContent += modalBody.outerHTML + '<hr style="margin: 20px 0; border: none; border-top: 1px dashed rgba(0,0,0,0.1);">';
+                    printContent += modalBody.outerHTML + '<hr style="margin: 1px 0; border: none; border-top: 1px dashed rgba(0,0,0,0.1);">';
                 }
     
                 printWindow.document.open();
@@ -83,42 +83,88 @@
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Print Tickets</title>
-                        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+                        <title>Étiquette de Palette</title>
                         <style>
+                            @page {
+                                size: A4 landscape;
+                                margin: 20mm;
+                            }
+
                             body {
                                 font-family: Arial, sans-serif;
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: flex-start;
+                                height: 100%;
+                            }
+
+                            .row-wrapper {
+                                width: 100%;
+                                max-width: 180mm;
+                                margin: 0 auto;
+                                padding: 0;
                                 text-align: center;
-                                margin: 20px;
+                                page-break-after: always;
                             }
-                            .modal-body {
-                                margin-bottom: 20px;
-                            }
+
                             .row {
                                 display: flex;
+                                flex-wrap: wrap;
+                                margin: 0;
                                 justify-content: space-between;
-                                margin-top: 10px;
                             }
+
                             .col-md-6, .col-md-3 {
-                                width: 45%;
+                                padding: 5mm;
+                                box-sizing: border-box;
                             }
+
+                            .col-md-6 {
+                                width: 50%;
+                            }
+
+                            .col-md-3 {
+                                width: 25%;
+                            }
+
                             .text-left {
                                 text-align: left;
                             }
+
+                            .text-center {
+                                text-align: center;
+                            }
+
                             strong {
                                 color: #5d5d5d;
+                                font-size: 18pt;
                             }
+
                             p {
                                 margin: 0;
                                 color: rgba(194, 194, 194, 1);
+                                font-size: 16pt;
                             }
+
+                            .m-0 {
+                                margin: 0;
+                            }
+
+                            .mt-2 {
+                                margin-top: 0.5rem;
+                            }
+
                             hr {
                                 margin: 20px 0;
                                 border: none;
-                                border-top: 1px dashed rgba(0,0,0,0.1);
+                                border-top: 1px dashed rgba(0, 0, 0, 0.1);
                             }
+
                             img {
-                                max-width: 40%;
+                                max-width: 80mm;
                                 height: auto;
                             }
                         </style>
@@ -128,6 +174,8 @@
                     </body>
                     </html>
                 `);
+
+
 
                 const printImg = printWindow.document.querySelector('#qr-code-image');
                 printImg.onload = function () {

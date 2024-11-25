@@ -27,6 +27,7 @@ urlpatterns = [
 
     path('move-lines/', move_list, name='move_lines'),
     path('', move_list, name='move_lines'),
+    path('transfer-lines/', tarnsfer_list, name='tarnsfer_list'),
     path('move-line/edit/<int:move_line_id>/', move_edit, name='edit_move_line'),
     path('move-line/delete/<int:move_line_id>/', move_delete, name='delete_move_line'),
     path('move-line/create/', create_move, name='create_move'),
