@@ -10,6 +10,7 @@ def getAttrs(type, placeholder='', other={}):
         'controlID': {'class': 'form-control search-input-id', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
         'controlSearch': {'class': 'form-control search-input', 'autocomplete': "off", 'style': 'background-color: #ffffff; border-color: #ffffff;', 'placeholder': ''},
         'search': {'class': 'form-control', 'style': 'width: 40%; margin-right: 10px;', 'type': 'text', 'placeholder': '', 'id': 'search'},
+        'search2': {'class': 'form-control', 'style': 'margin-right: 10px;', 'type': 'text', 'placeholder': '', 'id': 'search'},
         'select': {'class': 'form-select', 'style': 'background-color: #ffffff; padding-left: 30px;'},
         'select2': {'class': 'form-select select2', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},
         'select3': {'class': 'form-select select3', 'style': 'background-color: #ffffff; padding-left: 30px; width: 100%;'},

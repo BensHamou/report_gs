@@ -58,21 +58,27 @@ def move_list_api(request):
     except NotAuthenticated:
         return Response({'error': 'User must be authenticated to access this resource.'}, status=401)
     
-class FamilyListView(generics.ListAPIView):
-    queryset = Family.objects.all()
-    serializer_class = FamilySerializer
+class SyncDataView(APIView):
+    def get(self, request):
+        sites = Site.objects.all()
+        warehouses = Warehouse.objects.all()
+        zones = Zone.objects.all()
+        lines = Line.objects.all()
+        families = Family.objects.all()
+        units = Unit.objects.all()
+        products = Product.objects.all()
 
-class ProductListView(generics.ListAPIView):
-    serializer_class = ProductSerializer
+        data = {
+            "sites": SiteSerializer(sites, many=True).data,
+            "warehouses": WarehouseSerializer(warehouses, many=True).data,
+            "zones": ZoneSerializer(zones, many=True).data,
+            "lines": LineSerializer(lines, many=True).data,
+            "families": FamilySerializer(families, many=True).data,
+            "units": UnitSerializer(units, many=True).data,
+            "products": ProductSerializer(products, many=True).data,
+        }
 
-    def get_queryset(self):
-        family_id = self.kwargs['family_id']
-        try:
-            family = Family.objects.get(id=family_id)
-        except Family.DoesNotExist:
-            raise NotFound(detail="Family not found")
-        
-        return Product.objects.filter(family=family)
+        return Response(data)
     
 class MoveOutDetailsView(APIView):
     def post(self, request, *args, **kwargs):

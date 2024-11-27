@@ -52,17 +52,17 @@ class MoveLineFilter(django_filters.FilterSet):
         ('Annulé', 'Annulé')
     ]
     
-    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..', other={'style': 'width: 80%; margin-right: 10px;'})))
     type = django_filters.ChoiceFilter(method='filter_by_type', choices=TYPE_CHOICES, empty_label=None, initial='all', widget=forms.Select(attrs=getAttrs('select')))
+    site = django_filters.CharFilter(field_name="move__site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
+    warehouse = django_filters.CharFilter(method='filter_by_warehouse', widget=forms.TextInput(attrs=getAttrs('search2', 'Entrepôt')))
+    zone = django_filters.CharFilter(method='filter_by_zone', widget=forms.TextInput(attrs=getAttrs('search2', 'Zone')))
+    lot_number = django_filters.CharFilter(field_name="lot_number", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Lot')))
+    start_date = django_filters.DateFilter(field_name="move__date", lookup_expr='gte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Début')))
+    end_date = django_filters.DateFilter(field_name="move__date", lookup_expr='lte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Fin')))
+    product = django_filters.CharFilter(field_name="product__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Produit')))
+
     state = django_filters.ChoiceFilter(method='filter_by_state', choices=STATE_REPORT, empty_label=None, initial='Tous', widget=forms.Select(attrs=getAttrs('select')))
 
-    def filter_search(self, queryset, name, value):
-        return queryset.filter(Q(product__designation__icontains=value)
-                               |Q(lot_number__icontains=value)
-                               |Q(move__date__icontains=value)
-                               |Q(move__gestionaire__fullname__icontains=value)
-                               ).distinct()
-    
     def filter_by_state(self, queryset, name, value):
         if value == 'Tous':
             return queryset.filter(move__state__in=['Brouillon', 'Confirmé', 'Annulé'])
@@ -82,9 +82,15 @@ class MoveLineFilter(django_filters.FilterSet):
             return queryset.filter(move__type='Sortie', move__is_transfer=False)
         return queryset
 
+    def filter_by_warehouse(self, queryset, name, value):
+        return queryset.filter(details__warehouse__designation__icontains=value).distinct()
+
+    def filter_by_zone(self, queryset, name, value):
+        return queryset.filter(details__zone__designation__icontains=value).distinct()
+
     class Meta:
         model = MoveLine
-        fields = ['search', 'type', 'state']
+        fields = ['type', 'site', 'warehouse', 'zone', 'lot_number', 'start_date', 'end_date', 'product', 'state']
 
 class LineDetailFilter(django_filters.FilterSet):
 

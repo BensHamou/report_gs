@@ -12,6 +12,8 @@ from .models import *
 from account.models import *
 from .forms import *
 import qrcode
+from datetime import date
+from django.utils.timezone import now, timedelta
 
 # UNIT
 
@@ -319,7 +321,27 @@ def move_list(request):
     paginator = Paginator(moves, page_size)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    context = {'page': page, 'filteredData': filteredData}
+    today = date.today()
+    move_out_today = MoveLine.objects.filter(move__state='Confirmé', move__type='Sortie', move__date=today)
+    palettes_today = sum(m.palette for m in move_out_today)
+
+    move_lines = MoveLine.objects.filter(move__state='Confirmé', move__type='Sortie').select_related('product')
+    
+    product_totals = {}
+    for move_line in move_lines:
+        product_id = move_line.product.id
+        if product_id not in product_totals:
+            product_totals[product_id] = {
+                'designation': move_line.product.designation,
+                'image': move_line.product.image.url if move_line.product.image else None,
+                'total_qte': 0,
+            }
+        product_totals[product_id]['total_qte'] += move_line.qte
+    top_product = max(product_totals.values(), key=lambda p: p['total_qte'], default=None)
+    active_users_count = User.objects.filter(last_login__gte=now() - timedelta(hours=24)).count()
+
+
+    context = {'page': page, 'filteredData': filteredData, 'palettes_today': palettes_today, 'top_product': top_product, 'active_users_count': active_users_count}
     return render(request, 'move_list.html', context)
 
 @login_required(login_url='login')

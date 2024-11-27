@@ -6,36 +6,107 @@
 
 {% block content %}
 <div class="row mb-3">
-    <form method="GET" class="w-100">
-        <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-12">
-                <p class="page-title">Rapports <i class="fas fa-chart-bar" style='font-size: 24px'></i></p>
+    <div class="w-100">
+        <p class="page-title">Rapports <i class="fas fa-chart-bar" style='font-size: 24px'></i></p>
+    </div>
+    <div class="row align-items-center mb-3">
+        <div class="col-6">
+            <h4 style="color: #5d5d5d;">Analyse Global</h4>
+        </div>
+        <div class="col-6 d-flex justify-content-end">
+            <button id="toggle-filter" class="btn btn-outline-primary d-flex align-items-center">
+                <i class="fas fa-filter me-2"></i> Filtre
+            </button>
+        </div>
+    </div>
+
+    <div id="stats-section" class="row mb-3">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
+            <div class="stat-widget">
+                <small class="stat-widget-title">Palette scannées aujourd'hui</small>
+                <h2 class="stat-widget-number">{{ palettes_today }}</h2>
+                <span class="stat-widget-subtext">Palettes</span>
             </div>
         </div>
-
-        <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-lg-4 col-md-12 col-sm-12 mb-2 mb-lg-0">
-                {{ filteredData.form.search }}
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
+            <div class="stat-widget">
+                <small class="text-muted">Utilisateurs actifs (24h)</small>
+                <h2 class="text-primary fw-bold m-0">{{ active_users_count }}</h2>
+                <span class="text-primary" style="font-size: 1.2rem;">Utilisateurs</span>
             </div>
-            <div class="col-lg-8 col-md-12 col-sm-12">
-                <div class="row align-items-center">
-                    <div class="col-lg-6 col-12 d-flex justify-content-start mb-2 mb-lg-0">
-                        <div class="me-2">
-                            {{ filteredData.form.state }}
-                        </div>
-                        <div>
-                            {{ filteredData.form.type }}
-                        </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
+            <div class="stat-widget">
+                <small class="stat-widget-title">Palette scannées aujourd'hui</small>
+                {% if top_product.designation %}
+                    <div>
+                        <img src="{{ top_product.image }}" alt="{{ top_product.designation }}" style="height: 160px; object-fit: contain;">
                     </div>
-                    <div class="col-lg-6 col-12 d-flex justify-content-end">
-                        <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control me-2" style="width: auto;">
-                        <button type="submit" class="btn btn-primary me-2" style="background-color: #1d71b8;">Appliquer</button>
-                        <a href="{% url 'families_view' %}" class="btn btn-primary" style="background-color: #1d71b8;">Nouveau</a>
-                    </div>
+                {% else %}
+                    <span class="text-muted">Aucun produit scanné</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
+            <div class="stat-widget p-0 m-0">
+                <a class="weatherwidget-io" href="https://forecast7.com/fr/35d20n0d63/sidi-bel-abbes/" 
+                data-label_1="SIDI BEL ABBÈS" style="border-radius: 8px" data-theme="original" >SIDI BEL ABBÈS</a>
+            </div>
+        </div>
+    </div>
+    <div id="filter-section" class="mb-3" style="display: none;">
+        <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;">
+            <div class="row mb-3">
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="lot_number" class="form-label">Lot</label>
+                    {{ filteredData.form.lot_number }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="type" class="form-label">Catégorie</label>
+                    {{ filteredData.form.type }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="site" class="form-label">Site</label>
+                    {{ filteredData.form.site }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="warehouse" class="form-label">Entrepôt</label>
+                    {{ filteredData.form.warehouse }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="zone" class="form-label">Zone</label>
+                    {{ filteredData.form.zone }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="state" class="form-label">Etat</label>
+                    {{ filteredData.form.state }}
                 </div>
             </div>
-        </div>
-    </form>
+            <div class="row mb-3">
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="start_date" class="form-label">Date Début</label>
+                    {{ filteredData.form.start_date }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="end_date" class="form-label">Date Fin</label>
+                    {{ filteredData.form.end_date }}
+                </div>
+                <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
+                    <label for="product" class="form-label">Produit</label>
+                    {{ filteredData.form.product }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="page_size" class="form-label">Ligne</label>
+                    <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control">
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="submit" class="form-label">&nbsp;</label></br>
+                    <button type="submit" class="btn btn-primary" style="background-color: #1d71b8;">Appliquer</button>
+                </div>
+            </div>
+        </form>
+    </div>
 
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <table class="table table-borderless">
@@ -90,8 +161,69 @@
         {% include 'pagination.html' %}
     {% endif %}
 </div>
+<style>
+    #stats-section .col > .p-3 {
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .stat-widget {
+        height: 212px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        text-align: center;
+    }
+    
+    .stat-widget-title {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .stat-widget-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1d71b8;
+        margin: 0;
+    }
+    
+    .stat-widget-subtext {
+        font-size: 1.2rem;
+        color: #1d71b8;
+    }
+</style>
 
 <script>
+    !function(d,s,id){
+        var js,fjs=d.getElementsByTagName(s)[0];
+        if(!d.getElementById(id)){
+            js=d.createElement(s);
+            js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';
+            fjs.parentNode.insertBefore(js,fjs);
+        }
+    }
+    (document,'script','weatherwidget-io-js');
+
+    document.getElementById("toggle-filter").addEventListener("click", function () {
+        const statsSection = document.getElementById("stats-section");
+        const filterSection = document.getElementById("filter-section");
+    
+        if (statsSection.style.display === "none") {
+            statsSection.style.display = "flex";
+            filterSection.style.display = "none";
+            this.innerHTML = '<i class="fas fa-filter me-2"></i> Filtre';
+        } else {
+            statsSection.style.display = "none";
+            filterSection.style.display = "block";
+            this.innerHTML = '<i class="fas fa-times me-2"></i> Cacher';
+        }
+    });
     function confirmMoveLineDel(lineId, lineLot) {
         swal({
             title: "Confirmation de la suppression.",

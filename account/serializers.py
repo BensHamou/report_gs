@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from report.models import *
+from .models import *
 
 class LineDetailSerializer(serializers.ModelSerializer):
     palette = serializers.ReadOnlyField()
@@ -19,20 +20,51 @@ class MoveLineSerializer(serializers.ModelSerializer):
         model = MoveLine
         fields = ['id',  'product_name',  'lot_number',  'code', 'expiry_date',  'production_date',  'details', 'qte', 'palette', 'n_lot']
 
-class FamilySerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True)
 
+class SiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Site
+        fields = ['id', 'designation', 'address', 'email']
+
+class WarehouseSerializer(serializers.ModelSerializer):
+    site = SiteSerializer()
+
+    class Meta:
+        model = Warehouse
+        fields = ['id', 'designation', 'site']
+
+class ZoneSerializer(serializers.ModelSerializer):
+    warehouse = WarehouseSerializer()
+
+    class Meta:
+        model = Zone
+        fields = ['id', 'designation', 'quarantine', 'temp', 'warehouse']
+
+class LineSerializer(serializers.ModelSerializer):
+    site = SiteSerializer()
+
+    class Meta:
+        model = Line
+        fields = ['id', 'designation', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'site']
+
+class FamilySerializer(serializers.ModelSerializer):
     class Meta:
         model = Family
         fields = ['id', 'designation', 'image']
 
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Unit
+        fields = ['id', 'designation']
+
 class ProductSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(use_url=True)
-    family_name = serializers.CharField(source='family.designation')
+    family = FamilySerializer()
+    unit = UnitSerializer()
 
     class Meta:
         model = Product
-        fields = ['id', 'designation', 'image', 'family_name', 'type', 'qte_per_pal', 'delais_expiration']
+        fields = ['id', 'designation', 'image', 'type', 'family', 'unit']
+
 
 class DetailAvailabilitySerializer(serializers.ModelSerializer):
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)

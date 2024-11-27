@@ -48,10 +48,16 @@ def getRedirectionURL(request, url_path):
         'page_size': request.GET.get('page_size', '12'),
         'search': request.GET.get('search', ''),
         'state': request.GET.get('state', ''),
+        'family': request.GET.get('family', ''),
+        'unit': request.GET.get('unit', ''),
+        'type': request.GET.get('type', ''),
+        'site': request.GET.get('site', ''),
+        'warehouse': request.GET.get('warehouse', ''),
+        'zone': request.GET.get('zone', ''),
+        'lot_number': request.GET.get('lot_number', ''),
         'start_date': request.GET.get('start_date', ''),
         'end_date': request.GET.get('end_date', ''),
-        'site': request.GET.get('site', ''),
-        'distru': request.GET.get('distru', '')
+        'product': request.GET.get('product', ''),
     }
     cache_param = str(uuid.uuid4())
     query_string = '&'.join([f'{key}={value}' for key, value in params.items() if value])
