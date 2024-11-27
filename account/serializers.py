@@ -27,21 +27,18 @@ class SiteSerializer(serializers.ModelSerializer):
         fields = ['id', 'designation', 'address', 'email']
 
 class WarehouseSerializer(serializers.ModelSerializer):
-    site = SiteSerializer()
 
     class Meta:
         model = Warehouse
         fields = ['id', 'designation', 'site']
 
 class ZoneSerializer(serializers.ModelSerializer):
-    warehouse = WarehouseSerializer()
 
     class Meta:
         model = Zone
         fields = ['id', 'designation', 'quarantine', 'temp', 'warehouse']
 
 class LineSerializer(serializers.ModelSerializer):
-    site = SiteSerializer()
 
     class Meta:
         model = Line
@@ -58,8 +55,6 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = ['id', 'designation']
 
 class ProductSerializer(serializers.ModelSerializer):
-    family = FamilySerializer()
-    unit = UnitSerializer()
 
     class Meta:
         model = Product

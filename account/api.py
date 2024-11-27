@@ -59,6 +59,9 @@ def move_list_api(request):
         return Response({'error': 'User must be authenticated to access this resource.'}, status=401)
     
 class SyncDataView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         sites = Site.objects.all()
         warehouses = Warehouse.objects.all()
@@ -81,6 +84,8 @@ class SyncDataView(APIView):
         return Response(data)
     
 class MoveOutDetailsView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         line_id = request.data.get('line_id')
         product_ids = request.data.get('product_ids')
