@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="{% url 'products_view' product.family.id %}" 
+    <a href="{% url 'select_p' product.family.id %}" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" 
@@ -60,12 +60,12 @@
                         <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Ligne --</option>
                             {% for line in lines %}
-                            <option value="{{ line.id }}">{{ line.designation }}</option>
+                                <option value="{{ line.id }}">{{ line.designation }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     {% else %}
-                    <input type="hidden" name="line" value="{{ default_line.id }}">
+                        <input type="hidden" name="line" id='line' value="{{ default_line.id }}">
                     {% endif %}
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
@@ -227,11 +227,15 @@
     });
 
     const lines = {{ lines|length }};
-    const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
+    
     if (lines === 1) {
+        const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
         const lineSelect = document.getElementById('line');
-        lineSelect.value = {{ lines.0.id }};
         lineWrapper.style.display = 'none';
+        lineSelect.dispatchEvent(new Event('change'));
+    }
+    else if(lines === 0) {
+        const lineSelect = document.getElementById('line');
         lineSelect.dispatchEvent(new Event('change'));
     }
 

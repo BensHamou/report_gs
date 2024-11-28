@@ -32,7 +32,7 @@
     <div class="row">
         {% for family in families %}
         <div class="col-md-3 col-sm-6 col-12 mb-4 d-flex justify-content-center">
-            <a href="{% url 'products_view' family.id %}" class="text-decoration-none">
+            <a href="{% url 'select_p' family.id %}" class="text-decoration-none">
                 <div class="text-center" style="cursor: pointer;">
                     <img src="{{ family.image.url }}" 
                          alt="{{ family.name }}" 

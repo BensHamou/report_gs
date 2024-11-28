@@ -37,6 +37,28 @@ services:
       - DB_USER=stock_report
       - DB_PASS=stock_report
       - DB_PORT=5432
+  cron:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    image: stock_cron
+    container_name: STOCK_CRON
+    depends_on:
+      - db
+    volumes:
+      - ./report_gs:/report_gs
+      - ./media:/app/media
+    environment:
+      - DB_HOST=db
+      - DB_NAME=StockDB
+      - DB_USER=stock_report
+      - DB_PASS=stock_report
+      - DB_PORT=5432
+    command: >
+      sh -c "python manage.py crontab remove &&
+            python manage.py crontab add &&
+            crond -f"
 volumes:
   db_data:
   media_volume:

@@ -18,8 +18,8 @@ urlpatterns = [
     path('product/edit/<int:id>/', editProductView, name='edit_product'),
     path('product/delete/<int:id>/', deleteProductView, name='delete_product'),
 
-    path('families/', families_view, name='families_view'),  
-    path('products/<int:family_id>/', products_view, name='products_view'),  
+    path('families/', families_view, name='select_f'),  
+    path('products/<int:family_id>/', products_view, name='select_p'),  
     path('move-in/form/<int:product_id>/', move_in_form_view, name='move_in_form'),
     path('get_shifts_and_users_for_line/', get_shifts_and_users_for_line, name='get_shifts_and_users_for_line'),
     path('get_warehouses_for_line/', get_warehouses_for_line, name='get_warehouses_for_line'),

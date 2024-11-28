@@ -655,3 +655,4 @@ def get_transfers(request, detail_id):
                      'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'state': move.state})
         
     return JsonResponse({'transfers': data})
+
