@@ -45,6 +45,7 @@ class LineSerializer(serializers.ModelSerializer):
         fields = ['id', 'designation', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'site']
 
 class FamilySerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
     class Meta:
         model = Family
         fields = ['id', 'designation', 'image']
@@ -55,6 +56,7 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = ['id', 'designation']
 
 class ProductSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Product

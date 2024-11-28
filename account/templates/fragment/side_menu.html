@@ -172,13 +172,14 @@
 <style>
     .side_menu {
         background-color: #151f31;
-        display: flex;
-        flex-direction: column;
-        position: sticky;
-        top: 0;
-        height: 100vh;
+        min-width: 250px;
+        max-width: 22%;
+        flex-shrink: 0;
         overflow-y: auto;
-        overflow-x: hidden;
+        position: sticky;
+        height: 100vh;
+        top: 0;
+        transition: all 0.3s ease;
     }
 
     .user-img {
@@ -213,12 +214,13 @@
     
     @media (max-width: 768px) {
         .side_menu {
+            max-width: 100%; 
             position: static;
-            overflow-y: auto;
-            flex-direction: column;
-            align-items: center;
+            flex-shrink: 1;  
             height: auto;
             overflow: visible;
+            flex-direction: column;
+            align-items: center;
         }
         .side_menu .text-center {
             display: flex;

@@ -431,7 +431,7 @@ def create_move(request):
                     qte = request.POST.get(f'qte_{row_id}')
 
                     if warehouse_id and zone_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, 
+                        line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, 
                                                   qte=int(qte), create_uid=request.user, write_uid=request.user)
 
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
@@ -482,7 +482,7 @@ def update_move(request, move_line_id):
                     qte = request.POST.get(f'qte_{row_id}')
 
                     if warehouse_id and zone_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, write_uid=request.user, 
+                        line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, write_uid=request.user, 
                                                   create_uid=move_line.create_uid, date_created=move_line.date_created, qte=int(qte))
 
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
@@ -524,6 +524,8 @@ def confirmMoveLine(request, move_line_id):
         if success:
             for detail in move_line.details.all():
                 detail.code = f"ID:{detail.id}MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date};Qte:{detail.qte}"
+                if detail.zone.temp:
+                    TemporaryZoneAlert.objects.get_or_create(line_detail=detail, write_uid=request.user, create_uid=request.user)
                 detail.save()
             if move_line.move.is_transfer:
                 for detail in move_line.details.all():
@@ -531,6 +533,8 @@ def confirmMoveLine(request, move_line_id):
                     source_line_detail.qte -= detail.qte
                     source_line_detail.code = f"ID:{source_line_detail.id}MoveLine:{source_line_detail.move_line.id};Product:{source_line_detail.move_line.product.designation};Date:{source_line_detail.move_line.move.date};Qte:{source_line_detail.qte}"
                     source_line_detail.save()
+                    if source_line_detail.zone.temp and source_line_detail.qte == 0:
+                        TemporaryZoneAlert.objects.filter(line_detail=source_line_detail).delete()
 
             return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
         else:

@@ -173,6 +173,11 @@ class LineDetail(BaseModel):
     def __str__(self):
         return f"{self.move_line.product} - {self.qte}"
 
+class TemporaryZoneAlert(BaseModel):
+    line_detail = models.OneToOneField(LineDetail, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(auto_now_add=True)
+    email_sent = models.BooleanField(default=False)
+
 
 class Validation(BaseModel):
     MOVE_STATE = [
