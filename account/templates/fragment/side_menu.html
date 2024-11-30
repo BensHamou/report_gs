@@ -7,79 +7,83 @@
     </div>
 
     <ul class="nav flex-column flex-grow-1 d-none d-md-flex">
+        {% if user.role == 'Admin' %}
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                 <i class="margiin fas fa-house"></i> 
                 <span class="menu-text">Dashboard</span>
             </a>
         </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'select_f,select_p,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'select_f' %}">
-                <i class="margiin fas fa-plus"></i> 
-                <span class="menu-text">Entré</span>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name == 'move_lines' %} activeP {% endif %}" href="{% url 'move_lines' %}">
-                <i class="margiin fas fa-chart-bar"></i> 
-                <span class="menu-text">Rapports</span>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'tarnsfer_list' %} activeP {% endif %}" href="{% url 'tarnsfer_list' %}">
-                <i class="margiin fas fa-exchange-alt"></i> 
-                <span class="menu-text">Transfers</span>
-            </a>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,products,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
-                <i class="margiin fas fa-gear"></i> 
-                <span class="menu-text">Paramètres</span>
-            </a>
-            <ul class="collapse list-unstyled" id="parametersSubmenu">
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}" style="margin-left: 30px;">Sites</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}" style="margin-left: 30px;">Lignes</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}" style="margin-left: 30px;">Magasins</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}" style="margin-left: 30px;">Zones</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}" style="margin-left: 30px;">Shifts</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}" style="margin-left: 30px;">Produits</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}" style="margin-left: 30px;">Familles</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}" style="margin-left: 30px;">Unités</a>
-                </li>
-            </ul>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
-                <i class="margiin far fa-user"></i> 
-                <span class="menu-text">Utilisateurs</span>
-            </a>
-            <ul class="collapse list-unstyled" id="usersSubmenu">
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}" style="margin-left: 30px;">Active</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}" style="margin-left: 30px;">Nouveau</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}" style="margin-left: 30px;">Actualisez</a>
-                </li>
-            </ul>
-        </li>
+        {% endif %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'select_f,select_p,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'select_f' %}">
+                    <i class="margiin fas fa-plus"></i> 
+                    <span class="menu-text">Entré</span>
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name == 'move_lines' %} activeP {% endif %}" href="{% url 'move_lines' %}">
+                    <i class="margiin fas fa-chart-bar"></i> 
+                    <span class="menu-text">Rapports</span>
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'tarnsfer_list' %} activeP {% endif %}" href="{% url 'tarnsfer_list' %}">
+                    <i class="margiin fas fa-exchange-alt"></i> 
+                    <span class="menu-text">Transfers</span>
+                </a>
+            </li>
+        {% if user.role == 'Admin' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,products,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                    <i class="margiin fas fa-gear"></i> 
+                    <span class="menu-text">Paramètres</span>
+                </a>
+                <ul class="collapse list-unstyled" id="parametersSubmenu">
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}" style="margin-left: 30px;">Sites</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}" style="margin-left: 30px;">Lignes</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}" style="margin-left: 30px;">Magasins</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}" style="margin-left: 30px;">Zones</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}" style="margin-left: 30px;">Shifts</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}" style="margin-left: 30px;">Produits</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}" style="margin-left: 30px;">Familles</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}" style="margin-left: 30px;">Unités</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
+                    <i class="margiin far fa-user"></i> 
+                    <span class="menu-text">Utilisateurs</span>
+                </a>
+                <ul class="collapse list-unstyled" id="usersSubmenu">
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}" style="margin-left: 30px;">Active</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}" style="margin-left: 30px;">Nouveau</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}" style="margin-left: 30px;">Actualisez</a>
+                    </li>
+                </ul>
+            </li>
+        {% endif %}
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'logout' %}">
                 <i class="margiin fas fa-sign-out-alt"></i> 
@@ -89,11 +93,13 @@
     </ul>
 
     <ul class="nav flex-row flex-wrap d-md-none">
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
-                <i class="margiin fas fa-house"></i> 
-            </a>
-        </li>
+        {% if user.role == 'Admin' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
+                    <i class="margiin fas fa-house"></i> 
+                </a>
+            </li>
+        {% endif %}
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name in 'select_f,select_p,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'select_f' %}">
                 <i class="margiin fas fa-plus"></i> 
@@ -109,53 +115,55 @@
                 <i class="margiin fas fa-exchange-alt"></i> 
             </a>
         </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
-                <i class="margiin fas fa-gear"></i> 
-            </a>
-            <ul class="collapse list-unstyled" id="parametersSubmenu">
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}">Sites</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}">Lignes</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}">Magasins</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}">Zones</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}">Unités</a>
-                </li>
-            </ul>
-        </li>
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
-                <i class="margiin far fa-user"></i> 
-            </a>
-            <ul class="collapse list-unstyled" id="usersSubmenu">
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}">Active</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}">Nouveau</a>
-                </li>
-                <li class="ml-3 mb-2">
-                    <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}">Actualisez</a>
-                </li>
-            </ul>
-        </li>
+        {% if user.role == 'Admin' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,zones,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                    <i class="margiin fas fa-gear"></i> 
+                </a>
+                <ul class="collapse list-unstyled" id="parametersSubmenu">
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'sites' %} class="active" {% endif %} href="{% url 'sites' %}">Sites</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'lines' %} class="active" {% endif %} href="{% url 'lines' %}">Lignes</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'warehouses' %} class="active" {% endif %} href="{% url 'warehouses' %}">Magasins</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'zones' %} class="active" {% endif %} href="{% url 'zones' %}">Zones</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'shifts' %} class="active" {% endif %} href="{% url 'shifts' %}">Shifts</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'units' %} class="active" {% endif %} href="{% url 'units' %}">Unités</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'users,new_users,refresh_users' %} activeP {% endif %}" href="#usersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="usersSubmenu">
+                    <i class="margiin far fa-user"></i> 
+                </a>
+                <ul class="collapse list-unstyled" id="usersSubmenu">
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'users' %} class="active" {% endif %} href="{% url 'users' %}">Active</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'new_users' %} class="active" {% endif %} href="{% url 'new_users' %}">Nouveau</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'refresh_users' %} class="active" {% endif %} href="{% url 'refresh_users' %}">Actualisez</a>
+                    </li>
+                </ul>
+            </li>
+        {% endif %}
         <li class="nav-item mb-2">
             <a class="nav-link" href="{% url 'logout' %}">
                 <i class="margiin fas fa-sign-out-alt"></i> 

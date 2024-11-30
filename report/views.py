@@ -12,7 +12,7 @@ from .models import *
 from account.models import *
 from .forms import *
 import qrcode
-from datetime import date
+from datetime import date, datetime
 from django.utils.timezone import now, timedelta
 
 # UNIT
@@ -36,11 +36,11 @@ def deleteUnitView(request, id):
     unit = get_object_or_404(Unit, id=id)
     try:
         unit.delete()
-        url_path = reverse('units')  # Adjust the URL name accordingly
+        url_path = reverse('units')
         return redirect(getRedirectionURL(request, url_path))
     except Exception as e:
         messages.error(request, f"Erreur lors de la suppression de l'unité : {e}")
-        return redirect(getRedirectionURL(request, reverse('units')))  # Adjust the URL name accordingly
+        return redirect(getRedirectionURL(request, reverse('units')))
 
 @login_required(login_url='login')
 @admin_required
@@ -298,7 +298,7 @@ def get_warehouses_for_line(request):
     warehouses = Warehouse.objects.filter(site=line.site)
     warehouse_data = [{'id': warehouse.id, 'name': warehouse.designation} for warehouse in warehouses]
 
-    return JsonResponse({'warehouses': warehouse_data})
+    return JsonResponse({'warehouses': warehouse_data, 'site_id': line.site.id})
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -313,7 +313,7 @@ def get_zones_for_warehouse(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_list(request):
-    moves = MoveLine.objects.filter(move__line__in=request.user.lines.all().values('id')).order_by('-date_modified')    
+    moves = MoveLine.objects.filter(Q(move__gestionaire=request.user) | Q(move__line__in=request.user.lines.all().values('id'))).order_by('-date_modified')    
     filteredData = MoveLineFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
@@ -347,7 +347,7 @@ def move_list(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def tarnsfer_list(request):
-    transfers = LineDetail.objects.filter(move_line__move__line__in=request.user.lines.all().values('id'), move_line__move__is_transfer=True).order_by('-date_modified')    
+    transfers = LineDetail.objects.filter(Q(move_line__move__gestionaire=request.user) | Q(move_line__move__line__in=request.user.lines.all().values('id')), move_line__move__is_transfer=True).order_by('-date_modified')    
     filteredData = LineDetailFilter(request.GET, queryset=transfers)
     transfers = filteredData.qs
     page_size_param = request.GET.get('page_size')
@@ -391,14 +391,17 @@ def move_edit(request, move_line_id):
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_delete(request, move_line_id):
-    move = get_object_or_404(MoveLine, id=move_line_id)
+    move_line = get_object_or_404(MoveLine, id=move_line_id)
     try:
-        if move.move.is_transfer:
-            for d in move.details.all():
+        if move_line.move.is_transfer:
+            for d in move_line.details.all():
                 original = LineDetail.objects.get(id=d.mirrored_move.id)
                 original.qte += d.qte
                 original.save()
-        Move.objects.get(id=move.move.id).delete()
+        move = Move.objects.get(id=move_line.move.id)
+        move_line.delete()
+        if move.move_lines.all().count() == 0:
+            move.delete()
         messages.success(request, "Move supprimée avec succès.")
     except Exception as e:
         messages.error(request, f"Erreur lors de la suppression du move : {e}")
@@ -417,14 +420,15 @@ def create_move(request):
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
                 product = request.POST.get('product')
-                if not (site_id, line_id and shift_id and gestionaire_id):
+                production_year = datetime.strptime(production_date, "%Y-%m-%d").year
+                if not (site_id and line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
 
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number)
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year)
                 if existing_move_line.exists():
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
-
-                move = Move.objects.create(site_id=site_id, line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
+                
+                move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move=move, 
@@ -457,13 +461,14 @@ def update_move(request, move_line_id):
                 gestionaire_id = request.POST.get('gestionaire')
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
+                production_year = datetime.strptime(production_date, "%Y-%m-%d").year
 
                 if not (line_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
 
                 move_line = MoveLine.objects.get(id=move_line_id)
 
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line).exclude(id=move_line_id)
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
                 if existing_move_line.exists():
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
 
@@ -627,6 +632,7 @@ def transfer_quantity(request):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                site_id = request.POST.get('site_id')
                 destination_line_id = request.POST.get('line')
                 destination_warehouse_id = request.POST.get('destination_warehouse')
                 destination_zone_id = request.POST.get('destination_zone')
@@ -634,7 +640,7 @@ def transfer_quantity(request):
                 transfer_quantity = int(request.POST.get('destination_qte', 0))
                 source_id = request.POST.get('source_id')
 
-                if not all([destination_line_id, destination_warehouse_id, destination_zone_id, destination_lot_number, transfer_quantity]):
+                if not all([site_id, destination_line_id, destination_warehouse_id, destination_zone_id, destination_lot_number, transfer_quantity]):
                     return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=200)
 
                 if transfer_quantity <= 0:
@@ -646,20 +652,21 @@ def transfer_quantity(request):
                 if transfer_quantity > source_line_detail.qte:
                     return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=200)
                 
-                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id).first()
+                move_year = source_move_line.move.date.year
+                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id, move__date__year=move_year).first()
                 
                 if existing_move_line: 
                     if not existing_move_line.move.is_transfer:
                         return JsonResponse({'success': False, 'message': f'N° Lot {destination_lot_number} existe déjà.'}, status=200)
                     elif not existing_move_line.move.state == 'Brouillon':
                         return JsonResponse({'success': False, 'message': f'Il existe déjà un transfert validé avec le même N° Lot {destination_lot_number}, id = {existing_move_line.id}'}, status=200)
-                    elif existing_move_line.qte + transfer_quantity > source_line_detail.qte:
+                    elif source_line_detail.transfers.aggregate(total=models.Sum('qte'))['total'] or 0 >= transfer_quantity: 
                         return JsonResponse({'success': False, 'message': f'La quantité à transférer dépasse la quantité disponible.'}, status=200)
                     else:
                         LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
                                               qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
                 else:
-                    new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
+                    new_move = Move.objects.create(site_id=site_id,line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
                                                 is_transfer=True, type='Entré', write_uid=request.user, 
                                                 create_uid=request.user)
 

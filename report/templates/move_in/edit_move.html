@@ -39,7 +39,7 @@
         <div class="row">
             <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
                 <div class="row">
-                    <input type="number" name="site" id="site" hidden required>
+                    <input type="number" name="site" id="site" value="{{ move_line.move.site.id }}" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
                         <input type="text" name="lot_number" id="lot_number" class="form-control" value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -67,7 +67,7 @@
                         </select>
                     </div>
                     {% else %}
-                        <input type="hidden" name="line" id="line" value="{{ move_line.line_id }}">
+                        <input type="hidden" name="line" id="line" value="{{ move_line.move.line.id }}">
                     {% endif %}
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
@@ -79,6 +79,8 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% else %}
+                        <input type="hidden" name="gestionaire" id='gestionaire' value="{{ move_line.move.gestionaire.id }}">
                     {% endif %}
                     {% if not move_line.move.is_transfer %}
                         <div class="col-lg-6 col-12 mb-2">
@@ -250,21 +252,7 @@
                 .catch(error => console.error('Error fetching zones:', error));
         }
     });
-
-    const lines = {{ lines|length }};
-    const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
-    if (lines === 1) {
-        const lineSelect = document.getElementById('line');
-        lineSelect.value = {{ lines.0.id }};
-        lineWrapper.style.display = 'none';
-        lineSelect.dispatchEvent(new Event('change'));
-    }
-
-    const isGestionaire = '{{ request.user.role }}' === 'Gestionaire';
-    const gestionaireWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="gestionaire"]').parentElement;
-    if (isGestionaire) {
-        gestionaireWrapper.style.display = 'none';
-    }
+    
     document.addEventListener("DOMContentLoaded", () => {
         const productionDateField = document.getElementById("production_date");
         const expireDateField = document.getElementById("expire_date");
@@ -381,7 +369,6 @@
                 cancelButtonText: "Non",
             })
             .then((willConfirm) => {
-                console.log(willConfirm);
                 if (willConfirm) {
                     const form = document.getElementById('move_in-form');
                     const formData = new FormData(form);

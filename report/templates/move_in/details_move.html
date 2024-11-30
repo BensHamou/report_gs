@@ -130,6 +130,7 @@
                             <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transferModal" 
                                     data-line-detail-id="{{ detail.id }}" 
                                     data-line-id="{{ detail.move_line.move.line.id }}" 
+                                    data-site-id="{{ detail.move_line.move.site.id }}" 
                                     data-magasin="{{ detail.warehouse.designation }}"
                                     data-lot="{{ detail.move_line.n_lot }}"
                                     data-zone="{{ detail.zone.designation }}"
@@ -272,8 +273,11 @@
         modal.find('#destination-qte').val('').attr('max', button.data('qte'));
     
         const lineId = button.data('line-id');
+        const siteId = button.data('site-id');
         const lineSelect = modal.find('#line');
+        const siteInput = modal.find('#site_id');
         lineSelect.val(lineId);
+        siteInput.val(siteId);
     
         $.ajax({
             url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
@@ -361,13 +365,15 @@
         const lineId = $(this).val();
         const warehouseSelect = $('#destination-warehouse');
         const zoneSelect = $('#destination-zone');
-    
+        const siteField = $('#site_id');
+
         if (!lineId) {
             warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             return;
         }
-    
+
+
         $.ajax({
             url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
             success: function (data) {
@@ -375,7 +381,7 @@
                 data.warehouses.forEach(function (warehouse) {
                     warehouseSelect.append(new Option(warehouse.name, warehouse.id));
                 });
-    
+                siteField.val(data.site_id);
                 zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             },
             error: function () {

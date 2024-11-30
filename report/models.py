@@ -147,7 +147,8 @@ class MoveLine(BaseModel):
 
     @property
     def n_lot(self):
-        return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{self.move.date.year}'
+        return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+
     
     def __str__(self):
         return f"[{self.id}] {self.product} - {self.qte} - {self.lot_number}"
