@@ -424,16 +424,15 @@ def create_move(request):
                 if not (site_id and line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
 
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year)
+                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, move__line_id=line_id)
                 if existing_move_line.exists():
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
                 
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 
-                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move=move, 
-                                                    create_uid=request.user, write_uid=request.user)
-
+                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, write_uid=request.user)
+                
                 row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
                 for row_id in row_ids:
                     warehouse_id = request.POST.get(f'warehouse_{row_id}')
@@ -447,6 +446,7 @@ def create_move(request):
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
 
         except Exception as e:
+            print(str(e))
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
 
 @login_required(login_url='login')
