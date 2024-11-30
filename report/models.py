@@ -115,10 +115,6 @@ class Move(BaseModel):
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
 
     date = models.DateField(default=timezone.now)
-    n_bl_1 = models.PositiveIntegerField(blank=True, null=True)
-    n_bl_2 = models.PositiveIntegerField(blank=True, null=True)
-    n_bl_3 = models.PositiveIntegerField(blank=True, null=True)
-    n_bl_a = models.PositiveIntegerField(blank=True, null=True)
     is_transfer = models.BooleanField(default=False)
     stayed_in_temp = models.PositiveIntegerField(default=0)
 
@@ -180,6 +176,20 @@ class TemporaryZoneAlert(BaseModel):
     start_time = models.DateTimeField(auto_now_add=True)
     email_sent = models.BooleanField(default=False)
 
+class MoveBL(BaseModel):
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='bls')
+    is_annexe = models.BooleanField(default=False)
+    numero = models.PositiveIntegerField()
+
+    @property
+    def num(self):
+        if self.is_annexe:
+            return f'{self.move.site.prefix_bl_a}-{self.numero.zfill(5)}/{str(self.move.date.year)[-2:]}'
+        else:
+            return f'{self.move.site.prefix_bl}-{self.numero.zfill(5)}/{str(self.move.date.year)[-2:]}'
+    
+    def __str__(self):
+        return f"{self.move} - {self.numero}"
 
 class Validation(BaseModel):
     MOVE_STATE = [

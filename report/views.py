@@ -648,20 +648,21 @@ def transfer_quantity(request):
                 
                 source_line_detail = LineDetail.objects.get(id=source_id)
                 source_move_line = source_line_detail.move_line
+                already_transferred = source_line_detail.transfers.aggregate(total=models.Sum('qte'))['total'] or 0
 
                 if transfer_quantity > source_line_detail.qte:
                     return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=200)
+                elif already_transferred + transfer_quantity > source_line_detail.qte: 
+                        return JsonResponse({'success': False, 'message': f'La quantité à transférer dépasse la quantité disponible (Brouillon inclus).'}, status=200)
                 
                 move_year = source_move_line.move.date.year
                 existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id, move__date__year=move_year).first()
                 
-                if existing_move_line: 
+                if existing_move_line:
                     if not existing_move_line.move.is_transfer:
                         return JsonResponse({'success': False, 'message': f'N° Lot {destination_lot_number} existe déjà.'}, status=200)
                     elif not existing_move_line.move.state == 'Brouillon':
                         return JsonResponse({'success': False, 'message': f'Il existe déjà un transfert validé avec le même N° Lot {destination_lot_number}, id = {existing_move_line.id}'}, status=200)
-                    elif source_line_detail.transfers.aggregate(total=models.Sum('qte'))['total'] or 0 >= transfer_quantity: 
-                        return JsonResponse({'success': False, 'message': f'La quantité à transférer dépasse la quantité disponible.'}, status=200)
                     else:
                         LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
                                               qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
