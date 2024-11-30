@@ -24,7 +24,7 @@ class MoveLineSerializer(serializers.ModelSerializer):
 class SiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Site
-        fields = ['id', 'designation', 'address', 'email']
+        fields = ['id', 'designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a']
 
 class WarehouseSerializer(serializers.ModelSerializer):
 
@@ -42,7 +42,7 @@ class LineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Line
-        fields = ['id', 'designation', 'prefix_bl', 'prefix_bl_a', 'prefix_nlot', 'site']
+        fields = ['id', 'designation', 'prefix_nlot', 'site']
 
 class FamilySerializer(serializers.ModelSerializer):
     image = serializers.ImageField(use_url=True)

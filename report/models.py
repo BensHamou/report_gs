@@ -1,4 +1,4 @@
-from account.models import BaseModel, Line, Zone, Warehouse, Shift
+from account.models import BaseModel, Line, Zone, Warehouse, Shift, Site
 from django.template.defaultfilters import slugify
 from PIL import Image as PILImage
 from django.utils import timezone
@@ -64,17 +64,17 @@ class Product(BaseModel):
     alert_stock = models.PositiveIntegerField()
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
 
-    def get_stock_details(self, site):
-        move_lines = MoveLine.objects.filter(product=self, move__state='Confirmé', move__line__site=site)
+    def get_stock_details(self, site_id):
+        move_lines = MoveLine.objects.filter(product=self, move__state='Confirmé', move__site_id=site_id)
         stock_aggregate = move_lines.filter(move__type='Entré').aggregate(total_in=Sum('details__qte'))
         stock_aggregate.update(move_lines.filter(move__type='Sortie').aggregate(total_out=Sum('details__qte')))
         net_stock = (stock_aggregate['total_in'] or 0) - (stock_aggregate['total_out'] or 0)
 
-        valid_zones = Zone.objects.filter(temp=False, quarantine=False, warehouse__site=site)
+        valid_zones = Zone.objects.filter(temp=False, quarantine=False, warehouse__site_id=site_id)
         
         availability = (
             LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', zone__in=valid_zones)
-            .values('warehouse__designation', 'zone__designation', 'warehouse__id', 'zone__id')
+            .values('move_line__lot_number', 'move_line__move__date', 'warehouse__id', 'zone__id', 'code')
             .annotate(qte_in=Sum('qte', filter=Q(move_line__move__type='Entré')), qte_out=Sum('qte', filter=Q(move_line__move__type='Sortie')))
             .annotate(net_qte=(models.F('qte_in') or 0 - models.F('qte_out') or 0))
             .filter(net_qte__gt=0)
@@ -82,19 +82,19 @@ class Product(BaseModel):
 
         return {'net_stock': net_stock, 'availability': list(availability)}
 
-    def qte_in_stock(self, site):
-        return self.get_stock_details(site)['net_stock'] / 1000
+    def qte_in_stock(self, site_id):
+        return self.get_stock_details(site_id)['net_stock'] / 1000
 
-    def state_stock(self, site):
-        qte = self.qte_in_stock(site)
+    def state_stock(self, site_id):
+        qte = self.qte_in_stock(site_id)
         if qte > self.alert_stock / 1000:
             return 'En stock'
         elif qte < self.alert_stock / 1000 and qte > 0:
             return 'Stock bas'
         return 'Rupture'
     
-    def last_entry_date(self, site):
-        last_entry = MoveLine.objects.filter(product=self, move__type='Entré', move__state='Confirmé', move__line__site=site).order_by('-move__date').first()
+    def last_entry_date(self, site_id):
+        last_entry = MoveLine.objects.filter(product=self, move__type='Entré', move__state='Confirmé', move__site_id=site_id).order_by('-move__date').first()
         return last_entry.move.date if last_entry else None
     
     def __str__(self):
@@ -109,7 +109,8 @@ class Move(BaseModel):
     ]
     MOVE_TYPE = [('Entré', 'Entré'), ('Sortie', 'Sortie')]
 
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, related_name='moves')
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='moves')
+    line = models.ForeignKey(Line, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
 
@@ -125,7 +126,7 @@ class Move(BaseModel):
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
 
     def __str__(self):
-        return f"{self.line.designation} - {self.date}"
+        return f"[{self.id}] {self.line.designation} - {self.date}"
     
 class MoveLine(BaseModel):
     lot_number = models.CharField(max_length=255)
@@ -149,7 +150,7 @@ class MoveLine(BaseModel):
         return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{self.move.date.year}'
     
     def __str__(self):
-        return f"{self.product} - {self.qte} - {self.lot_number}"
+        return f"[{self.id}] {self.product} - {self.qte} - {self.lot_number}"
     
 class LineDetail(BaseModel):
     move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')

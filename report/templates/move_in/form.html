@@ -7,7 +7,8 @@
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="{% url 'select_p' product.family.id %}" 
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'select_p' product.family.id %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" 
@@ -38,6 +39,7 @@
         <div class="row">
             <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
                 <div class="row">
+                    <input type="number" name="site" id="site" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
                         <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -187,6 +189,8 @@
                         gestionaireSelect.appendChild(option);
                     });
                 }
+                const siteInput = document.getElementById('site');
+                siteInput.value = data.site;
             })
             .catch(error => console.error('Error fetching shifts or gestionaires:', error));
 

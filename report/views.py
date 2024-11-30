@@ -148,7 +148,7 @@ def listProductView(request):
     if selected_site_id:
         selected_site = Site.objects.get(id=selected_site_id)
     else:
-        selected_site = Site.objects.get(id=sites.first()['site_id']) if sites.exists() else None
+        selected_site = request.user.default_site
 
     filteredData = ProductFilter(request.GET, queryset=products)
     products = filteredData.qs
@@ -159,9 +159,9 @@ def listProductView(request):
             products_with_stock.append({
                 'id': product.id,
                 'designation': product.designation,
-                'qte_in_stock': product.qte_in_stock(selected_site),
-                'state_stock': product.state_stock(selected_site),
-                'last_entry_date': product.last_entry_date(selected_site),
+                'qte_in_stock': product.qte_in_stock(selected_site.id),
+                'state_stock': product.state_stock(selected_site.id),
+                'last_entry_date': product.last_entry_date(selected_site.id),
             })
     else:
         products_with_stock = [{'id': product.id, 'designation': product.designation, 'qte_in_stock': None, 'state_stock': 'Site non sélectionné', 'last_entry_date': None} for product in products]
@@ -177,7 +177,7 @@ def listProductView(request):
         'filteredData': filteredData,
         'allowed_sites': sites,
         'selected_site': selected_site,
-        'default_site': sites.first() if sites.exists() else None,
+        'default_site': request.user.default_site,
     }
     return render(request, 'list_products.html', context)
 
@@ -288,7 +288,7 @@ def get_shifts_and_users_for_line(request):
     shift_data = [{'id': shift.id, 'name': shift.designation} for shift in shifts]
     user_data = [{'id': user.id, 'name': user.fullname} for user in users]
     
-    return JsonResponse({'shifts': shift_data, 'users': user_data})
+    return JsonResponse({'shifts': shift_data, 'users': user_data, 'site': line.site.id})
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -393,7 +393,12 @@ def move_edit(request, move_line_id):
 def move_delete(request, move_line_id):
     move = get_object_or_404(MoveLine, id=move_line_id)
     try:
-        move.delete()
+        if move.move.is_transfer:
+            for d in move.details.all():
+                original = LineDetail.objects.get(id=d.mirrored_move.id)
+                original.qte += d.qte
+                original.save()
+        Move.objects.get(id=move.move.id).delete()
         messages.success(request, "Move supprimée avec succès.")
     except Exception as e:
         messages.error(request, f"Erreur lors de la suppression du move : {e}")
@@ -405,20 +410,21 @@ def create_move(request):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                site_id = request.POST.get('site')
                 line_id = request.POST.get('line')
                 shift_id = request.POST.get('shift')
                 gestionaire_id = request.POST.get('gestionaire')
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
                 product = request.POST.get('product')
-                if not (line_id and shift_id and gestionaire_id):
+                if not (site_id, line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
 
                 existing_move_line = MoveLine.objects.filter(lot_number=lot_number)
                 if existing_move_line.exists():
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
 
-                move = Move.objects.create(line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
+                move = Move.objects.create(site_id=site_id, line_id=line_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move=move, 
@@ -445,14 +451,15 @@ def update_move(request, move_line_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
+                site_id = request.POST.get('site')
                 line_id = request.POST.get('line')
-                shift_id = request.POST.get('shift')
+                shift_id = request.POST.get('shift', None)
                 gestionaire_id = request.POST.get('gestionaire')
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
 
-                if not (line_id and shift_id and gestionaire_id):
-                    return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoire.'}, status=200)
+                if not (line_id and gestionaire_id):
+                    return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
 
                 move_line = MoveLine.objects.get(id=move_line_id)
 
@@ -461,9 +468,14 @@ def update_move(request, move_line_id):
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
 
                 move = Move.objects.get(id=move_line.move.id)
-
+                if not move.is_transfer:
+                    if shift_id:
+                        move.shift_id = shift_id
+                    else:
+                        return JsonResponse({'success': False, 'message': 'Le champs Shift est obligatoire.'}, status=200)
+                    
+                move.site_id = site_id
                 move.line_id = line_id
-                move.shift_id = shift_id
                 move.gestionaire_id = gestionaire_id
                 move.date = production_date
                 move.write_uid = request.user
@@ -473,17 +485,31 @@ def update_move(request, move_line_id):
                 move_line.write_uid = request.user
                 move_line.save()
 
-                LineDetail.objects.filter(move_line=move_line).delete()
+                existing_line_details = LineDetail.objects.filter(move_line=move_line)
+                existing_ids = [str(detail.id) for detail in existing_line_details]
+                to_update_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and request.POST[key]]
+                to_add_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and not request.POST[key]]
+                to_update_ids = [request.POST.get(f'detail_id_{row_id}') for row_id in to_update_rows]
+                to_delete_ids = [detail_id for detail_id in existing_ids if detail_id not in to_update_ids]
 
-                row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
-                for row_id in row_ids:
+                LineDetail.objects.filter(id__in=to_delete_ids).delete()
+
+                for row_id in to_update_rows:
+                    detail_id = request.POST.get(f'detail_id_{row_id}')
+                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                    zone_id = request.POST.get(f'zone_{row_id}')
+                    qte = request.POST.get(f'qte_{row_id}')
+                    if warehouse_id and zone_id and qte:
+                        LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), write_uid=request.user)
+
+                for row_id in to_add_rows:
                     warehouse_id = request.POST.get(f'warehouse_{row_id}')
                     zone_id = request.POST.get(f'zone_{row_id}')
                     qte = request.POST.get(f'qte_{row_id}')
 
                     if warehouse_id and zone_id and qte:
-                        line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, write_uid=request.user, 
-                                                  create_uid=move_line.create_uid, date_created=move_line.date_created, qte=int(qte))
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), 
+                                                  write_uid=request.user, create_uid=move_line.create_uid)
 
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
         except Move.DoesNotExist:
@@ -609,22 +635,28 @@ def transfer_quantity(request):
                 source_id = request.POST.get('source_id')
 
                 if not all([destination_line_id, destination_warehouse_id, destination_zone_id, destination_lot_number, transfer_quantity]):
-                    return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=400)
+                    return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=200)
 
                 if transfer_quantity <= 0:
-                    return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=400)
+                    return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=200)
                 
                 source_line_detail = LineDetail.objects.get(id=source_id)
                 source_move_line = source_line_detail.move_line
 
                 if transfer_quantity > source_line_detail.qte:
-                    return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=400)
+                    return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=200)
                 
-                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id, move__is_transfer=True, 
-                                                             move__state='Brouillon').first()
-
-                if existing_move_line:
-                    LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id).first()
+                
+                if existing_move_line: 
+                    if not existing_move_line.move.is_transfer:
+                        return JsonResponse({'success': False, 'message': f'N° Lot {destination_lot_number} existe déjà.'}, status=200)
+                    elif not existing_move_line.move.state == 'Brouillon':
+                        return JsonResponse({'success': False, 'message': f'Il existe déjà un transfert validé avec le même N° Lot {destination_lot_number}, id = {existing_move_line.id}'}, status=200)
+                    elif existing_move_line.qte + transfer_quantity > source_line_detail.qte:
+                        return JsonResponse({'success': False, 'message': f'La quantité à transférer dépasse la quantité disponible.'}, status=200)
+                    else:
+                        LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
                                               qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
                 else:
                     new_move = Move.objects.create(line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
@@ -640,9 +672,9 @@ def transfer_quantity(request):
                 return JsonResponse({'success': True, 'message': 'Le transfert a été effectué avec succès.'}, status=200)
 
         except LineDetail.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Détail de ligne source introuvable.'}, status=404)
+            return JsonResponse({'success': False, 'message': 'Détail de ligne source introuvable.'}, status=200)
         except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Erreur lors du transfert : {str(e)}'}, status=500)
+            return JsonResponse({'success': False, 'message': f'Erreur lors du transfert : {str(e)}'}, status=200)
 
 def get_transfers(request, detail_id):
     detail = get_object_or_404(LineDetail, id=detail_id)

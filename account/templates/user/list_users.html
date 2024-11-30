@@ -30,9 +30,9 @@ Paramètre Utilisateurs
                     <th class="table-header">#</th>
                     <th class="table-header">Nom complet</th>
                     <th class="table-header">Email</th>
+                    <th class="table-header">Site</th>
                     <th class="table-header">Lignes</th>
                     <th class="table-header">Rôle</th>
-                    <th class="table-header">Admin?</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
@@ -43,6 +43,7 @@ Paramètre Utilisateurs
                         <td class="table-text">{{ user.id }}</td>
                         <td class="table-text">{{ user.fullname }}</td>
                         <td class="table-text">{{ user.email }}</td>
+                        <td class="table-text">{{ user.default_site }}</td>
                         <td class="d-none d-md-table-cell">
                             {% for line in user.lines.all %}
                                 <span class="badge listBadge">
@@ -53,7 +54,6 @@ Paramètre Utilisateurs
                             {% endfor %}
                         </td>
                         <td class="table-text">{{ user.role }}</td>
-                        <td class="table-text">{{ user.is_admin|yesno:"Oui,Non" }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_user' user.id %}')" 
                                 class="btn" style="color: #5d5d5d;">

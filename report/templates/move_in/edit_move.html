@@ -7,7 +7,8 @@
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="{% url 'select_p' product.family.id %}" 
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'select_p' product.family.id %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" 
@@ -38,6 +39,7 @@
         <div class="row">
             <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
                 <div class="row">
+                    <input type="number" name="site" id="site" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
                         <input type="text" name="lot_number" id="lot_number" class="form-control" value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -65,7 +67,7 @@
                         </select>
                     </div>
                     {% else %}
-                    <input type="hidden" name="line" value="{{ move_line.line_id }}">
+                        <input type="hidden" name="line" id="line" value="{{ move_line.line_id }}">
                     {% endif %}
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
@@ -78,15 +80,17 @@
                         </select>
                     </div>
                     {% endif %}
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="shift" class="form-label">Shift</label>
-                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                            <option value="">-- Shift --</option>
-                            {% for shift in default_shifts %}
-                                <option value="{{ shift.id }}" {% if shift.id == move_line.move.shift.id %}selected{% endif %}>{{ shift.designation }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    {% if not move_line.move.is_transfer %}
+                        <div class="col-lg-6 col-12 mb-2">
+                            <label for="shift" class="form-label">Shift</label>
+                            <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <option value="">-- Shift --</option>
+                                {% for shift in default_shifts %}
+                                    <option value="{{ shift.id }}" {% if shift.id == move_line.move.shift.id %}selected{% endif %}>{{ shift.designation }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endif %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="expire_date" class="form-label">Date d'expiration</label>
                         <input type="date" name="expire_date" id="expire_date" class="form-control" readonly value="{{ move_line.expire_date }}" style="background-color: #ffffff; padding-left: 30px;">
@@ -101,6 +105,7 @@
         <div class="row mt-4" id="details-container">
             {% for detail in line_details %}
             <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
+                <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                     <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -144,7 +149,7 @@
 </div>
 
 <script>
-    let rowId = 1;
+    let rowId = {{ line_details|length }};
 
     document.getElementById('details-container').addEventListener('click', function (e) {
         if (e.target.closest('#add-row')) {
@@ -202,6 +207,8 @@
                         gestionaireSelect.appendChild(option);
                     });
                 }
+                const siteInput = document.getElementById('site');
+                siteInput.value = data.site;
             })
             .catch(error => console.error('Error fetching shifts or gestionaires:', error));
 

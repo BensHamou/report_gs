@@ -46,7 +46,7 @@ def refreshUserList(request):
         group_users = json.loads(response_.content)['members']
         new_users_list = [user for user in data['users'] if user['fullname'] in group_users and user['AD2000'] not in usernames]
         for user in new_users_list:
-            user = User(username= user['AD2000'], password='password', fullname=user['fullname'], role='Nouveau', is_admin=False, first_name= user['fname'], email= user['mail'], last_name = user['lname'])
+            user = User(username= user['AD2000'], password='password', fullname=user['fullname'], role='Nouveau', default_site=Site.objects.first(), is_admin=False, first_name= user['fname'], email= user['mail'], last_name = user['lname'])
             user.save()
     else:
         print('Error: could not fetch data from API')

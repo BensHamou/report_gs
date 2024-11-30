@@ -32,8 +32,6 @@ Paramètre Lignes
                     <th class="table-header">#</th>
                     <th class="table-header">Désignation</th>
                     <th class="table-header">Site</th>
-                    <th class="table-header">Préfixe BL</th>
-                    <th class="table-header">Préfixe BL Annex</th>
                     <th class="table-header">Préfixe N° Lot</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
@@ -45,8 +43,6 @@ Paramètre Lignes
                         <td class="table-text">{{ line.id }}</td>
                         <td class="table-text">{{ line.designation }}</td>
                         <td class="table-text">{{ line.site }}</td>
-                        <td class="table-text">{{ line.prefix_bl }}</td>
-                        <td class="table-text">{{ line.prefix_bl_a }}</td>
                         <td class="table-text">{{ line.prefix_nlot }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_line' line.id %}')" 

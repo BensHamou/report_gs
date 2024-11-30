@@ -18,7 +18,7 @@
             </div>
             <div class="col-lg-6 col-12 d-flex justify-content-end flex-wrap">
                 {% if allowed_sites %}
-                    <select name="site" class="form-control mb-2 mb-md-0 me-2" style="width: auto;">
+                    <select name="site" class="form-control mb-2 mb-md-0 me-2" style="background-color: #ffffff; width: auto;">
                         {% for site in allowed_sites %}
                             <option value="{{ site.site_id }}" {% if selected_site and site.site_id == selected_site.id %}selected{% endif %}>
                                 {{ site.site__designation }}

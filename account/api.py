@@ -30,7 +30,7 @@ def login_api(request):
 
             if user is not None:
                 token, _ = Token.objects.get_or_create(user=user)
-                return JsonResponse({'success': True, 'token': token.key}, status=200)
+                return JsonResponse({'success': True, 'token': token.key, 'fullname': user.fullname, 'default_site': user.default_site.id}, status=200)
             else:
                 return JsonResponse({'success': False, 'message': 'Identifiants invalides.'}, status=401)
 
@@ -87,23 +87,17 @@ class MoveOutDetailsView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
-        line_id = request.data.get('line_id')
+        site_id = request.data.get('site_id')
         product_ids = request.data.get('product_ids')
 
-        if not line_id or not product_ids:
-            return Response({"detail": "Missing 'line_id' or 'product_ids'"}, status=400)
-        
-        try:
-            line = Line.objects.get(id=line_id)
-            site = line.site
-        except Line.DoesNotExist:
-            return Response({"detail": "Invalid 'line_id'"}, status=404)
+        if not site_id or not product_ids:
+            return Response({"detail": "Missing 'site_id' or 'product_ids'"}, status=400)
 
         products = Product.objects.filter(id__in=product_ids)
         product_data = []
 
         for product in products:
-            stock_details = product.get_stock_details(site)
+            stock_details = product.get_stock_details(site_id)
             
             product_data.append({
                 'product_id': product.id,

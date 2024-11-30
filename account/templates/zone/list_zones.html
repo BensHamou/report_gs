@@ -30,10 +30,11 @@
             <thead>
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
-                    <th class="table-header">Désignation</th>
-                    <th class="table-header">Quarantaine</th>
-                    <th class="table-header">Temporaire</th>
+                    <th class="table-header">Site</th>
                     <th class="table-header">Magasin</th>
+                    <th class="table-header">Zone</th>
+                    <th class="table-header">Est Quarantaine?</th>
+                    <th class="table-header">Est Temporaire?</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
@@ -42,10 +43,11 @@
                     {% for zone in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text">{{ zone.id }}</td>
+                        <td class="table-text">{{ zone.warehouse.site }}</td>
+                        <td class="table-text">{{ zone.warehouse.designation }}</td>
                         <td class="table-text">{{ zone.designation }}</td>
                         <td class="table-text">{{ zone.quarantine|yesno:"Oui,Non" }}</td>
                         <td class="table-text">{{ zone.temp|yesno:"Oui,Non" }}</td>
-                        <td class="table-text">{{ zone.warehouse }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_zone' zone.id %}')" class="btn" style="color: #5d5d5d;">
                                 <i class="far fa-pen-to-square"></i>

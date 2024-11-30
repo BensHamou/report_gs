@@ -41,6 +41,8 @@ class Site(BaseModel):
     designation = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     email = models.EmailField()
+    prefix_bl = models.CharField(max_length=50)
+    prefix_bl_a = models.CharField(max_length=50)
 
     def __str__(self):
         return self.designation
@@ -66,8 +68,6 @@ class Zone(BaseModel):
 
 class Line(BaseModel):
     designation = models.CharField(max_length=255)
-    prefix_bl = models.CharField(max_length=50)
-    prefix_bl_a = models.CharField(max_length=50)
     prefix_nlot = models.CharField(max_length=50)
     site = models.ForeignKey(Site, related_name='lines', on_delete=models.CASCADE)
     shifts = models.ManyToManyField(Shift, related_name='lines', blank=True)
@@ -94,6 +94,7 @@ class User(BaseModel, AbstractUser):
 
     fullname = models.CharField(max_length=255)
     role = models.CharField(choices=ROLE_CHOICES, max_length=30)
+    default_site = models.ForeignKey(Site, related_name='users', on_delete=models.SET_NULL, null=True, blank=True)
     lines = models.ManyToManyField(Line, related_name='users', blank=True)
     is_admin = models.BooleanField(default=False)
 
