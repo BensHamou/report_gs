@@ -64,7 +64,8 @@ TEMPLATES = [
                  os.path.join(BASE_DIR, 'account', 'templates', 'user'), os.path.join(BASE_DIR, 'account', 'templates', 'zone'),
                  os.path.join(BASE_DIR, 'account', 'templates', 'warehouse'), os.path.join(BASE_DIR, 'report', 'templates', 'family'),
                  os.path.join(BASE_DIR, 'report', 'templates', 'product'), os.path.join(BASE_DIR, 'report', 'templates', 'unit'),
-                 os.path.join(BASE_DIR, 'report', 'templates', 'move_in')
+                 os.path.join(BASE_DIR, 'report', 'templates', 'move_in'), os.path.join(BASE_DIR, 'report', 'templates', 'move_out'),
+                 os.path.join(BASE_DIR, 'report', 'templates', 'fragment')
                 ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -104,22 +105,22 @@ DATABASES = {
     #   'HOST': '10.10.10.20',
     #   'PORT': '5172',
     #},
-    'default': {
-     'ENGINE': 'django.db.backends.postgresql',
-     'NAME': 'PumaGS',
-     'USER': 'puma_gs',
-     'PASSWORD': 'puma_gs',
-     'HOST': '127.0.0.1',
-     'PORT': '5432',
-    },
     #'default': {
-    #    'ENGINE': 'django.db.backends.postgresql',
-    #    'NAME': os.environ.get('DB_NAME'),
-    #    'USER': os.environ.get('DB_USER'),
-    #    'PASSWORD': os.environ.get('DB_PASS'),
-    #    'HOST': os.environ.get('DB_HOST'),
-    #    'PORT': os.environ.get('DB_PORT'),
-    #}
+    # 'ENGINE': 'django.db.backends.postgresql',
+    # 'NAME': 'PumaGS',
+    # 'USER': 'puma_gs',
+    # 'PASSWORD': 'puma_gs',
+    # 'HOST': '127.0.0.1',
+    # 'PORT': '5432',
+    #},
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASS'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+    }
 }
 
 

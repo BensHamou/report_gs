@@ -121,6 +121,10 @@ class Move(BaseModel):
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
 
+    @property
+    def bl_str(self):
+        return ', '.join([bl.num for bl in self.bls.all()]) 
+
     def __str__(self):
         return f"[{self.id}] {self.line.designation} - {self.date}"
     
@@ -143,7 +147,18 @@ class MoveLine(BaseModel):
 
     @property
     def n_lot(self):
-        return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+        if self.move.type == 'Entré':
+            return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+        else:
+            return '/'
+        
+    @property
+    def style_list(self):
+        if self.move.state == 'Confirmé':
+            return 'font-weight: bold;'
+        elif self.move.state == 'Annulé':
+            return 'color: red;'
+        return 'font-style: italic;'
 
     
     def __str__(self):
@@ -184,9 +199,9 @@ class MoveBL(BaseModel):
     @property
     def num(self):
         if self.is_annexe:
-            return f'{self.move.site.prefix_bl_a}-{self.numero.zfill(5)}/{str(self.move.date.year)[-2:]}'
+            return f'{self.move.site.prefix_bl_a}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
         else:
-            return f'{self.move.site.prefix_bl}-{self.numero.zfill(5)}/{str(self.move.date.year)[-2:]}'
+            return f'{self.move.site.prefix_bl}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
     
     def __str__(self):
         return f"{self.move} - {self.numero}"

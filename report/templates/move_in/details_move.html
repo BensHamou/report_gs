@@ -55,7 +55,7 @@
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
-                    <p class="form-control">{{ move_line.qte }}</p>
+                    <p class="form-control">{{ move_line.qte }} {{ move_line.product.unit }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="palette" class="form-label">Nombre Palettes</label>
@@ -69,12 +69,10 @@
                     <label for="gestionaire" class="form-label">Gestionaire</label>
                     <p class="form-control">{{ move_line.move.gestionaire.fullname }}</p>
                 </div>
-                {% if move_line.move.shift %}
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="shift" class="form-label">Shift</label>
                     <p class="form-control">{{ move_line.move.shift.designation }}</p>
                 </div>
-                {% endif %}
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="expiry_date" class="form-label">Date d'expiration</label>
                     <p class="form-control">{{ move_line.expiry_date|date:'d M Y' }}</p>
@@ -102,7 +100,7 @@
                 <p class="form-control" 
                 {% if detail.transfers.exists %}style="color: red"{% endif %}
                 {% if detail.move_line.move.is_transfer %}style="color: blue"{% endif %}
-                >{{ detail.qte }}</p>
+                >{{ detail.qte }} {{ move_line.product.unit }}</p>
             </div>
             
             {% if can_print %}
@@ -142,7 +140,7 @@
                         <li>
                             <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transfersModal" 
                                     data-line-detail-id="{{ detail.id }}">
-                                <i class="fas fa-sync-alt"></i> Transferts
+                                <i class="fas fa-sync-alt"></i> Historique
                             </button>
                         </li>
                         {% endif %}
@@ -310,13 +308,13 @@
                 if (data.transfers && data.transfers.length > 0) {
                     transfersTableBody.innerHTML = data.transfers.map(transfer => `
                         <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                            <td class="table-text">${transfer.site}</td>
-                            <td class="table-text">${transfer.line}</td>
-                            <td class="table-text">${transfer.magasin}</td>
-                            <td class="table-text">${transfer.zone}</td>
-                            <td class="table-text">${transfer.qte}</td>
-                            <td class="table-text">${new Date(transfer.date).toLocaleString()}</td>
-                            <td class="table-text">${transfer.state}</td>
+                            <td class="table-text"${transfer.style}>${transfer.n_lot}</td>
+                            <td class="table-text"${transfer.style}>${transfer.site}</td>
+                            <td class="table-text"${transfer.style}>${transfer.line}</td>
+                            <td class="table-text"${transfer.style}>${transfer.magasin}</td>
+                            <td class="table-text"${transfer.style}>${transfer.zone}</td>
+                            <td class="table-text"${transfer.style}>${transfer.qte}</td>
+                            <td class="table-text"${transfer.style}>${new Date(transfer.date).toLocaleString()}</td>
                         </tr>
                     `).join('');
                 } else {

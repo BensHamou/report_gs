@@ -128,15 +128,15 @@
                 {% if page %}
                     {% for line in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.id }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.lot_number %}{{ line.n_lot }}{% else %}/{% endif %}</td>
-                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="cursor: pointer; color: {% if line.move.is_transfer %}blue{% elif line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{% if line.move.is_transfer %}Transfer{% else %}{{ line.move.type }}{% endif %}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.line.site }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.unit }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.palette }} Palettes</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.move.lot_number %}{{ line.move.lot_number }}{% else %}/{% endif %}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.id }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{% if line.lot_number %}{{ line.n_lot }}{% else %}/{% endif %}</td>
+                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="{{line.style_list}} cursor: pointer; color: {% if line.move.is_transfer %}blue{% elif line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{% if line.move.is_transfer %}Transfer{% else %}{{ line.move.type }}{% endif %}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.line.site }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.unit }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.palette }} Palettes</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.bl_str|default:"/" }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_move_line' line.id %}')" 
                                 class="btn" style="color: #5d5d5d;">

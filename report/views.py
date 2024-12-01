@@ -544,7 +544,8 @@ def move_line_detail(request, move_line_id):
 
 
     context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_print': can_print, 'lines': lines}
-    
+    if move_line.move.type == 'Sortie':
+        return render(request, 'move_out_details.html', context)
     return render(request, 'details_move.html', context)
 
 @login_required(login_url='login')
@@ -691,8 +692,15 @@ def get_transfers(request, detail_id):
 
     for t in detail.transfers.all():
         move = t.move_line.move
+        style = ''
+        if move.state == 'Confirmé':
+            style = 'style="font-weight: bold;"'
+        elif move.state == 'Annulé':
+            style = 'style="color: red;"'
+        else:
+            style = 'style="font-style: italic;"'
         data.append({ 'site': move.line.site.designation, 'line': move.line.designation, 'magasin': t.warehouse.designation, 
-                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'state': move.state})
+                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'style': style, 'n_lot': t.move_line.n_lot})
         
     return JsonResponse({'transfers': data})
 

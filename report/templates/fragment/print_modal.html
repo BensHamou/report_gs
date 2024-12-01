@@ -1,0 +1,162 @@
+<div class="modal fade" id="printModal" tabindex="-1" role="dialog" aria-labelledby="printModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="printModalLabel">Imprimer l'Étiquette</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body print-modal text-center">
+                <!-- QR Code Section -->
+                <div id="qr-code-section" class="mb-4">
+                    <img id="qr-code-image" src="" alt="QR Code" style="max-width: 40%; height: auto;" crossOrigin="anonymous">
+                </div>
+
+                <!-- Details Section -->
+                <div class="row">
+                    <div class="col-md-6 text-left">
+                        <p class="text-muted m-0">Produit:</p>
+                        <strong class="text-dark" id="modal-product-name"></strong>
+                    </div>
+                    <div class="col-md-6 text-left">
+                        <p class="text-muted m-0">Date Expiration:</p>
+                        <strong class="text-dark" id="modal-expiry-date"></strong>
+                        <p class="text-muted m-0 mt-2">Date Production:</p>
+                        <strong class="text-dark" id="modal-production-date"></strong>
+                    </div>
+                    <div class="col-md-6 text-left mt-5">
+                        <p class="text-muted m-0">N° Lot:</p>
+                        <strong class="text-dark" id="modal-lot-number"></strong>
+                    </div>
+                    <div class="col-md-3 text-left mt-5">
+                        <p class="text-muted m-0">Magasin:</p>
+                        <strong class="text-dark" id="modal-magasin"></strong>
+                    </div>
+                    <div class="col-md-3 text-left mt-5">
+                        <p class="text-muted m-0">Zone:</p>
+                        <strong class="text-dark" id="modal-zone"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ticket Input Section -->
+            <div class="row text-center">
+                <div class="mt-5 mb-2">
+                    <label for="ticket-count">Nombre d'étiquettes:</label>
+                    <input type="number" id="ticket-count" class="form-control w-50 mx-auto" min="1">
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" id="print-button">Imprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('print-button').addEventListener('click', function () {
+        const ticketCount = parseInt(document.getElementById('ticket-count').value) || 1;
+        const qrCodeImage = document.getElementById('qr-code-image');
+        const img = new Image();
+
+        img.onload = function () {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            context.drawImage(img, 0, 0);
+
+            const base64Image = canvas.toDataURL('image/png');
+            const printWindow = window.open('', '_blank');
+
+            if (printWindow) {
+                let printContent = '';
+                for (let i = 0; i < ticketCount; i++) {
+                    printContent += `
+                        <div style="page-break-after: always; width: 142mm; height: 210mm; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div class="fixed-header">grupopuma Algérie</div>
+                            <table style="width: 100%; height: 100%; border-collapse: collapse;">
+                                <tr style="height: 60%;">
+                                    <td style="text-align: center; vertical-align: middle; border: 1.6px solid #000; border-top: 0px solid #000;">
+                                        <img src="${base64Image}" alt="QR Code" style="max-width: 60%; height: auto;">
+                                    </td>
+                                </tr>
+                                <tr style="height: 40%;">
+                                    <td>
+                                        <table style="width: 100%; height: 100%; border-collapse: collapse;">
+                                            <tr style="height: 66%;">
+                                                <td style="text-align: left; width: 50%; vertical-align: middle; border: 1px solid #000;">
+                                                    <p style="padding: 8px;">Produit:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-product-name').textContent}</strong>
+                                                </td>
+                                                <td style="text-align: left; border: 1px solid #000;" colspan="2">
+                                                    <p style="padding: 8px;">Date d'expiration:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-expiry-date').textContent}</strong>
+                                                    <p style="padding: 8px;">Date de production:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-production-date').textContent}</strong>
+                                                </td>
+                                            </tr>
+                                            <tr style="height: 34%;">
+                                                <td style="text-align: left; width: 50%; vertical-align: middle; border: 1px solid #000;">
+                                                    <p style="padding: 8px;">N° Lot:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-lot-number').textContent}</strong>
+                                                </td>
+                                                <td style="text-align: left; border: 1px solid #000; width: 25%;">
+                                                    <p style="padding: 8px;">Magasin:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-magasin').textContent}</strong>
+                                                </td>
+                                                <td style="text-align: left; border: 1px solid #000; width: 25%;">
+                                                    <p style="padding: 8px;">Zone:</p>
+                                                    <strong style="padding: 8px;">${document.getElementById('modal-zone').textContent}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>`;
+                }
+
+                printWindow.document.open();
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Étiquette de Palette</title>
+                        <style>
+                            @page { size: 142mm 210mm; margin: 0; }
+                            body { margin: 0; padding: 0; width: 142mm; height: 209mm; }
+                            table { width: 100%; height: 100%; border-collapse: collapse;}
+                            *{ padding: 0px; margin: 0px; }
+                            td {border: 1px solid #000;}
+                            .fixed-header {
+                                font-size: 12pt;
+                                font-weight: bold;
+                                text-align: left;
+                                width: 534.6px;
+                                border: 1.8px solid #000;
+                                border-bottom: 0px solid #000;
+                            }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+                printWindow.onafterprint = () => printWindow.close();
+            } else {
+                alert("Erreur! Veuillez autoriser les popups pour continuer.");
+            }
+        };
+
+        img.crossOrigin = "Anonymous";
+        img.src = qrCodeImage.src;
+    });
+</script>
