@@ -692,15 +692,8 @@ def get_transfers(request, detail_id):
 
     for t in detail.transfers.all():
         move = t.move_line.move
-        style = ''
-        if move.state == 'Confirmé':
-            style = 'style="font-weight: bold;"'
-        elif move.state == 'Annulé':
-            style = 'style="color: red;"'
-        else:
-            style = 'style="font-style: italic;"'
         data.append({ 'site': move.line.site.designation, 'line': move.line.designation, 'magasin': t.warehouse.designation, 
-                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'style': style, 'n_lot': t.move_line.n_lot})
+                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'state': move.state, 'n_lot': t.move_line.n_lot})
         
     return JsonResponse({'transfers': data})
 

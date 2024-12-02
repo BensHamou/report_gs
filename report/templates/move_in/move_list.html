@@ -79,7 +79,7 @@
                     {{ filteredData.form.zone }}
                 </div>
                 <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
-                    <label for="state" class="form-label">Etat</label>
+                    <label for="state" class="form-label">État</label>
                     {{ filteredData.form.state }}
                 </div>
             </div>
@@ -121,6 +121,7 @@
                     <th class="table-header">Quantité</th>
                     <th class="table-header">Palettes</th>
                     <th class="table-header">N° Bl</th>
+                    <th class="table-header">État</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
@@ -137,6 +138,7 @@
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.unit }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.palette }} Palettes</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.bl_str|default:"/" }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.state }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_move_line' line.id %}')" 
                                 class="btn" style="color: #5d5d5d;">

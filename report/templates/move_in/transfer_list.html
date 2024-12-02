@@ -6,29 +6,22 @@
 
 {% block content %}
 <div class="row mb-3">
-    <form method="GET" class="w-100">
-        <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-12">
-                <p class="page-title">Transfert <i class="fas fa-exchange-alt" style='font-size: 24px'></i></p>
-            </div>
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col-12">
+            <p class="page-title">Transfert <i class="fas fa-exchange-alt" style='font-size: 24px'></i></p>
         </div>
-
-        <div class="row justify-content-between align-items-center mb-3">
-            <div class="col-lg-4 col-md-12 col-sm-12 mb-2 mb-lg-0">
+    </div>
+    <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;">
+        <div class="row mb-3">
+            <div class="col-lg-4 col-md-12 col-sm-12 mb-2">
                 {{ filteredData.form.search }}
             </div>
-            <div class="col-lg-8 col-md-12 col-sm-12">
-                <div class="row align-items-center">
-                    <div class="col-lg-6 col-12 d-flex justify-content-start mb-2 mb-lg-0">
-                        <div>
-                            {{ filteredData.form.state }}
-                        </div>
-                    </div>
-                    <div class="col-lg-6 col-12 d-flex justify-content-end">
-                        <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control me-2" style="width: auto;">
-                        <button type="submit" class="btn btn-primary me-2" style="background-color: #1d71b8;">Appliquer</button>
-                    </div>
-                </div>
+            <div class="col-lg-4 col-md-10 col-sm-12 mb-2">
+                {{ filteredData.form.state }}
+            </div>
+            <div class="col-lg-4 col-md-12 col-sm-12 mb-2 d-flex justify-content-start flex-wrap">
+                <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control mb-2 mb-md-0 me-2" style="width: auto;">
+                <button type="submit" class="btn btn-primary mb-2 mb-md-0 me-2" style="background-color: #1d71b8;">Appliquer</button>
             </div>
         </div>
     </form>
@@ -44,6 +37,7 @@
                     <th class="table-header">Zone destination</th>
                     <th class="table-header">N° Lot</th>
                     <th class="table-header">Quantité</th>
+                    <th class="table-header">État</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,6 +51,7 @@
                         <td class="table-text">{{ line.zone.designation }}</td>
                         <td class="table-text">{{ line.move_line.n_lot }}</td>
                         <td class="table-text">{{ line.qte }} {{ line.move_line.product.unit }}</td>
+                        <td class="table-text">{{ line.move_line.move.state }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}

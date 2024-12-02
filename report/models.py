@@ -151,15 +151,6 @@ class MoveLine(BaseModel):
             return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
         else:
             return '/'
-        
-    @property
-    def style_list(self):
-        if self.move.state == 'Confirmé':
-            return 'font-weight: bold;'
-        elif self.move.state == 'Annulé':
-            return 'color: red;'
-        return 'font-style: italic;'
-
     
     def __str__(self):
         return f"[{self.id}] {self.product} - {self.qte} - {self.lot_number}"
