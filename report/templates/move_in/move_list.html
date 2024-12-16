@@ -75,8 +75,8 @@
                     {{ filteredData.form.warehouse }}
                 </div>
                 <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
-                    <label for="zone" class="form-label">Zone</label>
-                    {{ filteredData.form.zone }}
+                    <label for="emplacement" class="form-label">Emplacement</label>
+                    {{ filteredData.form.emplacement }}
                 </div>
                 <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
                     <label for="state" class="form-label">État</label>
@@ -135,7 +135,7 @@
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.line.site }}</td>
-                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.unit }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.packing.unit }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.palette }} Palettes</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.bl_str|default:"/" }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.state }}</td>

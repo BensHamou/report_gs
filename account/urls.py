@@ -34,10 +34,10 @@ urlpatterns = [
     path("warehouse/edit/<int:id>", editWarehouseView, name="edit_warehouse"),
     path("warehouse/delete/<int:id>", deleteWarehouseView, name="delete_warehouse"),
 
-    path('zone/all/', listZoneView, name='zones'),
-    path("zone/create/", createZoneView, name="create_zone"),
-    path("zone/edit/<int:id>", editZoneView, name="edit_zone"),
-    path("zone/delete/<int:id>", deleteZoneView, name="delete_zone"),
+    path('emplacement/all/', listEmplacementView, name='emplacements'),
+    path("emplacement/create/", createEmplacementView, name="create_emplacement"),
+    path("emplacement/edit/<int:id>", editEmplacementView, name="edit_emplacement"),
+    path("emplacement/delete/<int:id>", deleteEmplacementView, name="delete_emplacement"),
 
 
     path("shift/all/", listShiftView, name='shifts'),

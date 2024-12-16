@@ -1,10 +1,9 @@
 from .models import *
 from django.utils.timezone import now, timedelta
 
-def check_temp_zones():
-    alerts = TemporaryZoneAlert.objects.all()
+def check_temp_emplacements():
+    alerts = TemporaryEmplacementAlert.objects.all()
     for alert in alerts:
-        print('TEST')
         alert.email_sent = True
         alert.save()
 

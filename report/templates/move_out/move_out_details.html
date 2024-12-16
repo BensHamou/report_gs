@@ -56,7 +56,7 @@
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
-                    <p class="form-control">{{ move_line.qte }} {{ move_line.product.unit }}</p>
+                    <p class="form-control">{{ move_line.qte }} {{ move_line.product.packing.unit }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="palette" class="form-label">Nombre Palettes</label>
@@ -71,18 +71,18 @@
     </div>
     <div class="row mt-4" id="details-container">
         {% for detail in move_line.details.all %}
-        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
+        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
             <div class="col-lg-4 col-md-4 col-sm-12">
                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                 <p class="form-control">{{ detail.warehouse.designation }}</p>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-12">
-                <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
-                <p class="form-control">{{ detail.zone.designation }}</p>
+                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                <p class="form-control">{{ detail.emplacement.designation }}</p>
             </div>
             <div class="col-lg-4 col-md-4 col-sm-12">
                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
-                <p class="form-control">{{ detail.qte }} {{ move_line.product.unit }}</p>
+                <p class="form-control">{{ detail.qte }} {{ move_line.product.packing.unit }}</p>
             </div>
             
             </div>
@@ -192,7 +192,7 @@
         modal.find('#modal-expiry-date').text(button.data('expiry-date'));
         modal.find('#modal-production-date').text(button.data('production-date'));
         modal.find('#modal-magasin').text(button.data('magasin'));
-        modal.find('#modal-zone').text(button.data('zone'));
+        modal.find('#modal-emplacement').text(button.data('emplacement'));
         modal.find('#ticket-count').val(button.data('palettes')).attr('max', button.data('palettes'));;
         const detail_id = button.data('line-detail-id');
         
@@ -205,7 +205,7 @@
         const modal = $(this);
     
         modal.find('#source-warehouse').text(button.data('magasin'));
-        modal.find('#source-zone').text(button.data('zone'));
+        modal.find('#source-emplacement').text(button.data('emplacement'));
         modal.find('#source-lot').text(button.data('lot'));
         modal.find('#source-qte').text(button.data('max-qte'));
         modal.find('#source-id').val(button.data('line-detail-id'));
@@ -224,7 +224,7 @@
                     warehouseSelect.append(new Option(warehouse.name, warehouse.id));
                 });
     
-                modal.find('#destination-zone').empty().append('<option value="">-- Sélectionnez --</option>');
+                modal.find('#destination-emplacement').empty().append('<option value="">-- Sélectionnez --</option>');
             },
             error: function () {
                 swal("Erreur!", "Error fetching warehouses for ligne.", "error");
@@ -249,7 +249,7 @@
                             <td class="table-text">${transfer.site}</td>
                             <td class="table-text">${transfer.line}</td>
                             <td class="table-text">${transfer.magasin}</td>
-                            <td class="table-text">${transfer.zone}</td>
+                            <td class="table-text">${transfer.emplacement}</td>
                             <td class="table-text">${transfer.qte}</td>
                             <td class="table-text">${new Date(transfer.date).toLocaleString()}</td>
                             <td class="table-text">${transfer.state}</td>
@@ -275,24 +275,24 @@
     
     $(document).on('change', '#destination-warehouse', function () {
         const warehouseId = $(this).val();
-        const zoneSelect = $('#destination-zone');
+        const emplacementSelect = $('#destination-emplacement');
     
         if (!warehouseId) {
-            zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             return;
         }
     
         $.ajax({
-            url: `/get_zones_for_warehouse/`,
+            url: `/get_emplacements_for_warehouse/`,
             data: { warehouse_id: warehouseId },
             success: function (data) {
-                zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-                data.zones.forEach(function (zone) {
-                    zoneSelect.append(new Option(zone.name, zone.id));
+                emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+                data.emplacements.forEach(function (emplacement) {
+                    emplacementSelect.append(new Option(emplacement.name, emplacement.id));
                 });
             },
             error: function () {
-                swal("Erreur!", "Error fetching zones for warehouse.", "error");
+                swal("Erreur!", "Error fetching emplacements for warehouse.", "error");
             }
         });
     });
@@ -300,11 +300,11 @@
     $(document).on('change', '#line', function () {
         const lineId = $(this).val();
         const warehouseSelect = $('#destination-warehouse');
-        const zoneSelect = $('#destination-zone');
+        const emplacementSelect = $('#destination-emplacement');
     
         if (!lineId) {
             warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-            zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+            emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             return;
         }
     
@@ -316,7 +316,7 @@
                     warehouseSelect.append(new Option(warehouse.name, warehouse.id));
                 });
     
-                zoneSelect.empty().append('<option value="">-- Sélectionnez --</option>');
+                emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
             },
             error: function () {
                 swal("Erreur!", "Error fetching warehouses for line.", "error");

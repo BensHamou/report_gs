@@ -106,7 +106,7 @@
         </div>
         <div class="row mt-4" id="details-container">
             {% for detail in line_details %}
-            <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-zone-id="{{ detail.zone_id }}">
+            <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
                 <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
@@ -118,11 +118,11 @@
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="zone_{{ forloop.counter0 }}" class="form-label">Zone</label>
-                    <select name="zone_{{ forloop.counter0 }}" class="form-control zone" id="zone_{{ forloop.counter0 }}" required>
-                        <option value="">-- Zone --</option>
-                        {% for zone in zones %}
-                            <option value="{{ zone.id }}" {% if zone.id == detail.zone_id %}selected{% endif %}>{{ zone.designation }}</option>
+                    <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                    <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement" id="emplacement_{{ forloop.counter0 }}" required>
+                        <option value="">-- Emplacement --</option>
+                        {% for emplacement in emplacements %}
+                            <option value="{{ emplacement.id }}" {% if emplacement.id == detail.emplacement_id %}selected{% endif %}>{{ emplacement.designation }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -226,8 +226,8 @@
                         warehouseSelect.appendChild(option);
                     });
                 });
-                document.querySelectorAll('.form-row .zone').forEach(zoneSelect => {
-                    zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
+                document.querySelectorAll('.form-row .emplacement').forEach(emplacementSelect => {
+                    emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
                 });
             })
             .catch(error => console.error('Error fetching warehouses:', error));
@@ -236,20 +236,20 @@
     document.getElementById('details-container').addEventListener('change', function (e) {
         if (e.target.matches('.warehouse')) {
             const warehouseId = e.target.value;
-            const zoneSelect = e.target.closest('.form-row').querySelector('.zone');
+            const emplacementSelect = e.target.closest('.form-row').querySelector('.emplacement');
 
-            fetch(`{% url 'get_zones_for_warehouse' %}?warehouse_id=${warehouseId}`)
+            fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
                 .then(response => response.json())
                 .then(data => {
-                    zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
-                    data.zones.forEach(zone => {
+                    emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
+                    data.emplacements.forEach(emplacement => {
                         const option = document.createElement('option');
-                        option.value = zone.id;
-                        option.textContent = zone.name;
-                        zoneSelect.appendChild(option);
+                        option.value = emplacement.id;
+                        option.textContent = emplacement.name;
+                        emplacementSelect.appendChild(option);
                     });
                 })
-                .catch(error => console.error('Error fetching zones:', error));
+                .catch(error => console.error('Error fetching emplacements:', error));
         }
     });
     
@@ -304,24 +304,24 @@
 
         document.querySelectorAll('.form-row').forEach(function(row) {
             const warehouseId = row.dataset.warehouseId;
-            const zoneSelect = row.querySelector('.zone');
+            const emplacementSelect = row.querySelector('.emplacement');
             if (warehouseId) {
-                fetch(`{% url 'get_zones_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
                     .then(response => response.json())
                     .then(data => {
-                        zoneSelect.innerHTML = '<option value="">-- Zone --</option>';
-                        data.zones.forEach(zone => {
+                        emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
+                        data.emplacements.forEach(emplacement => {
                             const option = document.createElement('option');
-                            option.value = zone.id;
-                            option.textContent = zone.name;
-                            zoneSelect.appendChild(option);
+                            option.value = emplacement.id;
+                            option.textContent = emplacement.name;
+                            emplacementSelect.appendChild(option);
                         });
-                        const defaultZoneId = row.dataset.zoneId;
-                        if (defaultZoneId) {
-                            zoneSelect.value = defaultZoneId;
+                        const defaultEmplacementId = row.dataset.emplacementId;
+                        if (defaultEmplacementId) {
+                            emplacementSelect.value = defaultEmplacementId;
                         }
                     })
-                    .catch(error => console.error('Error fetching zones:', error));
+                    .catch(error => console.error('Error fetching emplacements:', error));
             }
         });
     

@@ -1,12 +1,12 @@
 {% extends "main.html" %}
 
 {% block title %}
-    {% if form.instance.pk %} Modification de l'Unité {% else %} Création d'une Unité {% endif %}
+    {% if form.instance.pk %} Modification de Conditionnement {% else %} Création d'un Conditionnement {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'units' %}')" 
+    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'packings' %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
@@ -18,28 +18,35 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if form.instance.pk %} Modification de l'unité {% else %} Création d'une unité {% endif %}</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if form.instance.pk %} Modification de Conditionnement {% else %} Création d'un Conditionnement {% endif %}</h4>
     </div>
 
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">{% if form.instance.pk %} Modification de l'unité {{ form.instance.designation }} {% else %} Créez une nouvelle unité {% endif %}</p>
+        <p style="font-size: 18px; color: #133356;">{% if form.instance.pk %} Modification de conditionnement {{ form.instance.designation }} {% else %} Créez un nouvel conditionnement {% endif %}</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" form="unit-form" class="btn btn-primary" style="background-color: #1d71b8;">
+        <button type="submit" form="packing-form" class="btn btn-primary" style="background-color: #1d71b8;">
             {% if form.instance.pk %} Sauvegarder {% else %} Nouveau {% endif %}
         </button>
     </div>
 </div>
 
-<form method="POST" id="unit-form">
+<form method="POST" id="packing-form">
     {% csrf_token %}
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <div class="row mb-4">
-            <div class="col-12 mb-2">
+            <div class="col-lg-6 col-md-12">
                 <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
                 {{ form.designation }}
                 {% if form.designation.errors %}
                     <small class="text-danger">{{ form.designation.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="unit" class="form-label" style="color: #5d5d5d;">Unité</label>
+                {{ form.unit }}
+                {% if form.unit.errors %}
+                    <small class="text-danger">{{ form.unit.errors }}</small>
                 {% endif %}
             </div>
         </div>

@@ -1,12 +1,12 @@
 {% extends "main.html" %}
 
 {% block title %}
-    {% if zone %} Modification de la Zone {% else %} Création d'une Zone {% endif %}
+    {% if emplacement %} Modification de l'emplacement {% else %} Création d'un emplacement {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'zones' %}')" 
+    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'emplacements' %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
@@ -18,20 +18,20 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if zone %} Modification de la zone {% else %} Création d'une zone {% endif %}</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if emplacement %} Modification de l'emplacement {% else %} Création d'un emplacement {% endif %}</h4>
     </div>
 
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">{% if zone %} Modification de la zone {{ zone.designation }} {% else %} Créez une nouvelle zone {% endif %}</p>
+        <p style="font-size: 18px; color: #133356;">{% if emplacement %} Modification de l'emplacement {{ emplacement.designation }} {% else %} Créez un emplacement {% endif %}</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" form="zone-form" class="btn btn-primary" style="background-color: #1d71b8;">
-            {% if zone %} Sauvegarder {% else %} Nouveau {% endif %}
+        <button type="submit" form="emplacement-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if emplacement %} Sauvegarder {% else %} Nouveau {% endif %}
         </button>
     </div>
 </div>
 
-<form method="POST" id="zone-form">
+<form method="POST" id="emplacement-form">
     {% csrf_token %}
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <div class="row mb-4">
@@ -53,7 +53,27 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-6 col-sm-6">
+            <div class="col-lg-6 col-md-12 col-sm-12">
+                <div class="form-outline">
+                    <label class="form-label" for="type" style="color: #5d5d5d;">Type d'emplacement</label>
+                    {{ form.type }}
+                    {% if form.type.errors %}
+                        <small class="text-danger">{{ form.type.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-12 col-sm-12">
+                <div class="form-outline">
+                    <label class="form-label" for="capacity" style="color: #5d5d5d;">Capacité (palettes)</label>
+                    {{ form.capacity }}
+                    {% if form.capacity.errors %}
+                        <small class="text-danger">{{ form.capacity.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6">
                 <div class="form-outline">
                     <label class="form-label" for="quarantine" style="color: #5d5d5d;">Est Quarantaine?</label>
                     </br>
@@ -63,8 +83,7 @@
                     {% endif %}
                 </div>
             </div>
-
-            <div class="col-md-6 col-sm-6">
+            <div class="col-lg-6 col-md-6 col-sm-6">
                 <div class="form-outline">
                     <label class="form-label" for="temp" style="color: #5d5d5d;">Est Temporaire?</label>
                     </br>

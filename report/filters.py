@@ -14,27 +14,27 @@ class FamilyFilter(django_filters.FilterSet):
         model = Family
         fields = ['search']
 
-class UnitFilter(django_filters.FilterSet):
+class PackingFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
 
     def filter_search(self, queryset, name, value):
-        return queryset.filter(Q(designation__icontains=value)).distinct()
+        return queryset.filter(Q(designation__icontains=value) | Q(unit__icontains=value)).distinct()
 
     class Meta:
-        model = Unit
+        model = Packing
         fields = ['search']
 
 class ProductFilter(django_filters.FilterSet):
     search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
     family = django_filters.ModelChoiceFilter(queryset=Family.objects.all(), empty_label='Choisir Famille')
-    unit = django_filters.ModelChoiceFilter(queryset=Unit.objects.all(), empty_label='Choisir Unité')
+    packing = django_filters.ModelChoiceFilter(queryset=Packing.objects.all(), empty_label='Choisir Conditionnement')
 
     def filter_search(self, queryset, name, value):
         return queryset.filter(Q(designation__icontains=value)).distinct()
 
     class Meta:
         model = Product
-        fields = ['search', 'family', 'unit']
+        fields = ['search', 'family', 'packing']
 
 class MoveLineFilter(django_filters.FilterSet):
     TYPE_CHOICES = [
@@ -55,7 +55,7 @@ class MoveLineFilter(django_filters.FilterSet):
     type = django_filters.ChoiceFilter(method='filter_by_type', choices=TYPE_CHOICES, empty_label=None, initial='all', widget=forms.Select(attrs=getAttrs('select')))
     site = django_filters.CharFilter(field_name="move__site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
     warehouse = django_filters.CharFilter(method='filter_by_warehouse', widget=forms.TextInput(attrs=getAttrs('search2', 'Entrepôt')))
-    zone = django_filters.CharFilter(method='filter_by_zone', widget=forms.TextInput(attrs=getAttrs('search2', 'Zone')))
+    emplacement = django_filters.CharFilter(method='filter_by_emplacement', widget=forms.TextInput(attrs=getAttrs('search2', 'Emplacement')))
     lot_number = django_filters.CharFilter(field_name="lot_number", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Lot')))
     start_date = django_filters.DateFilter(field_name="move__date", lookup_expr='gte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Début')))
     end_date = django_filters.DateFilter(field_name="move__date", lookup_expr='lte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Fin')))
@@ -85,12 +85,12 @@ class MoveLineFilter(django_filters.FilterSet):
     def filter_by_warehouse(self, queryset, name, value):
         return queryset.filter(details__warehouse__designation__icontains=value).distinct()
 
-    def filter_by_zone(self, queryset, name, value):
-        return queryset.filter(details__zone__designation__icontains=value).distinct()
+    def filter_by_emplacement(self, queryset, name, value):
+        return queryset.filter(details__emplacement__designation__icontains=value).distinct()
 
     class Meta:
         model = MoveLine
-        fields = ['type', 'site', 'warehouse', 'zone', 'lot_number', 'start_date', 'end_date', 'product', 'state']
+        fields = ['type', 'site', 'warehouse', 'emplacement', 'lot_number', 'start_date', 'end_date', 'product', 'state']
 
 class LineDetailFilter(django_filters.FilterSet):
 
@@ -110,7 +110,7 @@ class LineDetailFilter(django_filters.FilterSet):
                                |Q(move_line__move__date__icontains=value)
                                |Q(move_line__move__gestionaire__fullname__icontains=value)
                                |Q(warehouse__designation__icontains=value)
-                               |Q(zone__designation__icontains=value)
+                               |Q(emplacement__designation__icontains=value)
                                ).distinct()
     
     def filter_by_state(self, queryset, name, value):

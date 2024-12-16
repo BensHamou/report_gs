@@ -51,7 +51,7 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text">{{ product.id }}</td>
                         <td class="table-text">{{ product.designation }}</td>
-                        <td class="table-text">{% if product.last_entry_date %}{{ product.last_entry_date|default:None }}{% else %}/{% endif %}</td>
+                        <td class="table-text">{{ product.last_entry_date|default:'Jamais' }}</td>
                         <td class="table-text">{{ product.qte_in_stock }} Tn</td>
                         <td class="table-text" style="color: {% if product.state_stock == 'En stock' %}green{% elif product.state_stock == 'Stock bas' %}orange{% else %}red{% endif %}"><b>{{ product.state_stock }}</b></td>
                         <td class="text-center p-0 m-0">

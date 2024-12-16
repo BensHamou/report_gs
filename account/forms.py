@@ -90,12 +90,14 @@ class WarehouseForm(BaseModelForm):
     site = forms.ModelChoiceField(queryset=Site.objects.all(), widget=forms.Select(attrs=getAttrs('select2')), empty_label="Site")
 
 
-class ZoneForm(BaseModelForm):
+class EmplacementForm(BaseModelForm):
     class Meta:
-        model = Zone
-        fields = ['designation', 'quarantine', 'temp', 'warehouse']
+        model = Emplacement
+        fields = ['designation', 'type', 'capacity', 'quarantine', 'temp', 'warehouse']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
+    type = forms.ChoiceField(choices=Emplacement.TYPE_CHOICES, widget=forms.Select(attrs=getAttrs('select')))
+    capacity = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
     quarantine = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox', 
         'data-onstyle': 'secondary', 

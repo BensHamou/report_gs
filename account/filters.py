@@ -46,7 +46,7 @@ class LineFilter(django_filters.FilterSet):
         model = Line
         fields = ['search']
 
-class ZoneFilter(django_filters.FilterSet):
+class EmplacementFilter(django_filters.FilterSet):
     
     search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
 
@@ -54,7 +54,7 @@ class ZoneFilter(django_filters.FilterSet):
         return queryset.filter(Q(designation__icontains=value)).distinct()
 
     class Meta:
-        model = Zone
+        model = Emplacement
         fields = ['search']
 
 class SiteFilter(django_filters.FilterSet): 

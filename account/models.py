@@ -56,11 +56,15 @@ class Warehouse(BaseModel):
         return f'{self.designation} - {self.site}'
 
 
-class Zone(BaseModel):
+class Emplacement(BaseModel):
+    TYPE_CHOICES = [('Surface Libre', 'Surface Libre'), ('Rayon', 'Rayon')]
+
     designation = models.CharField(max_length=255)
+    type = models.CharField(choices=TYPE_CHOICES, max_length=30, default='Surface Libre')
+    capacity = models.PositiveIntegerField()
     quarantine = models.BooleanField(default=False)
     temp = models.BooleanField(default=False)
-    warehouse = models.ForeignKey(Warehouse, related_name='zones', on_delete=models.CASCADE)
+    warehouse = models.ForeignKey(Warehouse, related_name='emplacements', on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.designation} - {self.warehouse}'
@@ -88,6 +92,7 @@ class User(BaseModel, AbstractUser):
     ROLE_CHOICES = [
         ('Nouveau', 'Nouveau'),
         ('Gestionaire', 'Gestionaire'),
+        ('Validateur', 'Validateur'),
         ('Observateur', 'Observateur'),
         ('Admin', 'Admin')
     ]

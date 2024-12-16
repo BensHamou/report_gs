@@ -7,7 +7,7 @@ class LineDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LineDetail
-        fields = ['id', 'warehouse', 'zone', 'qte', 'palette']
+        fields = ['id', 'warehouse', 'emplacement', 'qte', 'palette']
 
 class MoveLineSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.designation', read_only=True)
@@ -32,10 +32,10 @@ class WarehouseSerializer(serializers.ModelSerializer):
         model = Warehouse
         fields = ['id', 'designation', 'site']
 
-class ZoneSerializer(serializers.ModelSerializer):
+class EmplacementSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Zone
+        model = Emplacement
         fields = ['id', 'designation', 'quarantine', 'temp', 'warehouse']
 
 class LineSerializer(serializers.ModelSerializer):
@@ -50,28 +50,28 @@ class FamilySerializer(serializers.ModelSerializer):
         model = Family
         fields = ['id', 'designation', 'image']
 
-class UnitSerializer(serializers.ModelSerializer):
+class PackingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Unit
-        fields = ['id', 'designation']
+        model = Packing
+        fields = ['id', 'designation', 'unit']
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'designation', 'image', 'type', 'family', 'unit']
+        fields = ['id', 'designation', 'image', 'type', 'family', 'packing']
 
 
 class DetailAvailabilitySerializer(serializers.ModelSerializer):
-    warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
-    zone_name = serializers.CharField(source='zone.name', read_only=True)
+    warehouse_name = serializers.CharField(source='warehouse.designation', read_only=True)
+    emplacement_name = serializers.CharField(source='emplacement.designation', read_only=True)
     lot_number = serializers.CharField(source='move_line.lot_number', read_only=True)
     expiry_date = serializers.DateField(source='move_line.expiry_date', read_only=True)
 
     class Meta:
         model = LineDetail
-        fields = ['warehouse_name', 'zone_name', 'qte', 'lot_number', 'expiry_date']
+        fields = ['warehouse_name', 'emplacement_name', 'qte', 'lot_number', 'expiry_date']
 
 class ProductAvailabilitySerializer(serializers.ModelSerializer):
     availability = LineDetailSerializer(many=True, read_only=True)

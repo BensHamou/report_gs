@@ -15,66 +15,66 @@ import qrcode
 from datetime import date, datetime
 from django.utils.timezone import now, timedelta
 
-# UNIT
+# PACKING
 
 @login_required(login_url='login')
 @admin_required
-def listUnitView(request):
-    units = Unit.objects.all().order_by('-date_modified')
-    filteredData = UnitFilter(request.GET, queryset=units)
-    units = filteredData.qs
-    paginator = Paginator(units, request.GET.get('page_size', 12))
+def listPackingView(request):
+    packings = Packing.objects.all().order_by('-date_modified')
+    filteredData = PackingFilter(request.GET, queryset=packings)
+    packings = filteredData.qs
+    paginator = Paginator(packings, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     
     context = {'page': page, 'filteredData': filteredData}
-    return render(request, 'list_units.html', context)
+    return render(request, 'list_packings.html', context)
 
 @login_required(login_url='login')
 @admin_required
-def deleteUnitView(request, id):
-    unit = get_object_or_404(Unit, id=id)
+def deletePackingView(request, id):
+    packing = get_object_or_404(Packing, id=id)
     try:
-        unit.delete()
-        url_path = reverse('units')
+        packing.delete()
+        url_path = reverse('packings')
         return redirect(getRedirectionURL(request, url_path))
     except Exception as e:
-        messages.error(request, f"Erreur lors de la suppression de l'unité : {e}")
-        return redirect(getRedirectionURL(request, reverse('units')))
+        messages.error(request, f"Erreur lors de la suppression de conditionnement : {e}")
+        return redirect(getRedirectionURL(request, reverse('packings')))
 
 @login_required(login_url='login')
 @admin_required
-def createUnitView(request):
-    form = UnitForm()
+def createPackingView(request):
+    form = PackingForm()
     if request.method == 'POST':
-        form = UnitForm(request.POST)
+        form = PackingForm(request.POST)
         if form.is_valid():
             form.save()
-            url_path = reverse('units')  # Adjust the URL name accordingly
+            url_path = reverse('packings')
             return redirect(getRedirectionURL(request, url_path))
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     
     context = {'form': form}
-    return render(request, 'unit_form.html', context)
+    return render(request, 'packing_form.html', context)
 
 @login_required(login_url='login')
 @admin_required
-def editUnitView(request, id):
-    unit = get_object_or_404(Unit, id=id)
-    form = UnitForm(instance=unit)
+def editPackingView(request, id):
+    packing = get_object_or_404(Packing, id=id)
+    form = PackingForm(instance=packing)
     
     if request.method == 'POST':
-        form = UnitForm(request.POST, instance=unit)
+        form = PackingForm(request.POST, instance=packing)
         if form.is_valid():
             form.save()
-            url_path = reverse('units')  # Adjust the URL name accordingly
+            url_path = reverse('packings')
             return redirect(getRedirectionURL(request, url_path))
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     
-    context = {'form': form, 'unit': unit}
-    return render(request, 'unit_form.html', context)
+    context = {'form': form, 'packing': packing}
+    return render(request, 'packing_form.html', context)
 
 # FAMILY
 
@@ -232,6 +232,11 @@ def editProductView(request, id):
 
 @login_required(login_url='login')
 @admin_or_gs_required
+def categories_view(request):
+    return render(request, 'categories.html')
+
+@login_required(login_url='login')
+@admin_or_gs_required
 def families_view(request):
     families = Family.objects.all()
     return render(request, 'families.html', {'families': families})
@@ -240,14 +245,25 @@ def families_view(request):
 @admin_or_gs_required
 def products_view(request, family_id):
     family = get_object_or_404(Family, id=family_id)
-    products = Product.objects.filter(family=family)
+    products = Product.objects.filter(family=family, type='Produit Fini')
     return render(request, 'products.html', {'products': products, 'family': family})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def primary_products_view(request):
+    products = Product.objects.filter(type='Matière Première')
+    default_site = request.user.default_site
+    default_line = default_site.lines.first()
+    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'emplacement', 'qte'), extra=1)
+    formset = MoveLineDetailFormSet(queryset=LineDetail.objects.none())
+    return render(request, 'form_mp.html', {'products': products, 'formset': formset, 'default_site': default_site.id, 'default_line': default_line.id})
+
 
 @login_required(login_url='login')
 @admin_or_gs_required
 def move_in_form_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'zone', 'qte'), extra=1)
+    MoveLineDetailFormSet = modelformset_factory(LineDetail, fields=('warehouse', 'emplacement', 'qte'), extra=1)
     
     user = request.user
     user_lines = user.lines.all()
@@ -302,13 +318,13 @@ def get_warehouses_for_line(request):
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def get_zones_for_warehouse(request):
+def get_emplacements_for_warehouse(request):
     warehouse_id = request.GET.get('warehouse_id')
     warehouse = Warehouse.objects.get(id=warehouse_id)
-    zones = Zone.objects.filter(warehouse=warehouse)
-    zone_data = [{'id': zone.id, 'name': zone.designation} for zone in zones]
+    emplacements = Emplacement.objects.filter(warehouse=warehouse)
+    emplacement_data = [{'id': emplacement.id, 'name': emplacement.designation} for emplacement in emplacements]
 
-    return JsonResponse({'zones': zone_data})
+    return JsonResponse({'emplacements': emplacement_data})
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -384,7 +400,7 @@ def move_edit(request, move_line_id):
         'is_admin': is_admin,
         'show_line_field': show_line_field,
         'warehouses': default_line.site.warehouses.all(),
-        'zones': Zone.objects.all(),
+        'emplacements': Emplacement.objects.all(),
     }
     return render(request, 'edit_move.html', context)
 
@@ -436,11 +452,11 @@ def create_move(request):
                 row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
                 for row_id in row_ids:
                     warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    zone_id = request.POST.get(f'zone_{row_id}')
+                    emplacement_id = request.POST.get(f'emplacement_{row_id}')
                     qte = request.POST.get(f'qte_{row_id}')
 
-                    if warehouse_id and zone_id and qte:
-                        line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, 
+                    if warehouse_id and emplacement_id and qte:
+                        line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                   qte=int(qte), create_uid=request.user, write_uid=request.user)
 
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
@@ -502,18 +518,18 @@ def update_move(request, move_line_id):
                 for row_id in to_update_rows:
                     detail_id = request.POST.get(f'detail_id_{row_id}')
                     warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    zone_id = request.POST.get(f'zone_{row_id}')
+                    emplacement_id = request.POST.get(f'emplacement_{row_id}')
                     qte = request.POST.get(f'qte_{row_id}')
-                    if warehouse_id and zone_id and qte:
-                        LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), write_uid=request.user)
+                    if warehouse_id and emplacement_id and qte:
+                        LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte), write_uid=request.user)
 
                 for row_id in to_add_rows:
                     warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    zone_id = request.POST.get(f'zone_{row_id}')
+                    emplacement_id = request.POST.get(f'emplacement_{row_id}')
                     qte = request.POST.get(f'qte_{row_id}')
 
-                    if warehouse_id and zone_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, zone_id=zone_id, qte=int(qte), 
+                    if warehouse_id and emplacement_id and qte:
+                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte), 
                                                   write_uid=request.user, create_uid=move_line.create_uid)
 
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
@@ -556,8 +572,8 @@ def confirmMoveLine(request, move_line_id):
         if success:
             for detail in move_line.details.all():
                 detail.code = f"ID:{detail.id}MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date};Qte:{detail.qte}"
-                if detail.zone.temp:
-                    TemporaryZoneAlert.objects.get_or_create(line_detail=detail, write_uid=request.user, create_uid=request.user)
+                if detail.emplacement.temp:
+                    TemporaryEmplacementAlert.objects.get_or_create(line_detail=detail, write_uid=request.user, create_uid=request.user)
                 detail.save()
             if move_line.move.is_transfer:
                 for detail in move_line.details.all():
@@ -565,8 +581,8 @@ def confirmMoveLine(request, move_line_id):
                     source_line_detail.qte -= detail.qte
                     source_line_detail.code = f"ID:{source_line_detail.id}MoveLine:{source_line_detail.move_line.id};Product:{source_line_detail.move_line.product.designation};Date:{source_line_detail.move_line.move.date};Qte:{source_line_detail.qte}"
                     source_line_detail.save()
-                    if source_line_detail.zone.temp and source_line_detail.qte == 0:
-                        TemporaryZoneAlert.objects.filter(line_detail=source_line_detail).delete()
+                    if source_line_detail.emplacement.temp and source_line_detail.qte == 0:
+                        TemporaryEmplacementAlert.objects.filter(line_detail=source_line_detail).delete()
 
             return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
         else:
@@ -636,12 +652,12 @@ def transfer_quantity(request):
                 site_id = request.POST.get('site_id')
                 destination_line_id = request.POST.get('line')
                 destination_warehouse_id = request.POST.get('destination_warehouse')
-                destination_zone_id = request.POST.get('destination_zone')
+                destination_emplacement_id = request.POST.get('destination_emplacement')
                 destination_lot_number = request.POST.get('destination_lot')
                 transfer_quantity = int(request.POST.get('destination_qte', 0))
                 source_id = request.POST.get('source_id')
 
-                if not all([site_id, destination_line_id, destination_warehouse_id, destination_zone_id, destination_lot_number, transfer_quantity]):
+                if not all([site_id, destination_line_id, destination_warehouse_id, destination_emplacement_id, destination_lot_number, transfer_quantity]):
                     return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=200)
 
                 if transfer_quantity <= 0:
@@ -665,7 +681,7 @@ def transfer_quantity(request):
                     elif not existing_move_line.move.state == 'Brouillon':
                         return JsonResponse({'success': False, 'message': f'Il existe déjà un transfert validé avec le même N° Lot {destination_lot_number}, id = {existing_move_line.id}'}, status=200)
                     else:
-                        LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                        LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, emplacement_id=destination_emplacement_id, 
                                               qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
                 else:
                     new_move = Move.objects.create(site_id=site_id,line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
@@ -675,7 +691,7 @@ def transfer_quantity(request):
                     new_move_line = MoveLine.objects.create(lot_number=destination_lot_number, product=source_move_line.product, 
                                                             move=new_move, write_uid=request.user, create_uid=request.user)
 
-                    LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, zone_id=destination_zone_id, 
+                    LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, emplacement_id=destination_emplacement_id, 
                                             qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
 
                 return JsonResponse({'success': True, 'message': 'Le transfert a été effectué avec succès.'}, status=200)
@@ -693,7 +709,7 @@ def get_transfers(request, detail_id):
     for t in detail.transfers.all():
         move = t.move_line.move
         data.append({ 'site': move.line.site.designation, 'line': move.line.designation, 'magasin': t.warehouse.designation, 
-                     'zone': t.zone.designation, 'qte': t.qte, 'date': move.date, 'state': move.state, 'n_lot': t.move_line.n_lot})
+                     'emplacement': t.emplacement.designation, 'qte': t.qte, 'date': move.date, 'state': move.state, 'n_lot': t.move_line.n_lot})
         
     return JsonResponse({'transfers': data})
 

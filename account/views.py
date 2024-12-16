@@ -225,67 +225,67 @@ def editLineView(request, id):
     context = {'form': form, 'line': line, 'selectedShifts': selectedShifts}
     return render(request, 'line_form.html', context)
 
-# ZONES
+# EMPLACEMENT
 
 @login_required(login_url='login')
 @admin_required
-def listZoneView(request):
-    zones = Zone.objects.all().order_by('-date_modified')
-    filteredData = ZoneFilter(request.GET, queryset=zones)
-    zones = filteredData.qs
-    paginator = Paginator(zones, request.GET.get('page_size', 12))
+def listEmplacementView(request):
+    emplacements = Emplacement.objects.all().order_by('-date_modified')
+    filteredData = EmplacementFilter(request.GET, queryset=emplacements)
+    emplacements = filteredData.qs
+    paginator = Paginator(emplacements, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     
     context = {'page': page, 'filteredData': filteredData}
-    return render(request, 'list_zones.html', context)
+    return render(request, 'list_emplacements.html', context)
 
 @login_required(login_url='login')
 @admin_required
-def deleteZoneView(request, id):
-    zone = get_object_or_404(Zone, id=id)
+def deleteEmplacementView(request, id):
+    emplacement = get_object_or_404(Emplacement, id=id)
     try:
-        zone.delete()
-        url_path = reverse('zones')
+        emplacement.delete()
+        url_path = reverse('emplacements')
         return redirect(getRedirectionURL(request, url_path))
     except Exception as e:
-        messages.error(request, f"Erreur lors de la suppression de la zone : {e}")
-        return redirect(getRedirectionURL(request, reverse('zones')))
+        messages.error(request, f"Erreur lors de la suppression de l'emplacement : {e}")
+        return redirect(getRedirectionURL(request, reverse('emplacements')))
 
 @login_required(login_url='login')
 @admin_required
-def createZoneView(request):
-    form = ZoneForm()
+def createEmplacementView(request):
+    form = EmplacementForm()
     
     if request.method == 'POST':
-        form = ZoneForm(request.POST)
+        form = EmplacementForm(request.POST)
         if form.is_valid():
             form.save(user=request.user)
-            url_path = reverse('zones')
+            url_path = reverse('emplacements')
             return redirect(getRedirectionURL(request, url_path))
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     
     context = {'form': form}
-    return render(request, 'zone_form.html', context)
+    return render(request, 'emplacement_form.html', context)
 
 @login_required(login_url='login')
 @admin_required
-def editZoneView(request, id):
-    zone = get_object_or_404(Zone, id=id)
-    form = ZoneForm(instance=zone)
+def editEmplacementView(request, id):
+    emplacement = get_object_or_404(Emplacement, id=id)
+    form = EmplacementForm(instance=emplacement)
     
     if request.method == 'POST':
-        form = ZoneForm(request.POST, instance=zone)
+        form = EmplacementForm(request.POST, instance=emplacement)
         if form.is_valid():
             form.save(user=request.user)
-            url_path = reverse('zones')
+            url_path = reverse('emplacements')
             return redirect(getRedirectionURL(request, url_path))
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     
-    context = {'form': form, 'zone': zone}
-    return render(request, 'zone_form.html', context)
+    context = {'form': form, 'emplacement': emplacement}
+    return render(request, 'emplacement_form.html', context)
 
 # SHIFT
 

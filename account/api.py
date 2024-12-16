@@ -65,19 +65,19 @@ class SyncDataView(APIView):
     def get(self, request):
         sites = Site.objects.all()
         warehouses = Warehouse.objects.all()
-        zones = Zone.objects.all()
+        emplacements = Emplacement.objects.all()
         lines = Line.objects.all()
         families = Family.objects.all()
-        units = Unit.objects.all()
+        packings = Packing.objects.all()
         products = Product.objects.all()
 
         data = {
             "sites": SiteSerializer(sites, many=True).data,
             "warehouses": WarehouseSerializer(warehouses, many=True).data,
-            "zones": ZoneSerializer(zones, many=True).data,
+            "emplacements": EmplacementSerializer(emplacements, many=True).data,
             "lines": LineSerializer(lines, many=True).data,
             "families": FamilySerializer(families, many=True).data,
-            "units": UnitSerializer(units, many=True).data,
+            "packings": PackingSerializer(packings, many=True).data,
             "products": ProductSerializer(products, many=True).data,
         }
 

@@ -21,15 +21,15 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if family %} Modification de produit {% else %} Création d'un produit {% endif %}</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if product %} Modification de produit {% else %} Création d'un produit {% endif %}</h4>
     </div>
 
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">{% if family %} Modification du produit {{ family.designation }} {% else %} Créez un nouveau produit {% endif %}</p>
+        <p style="font-size: 18px; color: #133356;">{% if product %} Modification du produit {{ product.designation }} {% else %} Créez un nouveau produit {% endif %}</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
         <button type="submit" form="product-form" class="btn btn-primary" style="background-color: #1d71b8;">
-            {% if produit %} Sauvegarder {% else %} Nouveau {% endif %}
+            {% if product %} Sauvegarder {% else %} Nouveau {% endif %}
         </button>
     </div>
 </div>
@@ -56,18 +56,26 @@
                 </div>
 
                 <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="unit" class="form-label" style="color: #5d5d5d;">Unité</label>
-                    {{ form.unit }}
-                    {% if form.unit.errors %}
-                        <small class="text-danger">{{ form.unit.errors }}</small>
+                    <label for="type" class="form-label" style="color: #5d5d5d;">Categorie</label>
+                    {{ form.type }}
+                    {% if form.type.errors %}
+                        <small class="text-danger">{{ form.type.errors }}</small>
                     {% endif %}
                 </div>
 
                 <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="type" class="form-label" style="color: #5d5d5d;">Type</label>
-                    {{ form.type }}
-                    {% if form.type.errors %}
-                        <small class="text-danger">{{ form.type.errors }}</small>
+                    <label for="packing" class="form-label" style="color: #5d5d5d;">Conditionnement</label>
+                    {{ form.packing }}
+                    {% if form.packing.errors %}
+                        <small class="text-danger">{{ form.packing.errors }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="qte_per_cond" class="form-label" style="color: #5d5d5d;">Quantité par conditionnement</label>
+                    {{ form.qte_per_cond }}
+                    {% if form.qte_per_cond.errors %}
+                        <small class="text-danger">{{ form.qte_per_cond.errors }}</small>
                     {% endif %}
                 </div>
 

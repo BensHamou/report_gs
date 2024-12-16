@@ -32,9 +32,9 @@
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">Site</th>
                     <th class="table-header">Magasin source</th>
-                    <th class="table-header">Zone source</th>
+                    <th class="table-header">Emplacement source</th>
                     <th class="table-header">Magasin destination</th>
-                    <th class="table-header">Zone destination</th>
+                    <th class="table-header">Emplacement destination</th>
                     <th class="table-header">N° Lot</th>
                     <th class="table-header">Quantité</th>
                     <th class="table-header">État</th>
@@ -46,11 +46,11 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text">{{ line.move_line.move.line.site }}</td>
                         <td class="table-text">{{ line.mirrored_move.warehouse.designation }}</td>
-                        <td class="table-text">{{ line.mirrored_move.zone.designation }}</td>
+                        <td class="table-text">{{ line.mirrored_move.emplacement.designation }}</td>
                         <td class="table-text">{{ line.warehouse.designation }}</td>
-                        <td class="table-text">{{ line.zone.designation }}</td>
+                        <td class="table-text">{{ line.emplacement.designation }}</td>
                         <td class="table-text">{{ line.move_line.n_lot }}</td>
-                        <td class="table-text">{{ line.qte }} {{ line.move_line.product.unit }}</td>
+                        <td class="table-text">{{ line.qte }} {{ line.move_line.product.packing.unit }}</td>
                         <td class="table-text">{{ line.move_line.move.state }}</td>
                     </tr>
                     {% endfor %}

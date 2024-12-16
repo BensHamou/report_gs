@@ -1,4 +1,4 @@
-from account.models import BaseModel, Line, Zone, Warehouse, Shift, Site
+from account.models import BaseModel, Line, Emplacement, Warehouse, Shift, Site
 from django.template.defaultfilters import slugify
 from PIL import Image as PILImage
 from django.utils import timezone
@@ -28,11 +28,12 @@ class Family(BaseModel):
     def __str__(self):
         return self.designation
 
-class Unit(BaseModel):
+class Packing(BaseModel):
     designation = models.CharField(max_length=255)
+    unit = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.designation
+        return f'{self.designation} en {self.unit}'
 
 def get_product_image_filename(instance, filename):
     title = instance.designation
@@ -58,9 +59,10 @@ class Product(BaseModel):
             img.save(self.image.path, quality=50, optimize=True)
 
     family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='products')
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='products')
+    packing = models.ForeignKey(Packing, on_delete=models.CASCADE, related_name='products')
     delais_expiration = models.PositiveIntegerField()
     qte_per_pal = models.PositiveIntegerField()
+    qte_per_cond = models.PositiveIntegerField()
     alert_stock = models.PositiveIntegerField()
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
 
@@ -70,11 +72,11 @@ class Product(BaseModel):
         stock_aggregate.update(move_lines.filter(move__type='Sortie').aggregate(total_out=Sum('details__qte')))
         net_stock = (stock_aggregate['total_in'] or 0) - (stock_aggregate['total_out'] or 0)
 
-        valid_zones = Zone.objects.filter(temp=False, quarantine=False, warehouse__site_id=site_id)
+        valid_emplacements = Emplacement.objects.filter(temp=False, quarantine=False, warehouse__site_id=site_id)
         
         availability = (
-            LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', zone__in=valid_zones)
-            .values('move_line__lot_number', 'move_line__move__date', 'warehouse__id', 'zone__id', 'code')
+            LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', emplacement__in=valid_emplacements)
+            .values('move_line__lot_number', 'move_line__move__date', 'warehouse__id', 'emplacement__id', 'code')
             .annotate(qte_in=Sum('qte', filter=Q(move_line__move__type='Entré')), qte_out=Sum('qte', filter=Q(move_line__move__type='Sortie')))
             .annotate(net_qte=(models.F('qte_in') or 0 - models.F('qte_out') or 0))
             .filter(net_qte__gt=0)
@@ -114,9 +116,9 @@ class Move(BaseModel):
     shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
 
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=timezone.now, null=True, blank=True)
     is_transfer = models.BooleanField(default=False)
-    stayed_in_temp = models.PositiveIntegerField(default=0)
+    stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
@@ -132,6 +134,7 @@ class MoveLine(BaseModel):
     lot_number = models.CharField(max_length=255)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
+    observation = models.TextField(blank=True, null=True)
 
     @property
     def qte(self):
@@ -142,13 +145,20 @@ class MoveLine(BaseModel):
         return self.move.date + timedelta(days=self.product.delais_expiration) 
 
     @property
+    def package(self):
+        return sum(detail.package for detail in self.details.all()) or 0
+
+    @property
     def palette(self):
         return sum(detail.palette for detail in self.details.all()) or 0
 
     @property
     def n_lot(self):
         if self.move.type == 'Entré':
-            return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+            if self.product.type == 'Produit Fini':
+                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+            else:
+                return self.lot_number
         else:
             return '/'
     
@@ -158,7 +168,7 @@ class MoveLine(BaseModel):
 class LineDetail(BaseModel):
     move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='details')
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='details')
+    emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
     code = models.CharField(max_length=255, null=True, blank=True)
     mirrored_move = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transfers', blank=True, null=True)
@@ -169,15 +179,19 @@ class LineDetail(BaseModel):
             return math.ceil(self.qte / self.move_line.product.qte_per_pal)
         return 0
 
+    @property
+    def package(self):
+        if self.move_line.product.qte_per_cond and self.qte:
+            return math.ceil(self.qte / self.move_line.product.qte_per_cond)
+        return 0
+    
     class Meta:
-        constraints = [
-            models.CheckConstraint(check=models.Q(qte__gte=0), name="qte_positive"),
-        ]
+        constraints = [models.CheckConstraint(check=models.Q(qte__gte=0), name="qte_positive")]
 
     def __str__(self):
         return f"{self.move_line.product} - {self.qte}"
 
-class TemporaryZoneAlert(BaseModel):
+class TemporaryEmplacementAlert(BaseModel):
     line_detail = models.OneToOneField(LineDetail, on_delete=models.CASCADE)
     start_time = models.DateTimeField(auto_now_add=True)
     email_sent = models.BooleanField(default=False)

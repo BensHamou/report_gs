@@ -1,7 +1,7 @@
 {% extends "main.html" %}
 
 {% block title %}
-    Paramètre Zones
+    Paramètre Conditionnements
 {% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
     <form method="GET" class="w-100">
         <div class="row justify-content-between align-items-center mb-3">
             <div class="col-12">
-                <p class="page-title">Paramètre Zones <i class="fas fa-gear" style='font-size: 24px'></i></p>
+                <p class="page-title">Paramètre Conditionnements <i class="fas fa-gear" style='font-size: 24px'></i></p>
             </div>
         </div>
 
@@ -20,7 +20,7 @@
             <div class="col-6 d-flex justify-content-end">
                 <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control" style="width: 15%; margin-right: 10px;">
                 <button type="submit" class="btn btn-primary" style="background-color: #1d71b8;">Appliquer</button>
-                <a href="{% url 'create_zone' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
+                <a href="{% url 'create_packing' %}" class="btn btn-primary ml-2" style="background-color: #1d71b8;">Nouveau</a>
             </div>
         </div>
     </form>
@@ -30,29 +30,24 @@
             <thead>
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
-                    <th class="table-header">Site</th>
-                    <th class="table-header">Magasin</th>
-                    <th class="table-header">Zone</th>
-                    <th class="table-header">Est Quarantaine?</th>
-                    <th class="table-header">Est Temporaire?</th>
+                    <th class="table-header">Désignation</th>
+                    <th class="table-header">Unité</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% if page %}
-                    {% for zone in page %}
+                    {% for packing in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text">{{ zone.id }}</td>
-                        <td class="table-text">{{ zone.warehouse.site }}</td>
-                        <td class="table-text">{{ zone.warehouse.designation }}</td>
-                        <td class="table-text">{{ zone.designation }}</td>
-                        <td class="table-text">{{ zone.quarantine|yesno:"Oui,Non" }}</td>
-                        <td class="table-text">{{ zone.temp|yesno:"Oui,Non" }}</td>
+                        <td class="table-text">{{ packing.id }}</td>
+                        <td class="table-text">{{ packing.designation }}</td>
+                        <td class="table-text">{{ packing.unit }}</td>
                         <td class="text-center p-0 m-0">
-                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_zone' zone.id %}')" class="btn" style="color: #5d5d5d;">
+                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_packing' packing.id %}')" 
+                                class="btn" style="color: #5d5d5d;">
                                 <i class="far fa-pen-to-square"></i>
                             </a>
-                            <a href="javascript:void(0);" onclick="confirmZoneDel('{{ zone.id }}', '{{ zone.designation }}')"
+                            <a href="javascript:void(0);" onclick="confirmPackingDel('{{ packing.id }}', '{{ packing.designation }}')"
                                 class="btn" style="color: #5d5d5d;">
                                 <i class="far fa-trash-can"></i>
                             </a>
@@ -61,7 +56,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="6" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
+                        <td colspan="4" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -73,10 +68,10 @@
 </div>
 
 <script>
-    function confirmZoneDel(zoneId, zoneName) {
+    function confirmPackingDel(packingId, packingName) {
         swal({
             title: "Confirmation de la suppression.",
-            text: `Etes-vous sûr que vous voulez supprimer ${zoneName}?`,
+            text: `Etes-vous sûr que vous voulez supprimer ${packingName}?`,
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -85,7 +80,7 @@
         })
         .then((willConfirm) => {
             if (willConfirm) {
-                window.location.href = "{% url 'delete_zone' 0 %}".replace('0', zoneId);
+                window.location.href = "{% url 'delete_packing' 0 %}".replace('0', packingId);
             }
         });
     }
