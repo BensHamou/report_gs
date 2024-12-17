@@ -58,40 +58,26 @@ class Product(BaseModel):
             img.thumbnail(max_size, PILImage.LANCZOS)
             img.save(self.image.path, quality=50, optimize=True)
 
-    family = models.ForeignKey(Family, on_delete=models.CASCADE, related_name='products')
-    packing = models.ForeignKey(Packing, on_delete=models.CASCADE, related_name='products')
-    delais_expiration = models.PositiveIntegerField()
-    qte_per_pal = models.PositiveIntegerField()
-    qte_per_cond = models.PositiveIntegerField()
-    alert_stock = models.PositiveIntegerField()
+    family = models.ForeignKey(Family, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    packing = models.ForeignKey(Packing, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    delais_expiration = models.PositiveIntegerField(null=True, blank=True)
+    qte_per_pal = models.PositiveIntegerField(null=True, blank=True)
+    qte_per_cond = models.PositiveIntegerField(null=True, blank=True)
+    alert_stock = models.PositiveIntegerField(null=True, blank=True)
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
+    odoo_id = models.PositiveIntegerField(null=True, blank=True)
 
-    def get_stock_details(self, site_id):
-        move_lines = MoveLine.objects.filter(product=self, move__state='Confirmé', move__site_id=site_id)
-        stock_aggregate = move_lines.filter(move__type='Entré').aggregate(total_in=Sum('details__qte'))
-        stock_aggregate.update(move_lines.filter(move__type='Sortie').aggregate(total_out=Sum('details__qte')))
-        net_stock = (stock_aggregate['total_in'] or 0) - (stock_aggregate['total_out'] or 0)
+    def unit_qte(self, site_id):
+        return self.disponibilities.filter(emplacement__warehouse__site_id=site_id).aggregate(total=Sum('qte'))['total'] or 0
 
-        valid_emplacements = Emplacement.objects.filter(temp=False, quarantine=False, warehouse__site_id=site_id)
-        
-        availability = (
-            LineDetail.objects.filter(move_line__product=self, move_line__move__state='Confirmé', emplacement__in=valid_emplacements)
-            .values('move_line__lot_number', 'move_line__move__date', 'warehouse__id', 'emplacement__id', 'code')
-            .annotate(qte_in=Sum('qte', filter=Q(move_line__move__type='Entré')), qte_out=Sum('qte', filter=Q(move_line__move__type='Sortie')))
-            .annotate(net_qte=(models.F('qte_in') or 0 - models.F('qte_out') or 0))
-            .filter(net_qte__gt=0)
-        )
-
-        return {'net_stock': net_stock, 'availability': list(availability)}
-
-    def qte_in_stock(self, site_id):
-        return self.get_stock_details(site_id)['net_stock'] / 1000
+    def tn_qte(self, site_id):
+        return round(self.unit_qte(site_id) / 1000, 2)
 
     def state_stock(self, site_id):
-        qte = self.qte_in_stock(site_id)
-        if qte > self.alert_stock / 1000:
+        qte = self.unit_qte(site_id)
+        if qte > self.alert_stock:
             return 'En stock'
-        elif qte < self.alert_stock / 1000 and qte > 0:
+        elif qte < self.alert_stock and qte > 0:
             return 'Stock bas'
         return 'Rupture'
     
@@ -107,6 +93,7 @@ class Move(BaseModel):
     MOVE_STATE = [
         ('Brouillon', 'Brouillon'),
         ('Confirmé', 'Confirmé'),
+        ('Validé', 'Validé'),
         ('Annulé', 'Annulé')
     ]
     MOVE_TYPE = [('Entré', 'Entré'), ('Sortie', 'Sortie')]
@@ -128,6 +115,8 @@ class Move(BaseModel):
         return ', '.join([bl.num for bl in self.bls.all()]) 
 
     def __str__(self):
+        if not self.line:  
+            return f"[{self.id}] {self.site} - {self.date}"
         return f"[{self.id}] {self.line.designation} - {self.date}"
     
 class MoveLine(BaseModel):
@@ -135,6 +124,7 @@ class MoveLine(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     observation = models.TextField(blank=True, null=True)
+    transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     @property
     def qte(self):
@@ -142,7 +132,10 @@ class MoveLine(BaseModel):
 
     @property
     def expiry_date(self):
-        return self.move.date + timedelta(days=self.product.delais_expiration) 
+        if self.product.type == 'Produit Fini':
+            return self.move.date + timedelta(days=self.product.delais_expiration) 
+        else:
+            return None
 
     @property
     def package(self):
@@ -172,6 +165,7 @@ class LineDetail(BaseModel):
     qte = models.PositiveIntegerField()
     code = models.CharField(max_length=255, null=True, blank=True)
     mirrored_move = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transfers', blank=True, null=True)
+    n_lot = models.CharField(max_length=255, null=True, blank=True)
 
     @property
     def palette(self):
@@ -227,3 +221,9 @@ class Validation(BaseModel):
     def __str__(self):
         return f"Validation - {str(str(self.move.id).zfill(4))} - {str(self.date)} ({self.old_state} -> {self.new_state})" 
     
+
+class Disponibility(BaseModel):
+    emplacement = models.ForeignKey(Emplacement, related_name='disponibilities', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)
+    n_lot = models.CharField(max_length=50)
+    qte = models.PositiveIntegerField()

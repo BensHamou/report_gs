@@ -2,13 +2,17 @@
 {% load static %}
 
 {% block title %}
-    {% if product %} Modification du Produit {% else %} Création d'un Produit {% endif %}
+    {% if product %} Modification du {% if is_pf %}produit{% else %}matière première{% endif %}{% else %} Création d'un Produit {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
     <a href="javascript:void(0);" 
-        onclick="window.location=constructUrl('{% url 'products' %}')" 
+        {% if is_pf %}
+            onclick="window.location=constructUrl('{% url 'products' %}')" 
+        {% else %}
+            onclick="window.location=constructUrl('{% url 'mproducts' %}')" 
+        {% endif %}
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" 
@@ -21,7 +25,7 @@
 
 <div class="row mb-3">
     <div class="col-12">
-        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if product %} Modification de produit {% else %} Création d'un produit {% endif %}</h4>
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if product %} Modification de {% if is_pf %}produit{% else %}matière première{% endif %} {% else %} Création d'un produit {% endif %}</h4>
     </div>
 
     <div class="col-6">
@@ -39,29 +43,30 @@
         <div class="col-lg-6 col-md-12">
             <div class="row">
                 <label for="" class="form-label" style="color: #0082cd;">Information Produit</label>
-                <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
-                    {{ form.designation }}
-                    {% if form.designation.errors %}
-                        <small class="text-danger">{{ form.designation.errors }}</small>
-                    {% endif %}
-                </div>
+                {% if is_pf %}
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
+                        {{ form.designation }}
+                        {% if form.designation.errors %}
+                            <small class="text-danger">{{ form.designation.errors }}</small>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="palette" class="form-label">Désignation</label>
+                        <p class="form-control" style="padding-left: 30px">{{ form.instance.designation }}</p>
+                    </div>
+                {% endif %}
 
-                <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="family" class="form-label" style="color: #5d5d5d;">Famille</label>
-                    {{ form.family }}
-                    {% if form.family.errors %}
-                        <small class="text-danger">{{ form.family.errors }}</small>
-                    {% endif %}
-                </div>
-
-                <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="type" class="form-label" style="color: #5d5d5d;">Categorie</label>
-                    {{ form.type }}
-                    {% if form.type.errors %}
-                        <small class="text-danger">{{ form.type.errors }}</small>
-                    {% endif %}
-                </div>
+                {% if is_pf %}
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="family" class="form-label" style="color: #5d5d5d;">Famille</label>
+                        {{ form.family }}
+                        {% if form.family.errors %}
+                            <small class="text-danger">{{ form.family.errors }}</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 <div class="col-lg-12 col-md-12 mb-1">
                     <label for="packing" class="form-label" style="color: #5d5d5d;">Conditionnement</label>
@@ -87,13 +92,15 @@
                     {% endif %}
                 </div>
 
-                <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="delais_expiration" class="form-label" style="color: #5d5d5d;">Délais d'expiration (jours)</label>
-                    {{ form.delais_expiration }}
-                    {% if form.delais_expiration.errors %}
-                        <small class="text-danger">{{ form.delais_expiration.errors }}</small>
-                    {% endif %}
-                </div>
+                {% if is_pf %}
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="delais_expiration" class="form-label" style="color: #5d5d5d;">Délais d'expiration (jours)</label>
+                        {{ form.delais_expiration }}
+                        {% if form.delais_expiration.errors %}
+                            <small class="text-danger">{{ form.delais_expiration.errors }}</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
 
                 <div class="col-lg-12 col-md-12 mb-1">
                     <label for="alert_stock" class="form-label" style="color: #5d5d5d;">Alerte Stock</label>
@@ -105,14 +112,21 @@
             </div>
         </div>
         <div class="col-lg-6 col-md-12 text-center">
-            <label for="image" class="form-label" style="color: #0082cd;">Image Produit</label>
-            <div class="d-flex flex-column align-items-center image-container"> 
-                <img id="imagePreview" src="{% if product and product.image %}{{ product.image.url }}{% else %}{% static 'img/empty_product.png' %}{% endif %}" 
-                    alt="Image Preview" style="width: 300px; height: 300px; margin-bottom: 15px; border-radius: 5px; object-fit: cover; cursor: pointer;"/>
-                {{ form.image }}
-            </div>
-            {% if form.image.errors %}
-                <small class="text-danger">{{ form.image.errors }}</small>
+            {% if is_pf %}
+                <label for="image" class="form-label" style="color: #0082cd;">Image Produit</label>
+                <div class="d-flex flex-column align-items-center image-container"> 
+                    <img id="imagePreview" src="{% if product and product.image %}{{ product.image.url }}{% else %}{% static 'img/empty_product.png' %}{% endif %}" 
+                        alt="Image Preview" style="width: 300px; height: 300px; margin-bottom: 15px; border-radius: 5px; object-fit: cover; cursor: pointer;"/>
+                    {{ form.image }}
+                </div>
+                {% if form.image.errors %}
+                    <small class="text-danger">{{ form.image.errors }}</small>
+                {% endif %}
+            {% else %}
+                <label for="image" class="form-label" style="color: #0082cd;">MP</label>
+                <div class="d-flex flex-column align-items-center"> 
+                    <img src="{% static 'img/mp.png' %}" alt="MP"/>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -163,5 +177,35 @@
     }
     
 </style>
+
+{% if product and product.disponibilities.all %}
+    <div class="table-responsive mt-3" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h4 class="mb-4 page-title" style="color: #0082cd;">Disponibilités</h4>
+            </div>
+        </div>
+        <table class="table table-borderless">
+            <thead>
+                <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
+                    <th class="table-header">N° Lot</th>
+                    <th class="table-header">Magazin</th>
+                    <th class="table-header">Emplacement</th>
+                    <th class="table-header">Quantité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for disponibility in product.disponibilities.all %}
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                        <td class="table-text">{{ disponibility.n_lot }}</td>
+                        <td class="table-text">{{ disponibility.emplacement.warehouse.designation }}</td>
+                        <td class="table-text">{{ disponibility.emplacement.designation }}</td>
+                        <td class="table-text">{{ disponibility.qte }} {{ product.packing.unit|default:'Kg' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
 
 {% endblock %}

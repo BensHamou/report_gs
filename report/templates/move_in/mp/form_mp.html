@@ -8,7 +8,7 @@
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
     <a href="javascript:void(0);" 
-       onclick="window.location=constructUrl('{% url 'select_p' product.family.id %}')" 
+       onclick="window.location=constructUrl('{% url 'select_c' %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" 
@@ -37,67 +37,28 @@
     <form method="POST" id="move_in-form">
         {% csrf_token %}
         <div class="row">
-            <div class="col-lg-8 col-md-6 col-sm-12 mb-4">
+            <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
                 <div class="row">
-                    <input type="number" name="site" id="site" hidden required>
+                    <input type="number" name="site" id="site" value="{{ default_site }}" hidden required>
+                    <input type="number" name="line" id="line" value="{{ default_line }}" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="lot_number" class="form-label">N Lot</label>
-                        <input type="number" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                    </div>
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="production_date" class="form-label">Production Date</label>
-                        <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                    </div>
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="global_qte" class="form-label">Quantity Globale</label>
-                        <input type="number" name="global_qte" id="global_qte" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
-                    </div>
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="palette_total" class="form-label">Nombre Palettes</label>
-                        <input type="number" name="palette_total" id="palette_total" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
-                    </div>
-                    {% if show_line_field %}
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="line" class="form-label">Ligne</label>
-                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                            <option value="">-- Ligne --</option>
-                            {% for line in lines %}
-                                <option value="{{ line.id }}">{{ line.designation }}</option>
+                        <label for="product" class="form-label">Article</label>
+                        <select name="product" id="product" class="form-control select2" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <option value="">-- Article --</option>
+                            {% for product in products %}
+                                <option value="{{ product.id }}">{{ product.designation }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    {% else %}
-                        <input type="hidden" name="line" id='line' value="{{ default_line.id }}">
-                    {% endif %}
-                    {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="gestionaire" class="form-label">Gestionaire</label>
-                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                            <option value="">-- Gestionaire --</option>
-                            {% for gestionaire in gestionaires %}
-                            <option value="{{ gestionaire.id }}">{{ gestionaire.fullname }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="lot_number" class="form-label">N Lot (complet)</label>
+                        <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
-                    {% else %}
-                        <input type="hidden" name="gestionaire" id='gestionaire' value="{{ user.id }}">
-                    {% endif %}
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="shift" class="form-label">Shift</label>
-                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
-                            <option value="">-- Shift --</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-6 col-12 mb-2">
-                        <label for="expire_date" class="form-label">Date d'expiration</label>
-                        <input type="date" name="expire_date" id="expire_date" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    <div class="col-lg-12 col-12 mb-2">
+                        <label for="observation" class="form-label">Observation</label>
+                        <textarea type="textarea" name="observation" row="3" id="observation" class="form-control" style="background-color: #ffffff; padding-left: 30px; width: 100%"></textarea>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
-                <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
-                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
-                <input type="number" name="product" id="product" value="{{ product.id }}" hidden>
             </div>
         </div>
         <div class="row mt-4" id="details-container">
@@ -167,35 +128,6 @@
     const lineField = document.getElementById('line');
     lineField?.addEventListener('change', function () {
         const lineId = this.value;
-        fetch(`{% url 'get_shifts_and_users_for_line' %}?line_id=${lineId}`)
-            .then(response => response.json())
-            .then(data => {
-                const shiftSelect = document.getElementById('shift');
-                shiftSelect.innerHTML = '<option value="">-- Shift --</option>';
-
-                data.shifts.forEach(shift => {
-                    const option = document.createElement('option');
-                    option.value = shift.id;
-                    option.textContent = shift.name;
-                    shiftSelect.appendChild(option);
-                });
-
-                const gestionaireSelect = document.getElementById('gestionaire');
-                if (gestionaireSelect) {
-                    gestionaireSelect.innerHTML = '<option value="">-- Gestionaire --</option>';
-
-                    data.users.forEach(gestionaire => {
-                        const option = document.createElement('option');
-                        option.value = gestionaire.id;
-                        option.textContent = gestionaire.name;
-                        gestionaireSelect.appendChild(option);
-                    });
-                }
-                const siteInput = document.getElementById('site');
-                siteInput.value = data.site;
-            })
-            .catch(error => console.error('Error fetching shifts or gestionaires:', error));
-
         fetch(`{% url 'get_warehouses_for_line' %}?line_id=${lineId}`)
             .then(response => response.json())
             .then(data => {
@@ -211,6 +143,7 @@
             })
             .catch(error => console.error('Error fetching warehouses:', error));
     });
+    lineField.dispatchEvent(new Event('change'));
 
     document.getElementById('details-container').addEventListener('change', function (e) {
         if (e.target.matches('.warehouse')) {
@@ -232,72 +165,6 @@
         }
     });
 
-    const lines = {{ lines|length }};
-    
-    if (lines === 1) {
-        const lineWrapper = document.querySelector('.col-lg-6.col-12.mb-2 select[name="line"]').parentElement;
-        const lineSelect = document.getElementById('line');
-        lineWrapper.style.display = 'none';
-        lineSelect.dispatchEvent(new Event('change'));
-    }
-    else if(lines === 0) {
-        const lineSelect = document.getElementById('line');
-        lineSelect.dispatchEvent(new Event('change'));
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const productionDateField = document.getElementById("production_date");
-        const expireDateField = document.getElementById("expire_date");
-        const globalQteField = document.getElementById("global_qte");
-        const paletteTotalField = document.getElementById("palette_total");
-        const detailsContainer = document.getElementById("details-container");
-    
-        const productDelaisExpiration = {{ product.delais_expiration }};
-        const qtePerPalette = {{ product.qte_per_pal }};
-    
-        const calculateExpireDate = () => {
-            const productionDate = new Date(productionDateField.value);
-            if (!isNaN(productionDate)) {
-                const expireDate = new Date(productionDate);
-                expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
-                expireDateField.value = expireDate.toISOString().split("T")[0];
-            }
-        };
-    
-        const calculateGlobalQte = () => {
-            let totalQte = 0;
-            detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
-                totalQte += parseFloat(qteInput.value) || 0;
-            });
-            globalQteField.value = totalQte;
-        };
-        
-        const calculatePaletteTotal = () => {
-            let totalPalettes = 0;
-            detailsContainer.querySelectorAll(".form-row").forEach((row) => {
-                const qteInput = row.querySelector(".qte");
-                const qte = parseFloat(qteInput.value) || 0;
-                const totalPalettesForRow = Math.ceil(qte / qtePerPalette);
-                totalPalettes += totalPalettesForRow;
-            });
-            paletteTotalField.value = totalPalettes;
-        };
-    
-        productionDateField.addEventListener("change", () => {
-            calculateExpireDate();
-        });
-    
-        detailsContainer.addEventListener("input", (e) => {
-            if (e.target.matches(".qte")) {
-                calculateGlobalQte();
-                calculatePaletteTotal();
-            }
-        });
-    
-        calculateExpireDate();
-        calculateGlobalQte();
-        calculatePaletteTotal();
-    });
 
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
@@ -345,7 +212,7 @@
                     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
                     $.ajax({
                         type: "POST",
-                        url: "{% url 'create_move' %}",
+                        url: "{% url 'create_move_mp' %}",
                         data: formData,
                         processData: false,
                         contentType: false,

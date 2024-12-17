@@ -29,10 +29,19 @@ class ProductForm(BaseModelForm):
     qte_per_pal = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
     family = forms.ModelChoiceField(queryset=Family.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
     packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
-    type = forms.ChoiceField(choices=Product.PRODUCT_CHOICES, widget=forms.Select(attrs=getAttrs('control')))
     alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
 
     class Meta:
         model = Product
-        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'type', 'alert_stock']
+        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock']
         
+class MProductForm(BaseModelForm):
+    
+    qte_per_cond = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par copnditionnement')))
+    qte_per_pal = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
+    packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
+    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
+
+    class Meta:
+        model = Product
+        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock']

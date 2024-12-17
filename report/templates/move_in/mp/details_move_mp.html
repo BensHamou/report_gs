@@ -28,7 +28,7 @@
     </div>
     <div class="col-6 d-flex justify-content-end">
         {% if can_edit %}
-            <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" onclick="window.location=constructUrl('{% url 'edit_move_line' move_line.id %}')" 
+            <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" onclick="window.location=constructUrl('{% url 'edit_move_line_mp' move_line.id %}')" 
              style="background-color: #1d71b8;">
                 <span class="d-none d-sm-inline">Modifier</span>
                 <i class="fas fa-edit d-inline d-sm-none"></i>
@@ -43,15 +43,19 @@
 
 <div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
     <div class="row">
-        <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
+        <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
             <div class="row">
+                <div class="col-lg-12 col-12 mb-2">
+                    <label for="product" class="form-label">Produit</label>
+                    <p class="form-control">{{ move_line.product }}</p>
+                </div>
+                <div class="col-lg-6 col-12 mb-2">
+                    <label for="line" class="form-label">Site</label>
+                    <p class="form-control">{{ move_line.move.site }}</p>
+                </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="n_lot" class="form-label">N Lot</label>
                     <p class="form-control">{{ move_line.n_lot }}</p>
-                </div>
-                <div class="col-lg-6 col-12 mb-2">
-                    <label for="production_date" class="form-label">Production Date</label>
-                    <p class="form-control">{{ move_line.move.date|date:'d M Y' }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
@@ -62,26 +66,14 @@
                     <p class="form-control">{{ move_line.palette }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
-                    <label for="line" class="form-label">Ligne</label>
-                    <p class="form-control">{{ move_line.move.line.designation }}</p>
+                    <label for="date_created" class="form-label">Entré le</label>
+                    <p class="form-control">{{ move_line.date_created }}</p>
                 </div>
                 <div class="col-lg-6 col-12 mb-2">
-                    <label for="gestionaire" class="form-label">Gestionaire</label>
+                    <label for="gestionaire" class="form-label">Par</label>
                     <p class="form-control">{{ move_line.move.gestionaire.fullname }}</p>
                 </div>
-                <div class="col-lg-6 col-12 mb-2">
-                    <label for="shift" class="form-label">Shift</label>
-                    <p class="form-control">{{ move_line.move.shift.designation }}</p>
-                </div>
-                <div class="col-lg-6 col-12 mb-2">
-                    <label for="expiry_date" class="form-label">Date d'expiration</label>
-                    <p class="form-control">{{ move_line.expiry_date|date:'d M Y' }}</p>
-                </div>
             </div>
-        </div>
-        <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">
-            <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ move_line.product.designation }}</p>
-            <img src="{{ move_line.product.image.url }}" alt="{{ move_line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
         </div>
     </div>
     <div class="row mt-4" id="details-container">
@@ -100,7 +92,7 @@
                 <p class="form-control" 
                 {% if detail.transfers.exists %}style="color: red"{% endif %}
                 {% if detail.move_line.move.is_transfer %}style="color: blue"{% endif %}
-                >{{ detail.qte }} {{ move_line.product.packing.unit }}</p>
+                >{{ detail.qte }} {{ move_line.product.packing.unit|default:'Kg' }}</p>
             </div>
             
             {% if can_print %}
@@ -156,9 +148,10 @@
 <div class="d-flex justify-content-center" style="padding: 15px;">
     {% if can_confirm %}
         <button class="btn-validate mr-2" onclick="confirmMoveLine('{{ move_line.id }}')">Confirmer</button>
-    {% endif %}
-    {% if can_confirm %}
         <button class="btn-cancel" onclick="cancelMoveLine('{{ move_line.id }}')">Annuler</button>
+    {% endif %}
+    {% if can_validate %}
+        <button class="btn-validate mr-2" onclick="validateMoveLine('{{ move_line.id }}')">Valider</button>
     {% endif %}
 </div>
 {% include 'modal.html' %}
@@ -221,6 +214,42 @@
                 $.ajax({
                     type: "POST",
                     url: "{% url 'cancel_move_line' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    function validateMoveLine(moveLineId) {
+        swal({
+            title: "Valider l'entrée",
+            text: "Êtes-vous sûr de vouloir valider cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'validate_move_line' 0 %}".replace('0', moveLineId),
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
                     },

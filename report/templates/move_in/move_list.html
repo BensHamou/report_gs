@@ -134,13 +134,13 @@
                         <td class="table-text" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')" style="{{line.style_list}} cursor: pointer; color: {% if line.move.is_transfer %}blue{% elif line.move.type == 'Sortie' %}red{% else %}green{% endif %}">{% if line.move.is_transfer %}Transfer{% else %}{{ line.move.type }}{% endif %}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.date_created }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.gestionaire }}</td>
-                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.line.site }}</td>
+                        <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.site }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.qte }} {{ line.product.packing.unit }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.palette }} Palettes</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.bl_str|default:"/" }}</td>
                         <td class="table-text" style="{{line.style_list}} cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_line_detail' line.id %}')">{{ line.move.state }}</td>
                         <td class="text-center p-0 m-0">
-                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_move_line' line.id %}')" 
+                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_move_line_pf' line.id %}')" 
                                 class="btn" style="color: #5d5d5d;">
                                 <i class="far fa-pen-to-square"></i>
                             </a>
@@ -238,7 +238,7 @@
         })
         .then((willConfirm) => {
             if (willConfirm) {
-                window.location.href = "{% url 'delete_move_line' 0 %}".replace('0', lineId);
+                window.location.href = "{% url 'delete_move' 0 %}".replace('0', lineId);
             }
         });
     }

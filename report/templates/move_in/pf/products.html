@@ -48,7 +48,7 @@
     <div class="row">
         {% for product in products %}
         <div class="col-md-3 col-sm-6 col-12 mb-4 d-flex justify-content-center">
-            <a href="{% url 'move_in_form' product.id %}" class="text-decoration-none">
+            <a href="{% url 'move_in_pf' product.id %}" class="text-decoration-none">
                 <div class="text-center" style="cursor: pointer;">
                     <img src="{{ product.image.url }}" 
                          alt="{{ product.name }}" 

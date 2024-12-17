@@ -96,4 +96,32 @@
         </div>
     </div>
 </form>
+
+{% if emplacement and emplacement.disponibilities.all %}
+    <div class="table-responsive mt-3" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h4 class="mb-4 page-title" style="color: #0082cd;">Disponibilités</h4>
+            </div>
+        </div>
+        <table class="table table-borderless">
+            <thead>
+                <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
+                    <th class="table-header">N° Lot</th>
+                    <th class="table-header">Produit</th>
+                    <th class="table-header">Quantité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for disponibility in emplacement.disponibilities.all %}
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                        <td class="table-text">{{ disponibility.n_lot }}</td>
+                        <td class="table-text">{{ disponibility.product }}</td>
+                        <td class="table-text">{{ disponibility.qte }} {{ disponibility.product.packing.unit|default:'Kg' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
 {% endblock %}

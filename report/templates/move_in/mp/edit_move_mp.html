@@ -39,59 +39,77 @@
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
                 <div class="row">
-                    <input type="number" name="site" id="site" value='{{ default_site }}' hidden required>
-                    <input type="number" name="line" id="line" value='{{ default_line }}' hidden required>
+                    <input type="number" name="site" id="site" value="{{ default_site }}" hidden required>
+                    <input type="number" name="line" id="line" value="{{ default_line }}" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="product" class="form-label">Article</label>
                         <select name="product" id="product" class="form-control select2" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Article --</option>
                             {% for product in products %}
-                                <option value="{{ product.id }}">{{ product.designation }}</option>
+                                <option value="{{ product.id }}" {% if product.id == default_product.id %}selected{% endif %}>{{ product.designation }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot (complet)</label>
-                        <input type="text" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="text" name="lot_number" id="lot_number" value="{{ move_line.lot_number }}" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-12 col-12 mb-2">
                         <label for="observation" class="form-label">Observation</label>
-                        <textarea type="textarea" name="observation" row="3" id="observation" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px; width: 100%"></textarea>
+                        <textarea type="textarea" name="observation" row="3" id="observation" value="{{ move_line.observation }}" class="form-control" style="background-color: #ffffff; padding-left: 30px; width: 100%"></textarea>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row mt-4" id="details-container">
-            <div class="row mb-3 form-row" data-row-id="0">
+            {% for detail in line_details %}
+            <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
+                <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
                 <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="warehouse_0" class="form-label">Magasin</label>
-                    <select name="warehouse_0" class="form-control warehouse" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
+                    <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                    <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.id }}" {% if warehouse.id == detail.warehouse_id %}selected{% endif %}>{{ warehouse.designation }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="emplacement_0" class="form-label">Emplacement</label>
-                    <select name="emplacement_0" class="form-control emplacement" id="emplacement_0" required>
+                    <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                    <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement" id="emplacement_{{ forloop.counter0 }}" required>
                         <option value="">-- Emplacement --</option>
+                        {% for emplacement in emplacements %}
+                            <option value="{{ emplacement.id }}" {% if emplacement.id == detail.emplacement_id %}selected{% endif %}>{{ emplacement.designation }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="qte_0" class="form-label">Quantity</label>
-                    <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
-                        <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
-                            <i class="fas fa-plus" style="color: #0082cd"></i>
-                        </button>
+                    <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantity</label>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex">
+                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantity" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            {% if forloop.first %}
+                            <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                                <i class="fas fa-plus" style="color: #0082cd"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn ms-2" style="background-color: #eaedf9" data-delete-row>
+                                <i class="fas fa-trash-alt" style="color: #0082cd;"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
     </form>
 </div>
 
 
 <script>
-    let rowId = 1;
+    let rowId = {{ line_details|length }};
 
     document.getElementById('details-container').addEventListener('click', function (e) {
         if (e.target.closest('#add-row')) {
@@ -116,34 +134,11 @@
             container.appendChild(newRow);
             rowId++;
         }
-    });
-
-    document.getElementById('details-container').addEventListener('click', function (e) {
         if (e.target.closest('[data-delete-row]')) {
             const row = e.target.closest('.form-row');
             row.remove();
         }
     });
-
-    const lineField = document.getElementById('line');
-    lineField?.addEventListener('change', function () {
-        const lineId = this.value;
-        fetch(`{% url 'get_warehouses_for_line' %}?line_id=${lineId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.querySelectorAll('.form-row .warehouse').forEach(warehouseSelect => {
-                    warehouseSelect.innerHTML = '<option value="">-- Magasin --</option>';
-                    data.warehouses.forEach(warehouse => {
-                        const option = document.createElement('option');
-                        option.value = warehouse.id;
-                        option.textContent = warehouse.name;
-                        warehouseSelect.appendChild(option);
-                    });
-                });
-            })
-            .catch(error => console.error('Error fetching warehouses:', error));
-    });
-    lineField.dispatchEvent(new Event('change'));
 
     document.getElementById('details-container').addEventListener('change', function (e) {
         if (e.target.matches('.warehouse')) {
@@ -160,6 +155,49 @@
                         option.textContent = emplacement.name;
                         emplacementSelect.appendChild(option);
                     });
+                })
+                .catch(error => console.error('Error fetching emplacements:', error));
+        }
+    });
+
+    document.getElementById('details-container').addEventListener('change', function (e) {
+        if (e.target.matches('.warehouse')) {
+            const warehouseId = e.target.value;
+            const emplacementSelect = e.target.closest('.form-row').querySelector('.emplacement');
+
+            fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
+                    data.emplacements.forEach(emplacement => {
+                        const option = document.createElement('option');
+                        option.value = emplacement.id;
+                        option.textContent = emplacement.name;
+                        emplacementSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching emplacements:', error));
+        }
+    });
+
+    document.querySelectorAll('.form-row').forEach(function(row) {
+        const warehouseId = row.dataset.warehouseId;
+        const emplacementSelect = row.querySelector('.emplacement');
+        if (warehouseId) {
+            fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
+                    data.emplacements.forEach(emplacement => {
+                        const option = document.createElement('option');
+                        option.value = emplacement.id;
+                        option.textContent = emplacement.name;
+                        emplacementSelect.appendChild(option);
+                    });
+                    const defaultEmplacementId = row.dataset.emplacementId;
+                    if (defaultEmplacementId) {
+                        emplacementSelect.value = defaultEmplacementId;
+                    }
                 })
                 .catch(error => console.error('Error fetching emplacements:', error));
         }
@@ -197,7 +235,7 @@
         } else {
             swal({
                 title: "Confirmer la modification",
-                text: "Êtes-vous sûr de vouloir enregistrer ces informations ?",
+                text: "Êtes-vous sûr de vouloir enregistrer ces modifications ?",
                 icon: "warning",
                 buttons: true,
                 dangerMode: true,
@@ -205,21 +243,20 @@
                 cancelButtonText: "Non",
             })
             .then((willConfirm) => {
-                console.log(willConfirm);
                 if (willConfirm) {
                     const form = document.getElementById('move_in-form');
                     const formData = new FormData(form);
                     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
                     $.ajax({
                         type: "POST",
-                        url: "{% url 'create_move' %}",
+                        url: "{% url 'update_move_mp' move_line.id %}",
                         data: formData,
                         processData: false,
                         contentType: false,
                         success: function(response) {
                             if (response.success) {
                                 swal("Succès!", response.message, "success").then(function() {
-                                    window.location.href = "{% url 'move_line_detail' 0 %}".replace('0', response.new_record);
+                                    window.location.href = "{% url 'move_line_detail' move_line.id %}";
                                 });
                             } else {
                                 swal("Erreur", response.message, "error");

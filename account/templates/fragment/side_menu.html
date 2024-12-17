@@ -16,7 +16,7 @@
         </li>
         {% endif %}
             <li class="nav-item mb-2">
-                <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
+                <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_pf,move_in_form,edit_move_line_pf,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
                     <i class="margiin fas fa-plus"></i> 
                     <span class="menu-text">Entré</span>
                 </a>
@@ -29,7 +29,7 @@
             </li>
         {% if user.role == 'Admin' %}
             <li class="nav-item mb-2">
-                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 
                     <span class="menu-text">Paramètres</span>
                 </a>
@@ -51,6 +51,9 @@
                     </li>
                     <li class="ml-3 mb-2">
                         <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}" style="margin-left: 30px;">Produits</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'mproducts' %} class="active" {% endif %} href="{% url 'mproducts' %}" style="margin-left: 30px;">Matière Première</a>
                     </li>
                     <li class="ml-3 mb-2">
                         <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}" style="margin-left: 30px;">Familles</a>
@@ -95,7 +98,7 @@
             </li>
         {% endif %}
         <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_form,move_in_form,edit_move_line,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
+            <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_pf,move_in_form,edit_move_line_pf,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
                 <i class="margiin fas fa-plus"></i> 
             </a>
         </li>
@@ -106,7 +109,7 @@
         </li>
         {% if user.role == 'Admin' %}
             <li class="nav-item mb-2">
-                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,shifts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
+                <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 
                 </a>
                 <ul class="collapse list-unstyled" id="parametersSubmenu">
@@ -127,6 +130,9 @@
                     </li>
                     <li class="ml-3 mb-2">
                         <a {% if request.resolver_match.url_name == 'products' %} class="active" {% endif %} href="{% url 'products' %}">Produits</a>
+                    </li>
+                    <li class="ml-3 mb-2">
+                        <a {% if request.resolver_match.url_name == 'mproducts' %} class="active" {% endif %} href="{% url 'mproducts' %}">Matière Première</a>
                     </li>
                     <li class="ml-3 mb-2">
                         <a {% if request.resolver_match.url_name == 'families' %} class="active" {% endif %} href="{% url 'families' %}">Familles</a>
