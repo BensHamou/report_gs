@@ -778,7 +778,8 @@ def adjustStock(ml):
             if ds:
                 ds.qte += detail.qte
             else:
-                ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, write_uid=ml.create_uid,n_lot=ml.n_lot)
+                ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
+                                    production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid,n_lot=ml.n_lot)
             ds.save()
             return True, 'Stock ajusté avec succès.'
         else:

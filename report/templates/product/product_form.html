@@ -192,6 +192,8 @@
                     <th class="table-header">Magazin</th>
                     <th class="table-header">Emplacement</th>
                     <th class="table-header">Quantité</th>
+                    <th class="table-header">Produit le</th>
+                    <th class="table-header">Expire le</th>
                 </tr>
             </thead>
             <tbody>
@@ -201,6 +203,8 @@
                         <td class="table-text">{{ disponibility.emplacement.warehouse.designation }}</td>
                         <td class="table-text">{{ disponibility.emplacement.designation }}</td>
                         <td class="table-text">{{ disponibility.qte }} {{ product.packing.unit|default:'Kg' }}</td>
+                        <td class="table-text">{{ disponibility.production_date|date:'d M Y' }}</td>
+                        <td class="table-text">{{ disponibility.expiry_date|date:'d M Y' }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

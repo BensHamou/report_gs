@@ -50,13 +50,13 @@ class StandardResultsSetPagination(PageNumberPagination):
 def move_list_api(request):
     try:
         user = request.user
-        moves = MoveLine.objects.filter(move__line__in=user.lines.all().values('id')).order_by('-date_modified')
+        moves = MoveLine.objects.filter(Q(move__line__in=user.lines.all().values('id')) | Q(move__line__isnull=True, move__site=user.default_site)).order_by('-date_modified')
         paginator = StandardResultsSetPagination()
         paginated_moves = paginator.paginate_queryset(moves, request)
         serializer = MoveLineSerializer(paginated_moves, many=True)
         return paginator.get_paginated_response(serializer.data)
     except NotAuthenticated:
-        return Response({'error': 'User must be authenticated to access this resource.'}, status=401)
+        return Response({'error': 'L\'utilisateur doit être authentifié pour accéder à cette ressource.'}, status=401)
     
 class SyncDataView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -91,21 +91,20 @@ class MoveOutDetailsView(APIView):
         product_ids = request.data.get('product_ids')
 
         if not site_id or not product_ids:
-            return Response({"detail": "Missing 'site_id' or 'product_ids'"}, status=400)
+            return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
+        
 
         products = Product.objects.filter(id__in=product_ids)
         product_data = []
 
         for product in products:
-            stock_details = product.get_stock_details(site_id)
+            stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
+            unit_qte = product.unit_qte(site_id)
             
             product_data.append({
-                'product_id': product.id,
-                'name': product.designation,
-                'qte_in_line': stock_details['net_stock'],
-                'availability': stock_details['availability'],
-                'qte_per_pal': product.qte_per_pal,
-                'image': product.image.url if product.image else None,
+                'product': ProductSerializer(product).data,
+                'stock_details': stock_details,
+                'global_qte': unit_qte
             })
 
         return Response(product_data)

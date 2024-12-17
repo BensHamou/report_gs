@@ -110,6 +110,8 @@
                     <th class="table-header">N° Lot</th>
                     <th class="table-header">Produit</th>
                     <th class="table-header">Quantité</th>
+                    <th class="table-header">Produit le</th>
+                    <th class="table-header">Expire le</th>
                 </tr>
             </thead>
             <tbody>
@@ -118,6 +120,8 @@
                         <td class="table-text">{{ disponibility.n_lot }}</td>
                         <td class="table-text">{{ disponibility.product }}</td>
                         <td class="table-text">{{ disponibility.qte }} {{ disponibility.product.packing.unit|default:'Kg' }}</td>
+                        <td class="table-text">{{ disponibility.production_date|date:'d M Y' }}</td>
+                        <td class="table-text">{{ disponibility.expiry_date|date:'d M Y' }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

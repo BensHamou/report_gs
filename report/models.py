@@ -70,6 +70,9 @@ class Product(BaseModel):
     def unit_qte(self, site_id):
         return self.disponibilities.filter(emplacement__warehouse__site_id=site_id).aggregate(total=Sum('qte'))['total'] or 0
 
+    def state_in_site(self, site_id):
+        return self.disponibilities.filter(emplacement__warehouse__site_id=site_id)
+
     def tn_qte(self, site_id):
         return round(self.unit_qte(site_id) / 1000, 2)
 
@@ -227,3 +230,12 @@ class Disponibility(BaseModel):
     product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)
     n_lot = models.CharField(max_length=50)
     qte = models.PositiveIntegerField()
+    production_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+
+    @property
+    def palette(self):
+        if self.product.qte_per_pal and self.qte:
+            return math.ceil(self.qte / self.product.qte_per_pal)
+        return 0
+    

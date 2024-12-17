@@ -6,9 +6,9 @@ services:
     container_name: STOCK_DB
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=StockDB
-      - POSTGRES_USER=stock_report
-      - POSTGRES_PASSWORD=stock_report
+      - POSTGRES_DB=PumaGS
+      - POSTGRES_USER=puma_gs
+      - POSTGRES_PASSWORD=puma_gs
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
@@ -33,9 +33,9 @@ services:
       - db
     environment:
       - DB_HOST=db
-      - DB_NAME=StockDB
-      - DB_USER=stock_report
-      - DB_PASS=stock_report
+      - DB_NAME=PumaGS
+      - DB_USER=puma_gs
+      - DB_PASS=puma_gs
       - DB_PORT=5432
   cron:
     build: 
@@ -51,9 +51,9 @@ services:
       - ./media:/app/media
     environment:
       - DB_HOST=db
-      - DB_NAME=StockDB
-      - DB_USER=stock_report
-      - DB_PASS=stock_report
+      - DB_NAME=PumaGS
+      - DB_USER=puma_gs
+      - DB_PASS=puma_gs
       - DB_PORT=5432
     command: >
       sh -c "python manage.py crontab remove &&

@@ -7,18 +7,27 @@ class LineDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LineDetail
-        fields = ['id', 'warehouse', 'emplacement', 'qte', 'palette']
+        fields = ['id', 'warehouse', 'emplacement', 'n_lot', 'qte', 'palette']
 
 class MoveLineSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.designation', read_only=True)
-    expiry_date = serializers.DateField(read_only=True)
+    details = LineDetailSerializer(many=True, read_only=True)
     production_date = serializers.DateField(source='move.date', read_only=True)
-    details = LineDetailSerializer(many=True, read_only=True) 
+    expiry_date = serializers.DateField(read_only=True)
     n_lot = serializers.CharField(read_only=True)
+    gestionaire = serializers.CharField(source='move.gestionaire.fullname', read_only=True)
+    state = serializers.CharField(source='move.state', read_only=True)
+    bls = serializers.CharField(source='move.bl_str', read_only=True)
+    type = serializers.CharField(source='move.type', read_only=True)
+    is_transfer = serializers.CharField(source='move.is_transfer', read_only=True)
+    is_transfer = serializers.CharField(source='move.is_transfer', read_only=True)
+    line = serializers.CharField(source='move.line', read_only=True)
+    site = serializers.CharField(source='move.site', read_only=True)
+    shift = serializers.CharField(source='move.shift', read_only=True)
 
     class Meta:
         model = MoveLine
-        fields = ['id',  'product_name',  'lot_number',  'code', 'expiry_date',  'production_date',  'details', 'qte', 'palette', 'n_lot']
+        fields = ['id',  'product', 'expiry_date',  'production_date',  'details', 'qte', 'palette', 'n_lot', 'state', 
+                  'gestionaire', 'bls', 'type', 'is_transfer', 'line', 'site', 'date_created', 'shift']
 
 
 class SiteSerializer(serializers.ModelSerializer):
@@ -36,7 +45,7 @@ class EmplacementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Emplacement
-        fields = ['id', 'designation', 'quarantine', 'temp', 'warehouse']
+        fields = ['id', 'designation', 'type', 'capacity', 'quarantine', 'temp', 'warehouse']
 
 class LineSerializer(serializers.ModelSerializer):
 
@@ -60,27 +69,21 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'designation', 'image', 'type', 'family', 'packing']
+        fields = ['id', 'designation', 'image', 'type', 'family', 'packing', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'alert_stock']
 
 
-class DetailAvailabilitySerializer(serializers.ModelSerializer):
-    warehouse_name = serializers.CharField(source='warehouse.designation', read_only=True)
-    emplacement_name = serializers.CharField(source='emplacement.designation', read_only=True)
-    lot_number = serializers.CharField(source='move_line.lot_number', read_only=True)
-    expiry_date = serializers.DateField(source='move_line.expiry_date', read_only=True)
+class DisponibilitySerializer(serializers.ModelSerializer):
+    warehouse_id = serializers.CharField(source='emplacement.warehouse.id', read_only=True)
+    emplacement_id = serializers.CharField(source='emplacement.id', read_only=True)
+    palette = serializers.ReadOnlyField()
 
     class Meta:
-        model = LineDetail
-        fields = ['warehouse_name', 'emplacement_name', 'qte', 'lot_number', 'expiry_date']
+        model = Disponibility
+        fields = ['warehouse_id', 'emplacement_id', 'n_lot', 'qte', 'palette', 'production_date', 'expiry_date']
 
-class ProductAvailabilitySerializer(serializers.ModelSerializer):
-    availability = LineDetailSerializer(many=True, read_only=True)
-    image = serializers.ImageField(use_url=True)
-    name = serializers.CharField(source='designation', read_only=True)
-    qte_in_line = serializers.IntegerField(source='aggregates.total_qte', read_only=True)
-    palettes_in_line = serializers.IntegerField(read_only=True)
-    product_id = serializers.IntegerField(source='id', read_only=True)
+class ProductDisponibilitySerializer(serializers.ModelSerializer):
+    disponibility = DisponibilitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
-        fields = ['product_id', 'name', 'qte_in_line', 'palettes_in_line', 'qte_per_pal', 'image', 'availability']
+        fields = ['id', 'disponibility']
