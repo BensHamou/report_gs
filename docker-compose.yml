@@ -3,7 +3,7 @@ version: "3"
 services:
   db:
     image: postgres
-    container_name: STOCK_DB
+    container_name: DB_STOCK
     restart: unless-stopped
     environment:
       - POSTGRES_DB=PumaGS
@@ -12,23 +12,23 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5172:5432"
+      - "5176:5432"
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: puma_stock:latest
+    image: stock_app:dev
     restart: unless-stopped
-    container_name: PUMA_STOCK
+    container_name: APP_STOCK
     ports:
-      - "8172:8172"
+      - "8176:8176"
     volumes:
       - ./report_gs:/report_gs
       - ./media:/app/media
     command: >
       sh -c " python manage.py makemigrations &&
               python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8172"
+              python manage.py runserver 0.0.0.0:8176"
     depends_on:
       - db
     environment:
@@ -42,8 +42,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    image: stock_cron
-    container_name: STOCK_CRON
+    image: stock_cron:dev
+    container_name: CRON_STOCK
     depends_on:
       - db
     volumes:

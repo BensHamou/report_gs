@@ -102,49 +102,21 @@
                 {% if detail.move_line.move.is_transfer %}style="color: blue"{% endif %}
                 >{{ detail.qte }} {{ move_line.product.packing.unit }}</p>
             </div>
-            
             {% if can_print %}
             <div class="col-lg-1 col-md-1 col-sm-12">
                 <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                 <div class="btn-group d-block">
-                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-ellipsis"></i>
+                    <button class="btn btn-success" type="button" data-toggle="modal" data-target="#printModal" 
+                            data-line-detail-id="{{ detail.id }}" 
+                            data-product-name="{{ detail.move_line.product.designation }}"
+                            data-lot-number="{{ detail.move_line.n_lot }}"
+                            data-expiry-date="{{ detail.move_line.expiry_date }}"
+                            data-production-date="{{ detail.move_line.move.date }}"
+                            data-magasin="{{ detail.warehouse.designation }}"
+                            data-emplacement="{{ detail.emplacement.designation }}"
+                            data-palettes="{{ detail.move_line.palette }}">
+                        <i class="fas fa-print"></i> 
                     </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#printModal" 
-                                    data-line-detail-id="{{ detail.id }}" 
-                                    data-product-name="{{ detail.move_line.product.designation }}"
-                                    data-lot-number="{{ detail.move_line.n_lot }}"
-                                    data-expiry-date="{{ detail.move_line.expiry_date }}"
-                                    data-production-date="{{ detail.move_line.move.date }}"
-                                    data-magasin="{{ detail.warehouse.designation }}"
-                                    data-emplacement="{{ detail.emplacement.designation }}"
-                                    data-palettes="{{ detail.move_line.palette }}">
-                                <i class="fas fa-print"></i> Imprimer
-                            </button>
-                        </li>
-                        <li>
-                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transferModal" 
-                                    data-line-detail-id="{{ detail.id }}" 
-                                    data-line-id="{{ detail.move_line.move.line.id }}" 
-                                    data-site-id="{{ detail.move_line.move.site.id }}" 
-                                    data-magasin="{{ detail.warehouse.designation }}"
-                                    data-lot="{{ detail.move_line.n_lot }}"
-                                    data-emplacement="{{ detail.emplacement.designation }}"
-                                    data-max-qte="{{ detail.qte }}">
-                                <i class="fas fa-exchange-alt"></i> Transférer
-                            </button>
-                        </li>
-                        {% if detail.transfers.exists %}
-                        <li>
-                            <button class="dropdown-item" type="button" data-toggle="modal" data-target="#transfersModal" 
-                                    data-line-detail-id="{{ detail.id }}">
-                                <i class="fas fa-sync-alt"></i> Historique
-                            </button>
-                        </li>
-                        {% endif %}
-                    </ul>
                 </div>
             </div>
             {% endif %}
@@ -164,12 +136,7 @@
 </div>
 {% include 'modal.html' %}
 {% include 'print_modal.html' %}
-{% include 'transfer_modal.html' %}
-{% include 'transfers_modal.html' %}
 
-<script src="https://kit.fontawesome.com/a076d05399.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" ></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
 <script>
     function confirmMoveLine(moveLineId) {
         swal({
@@ -294,205 +261,6 @@
         
         const qrCodeImg = $('#qr-code-image');
         qrCodeImg.attr('src', `/generate-qr-code/${detail_id}/`);
-    });
-
-    $(document).on('show.bs.modal', '#transferModal', function (event) {
-        const button = $(event.relatedTarget);
-        const modal = $(this);
-    
-        modal.find('#source-warehouse').text(button.data('magasin'));
-        modal.find('#source-emplacement').text(button.data('emplacement'));
-        modal.find('#source-lot').text(button.data('lot'));
-        modal.find('#source-qte').text(button.data('max-qte'));
-        modal.find('#source-id').val(button.data('line-detail-id'));
-        modal.find('#destination-qte').val('').attr('max', button.data('qte'));
-    
-        const lineId = button.data('line-id');
-        const siteId = button.data('site-id');
-        const lineSelect = modal.find('#line');
-        const siteInput = modal.find('#site_id');
-        lineSelect.val(lineId);
-        siteInput.val(siteId);
-    
-        $.ajax({
-            url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
-            success: function (data) {
-                const warehouseSelect = modal.find('#destination-warehouse');
-                warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-                data.warehouses.forEach(function (warehouse) {
-                    warehouseSelect.append(new Option(warehouse.name, warehouse.id));
-                });
-    
-                modal.find('#destination-emplacement').empty().append('<option value="">-- Sélectionnez --</option>');
-            },
-            error: function () {
-                swal("Erreur!", "Error fetching warehouses for ligne.", "error");
-            }
-        });
-    });
-
-    $(document).on('show.bs.modal', '#transfersModal', function (event)  {
-        const button = $(event.relatedTarget);
-        const modal = $(this);
-
-        transfersTableBody.innerHTML = `<tr>
-            <td colspan="7" class="text-center">Chargement...</td>
-        </tr>`;
-
-        fetch(`/get-detail-transfers/${button.data('line-detail-id')}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.transfers && data.transfers.length > 0) {
-                    transfersTableBody.innerHTML = data.transfers.map(transfer => `
-                        <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                            <td class="table-text">${transfer.n_lot}</td>
-                            <td class="table-text">${transfer.site}</td>
-                            <td class="table-text">${transfer.line}</td>
-                            <td class="table-text">${transfer.magasin}</td>
-                            <td class="table-text">${transfer.emplacement}</td>
-                            <td class="table-text">${transfer.qte}</td>
-                            <td class="table-text">${new Date(transfer.date).toLocaleString()}</td>
-                            <td class="table-text">${transfer.state}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    transfersTableBody.innerHTML = `
-                        <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                            <td colspan="8" class="text-center table-text">Aucun transfert trouvé.</td>
-                        </tr>
-                    `;
-                }
-            })
-            .catch(error => {
-                swal("Erreur!", "Error fetching transfers.", "error");
-                transfersTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center">Erreur de chargement des transferts.</td>
-                    </tr>
-                `;
-            });
-    });
-    
-    $(document).on('change', '#destination-warehouse', function () {
-        const warehouseId = $(this).val();
-        const emplacementSelect = $('#destination-emplacement');
-    
-        if (!warehouseId) {
-            emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-            return;
-        }
-    
-        $.ajax({
-            url: `/get_emplacements_for_warehouse/`,
-            data: { warehouse_id: warehouseId },
-            success: function (data) {
-                emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-                data.emplacements.forEach(function (emplacement) {
-                    emplacementSelect.append(new Option(emplacement.name, emplacement.id));
-                });
-            },
-            error: function () {
-                swal("Erreur!", "Error fetching emplacements for warehouse.", "error");
-            }
-        });
-    });
-    
-    $(document).on('change', '#line', function () {
-        const lineId = $(this).val();
-        const warehouseSelect = $('#destination-warehouse');
-        const emplacementSelect = $('#destination-emplacement');
-        const siteField = $('#site_id');
-
-        if (!lineId) {
-            warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-            emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-            return;
-        }
-
-
-        $.ajax({
-            url: `{% url 'get_warehouses_for_line' %}?line_id=${lineId}`,
-            success: function (data) {
-                warehouseSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-                data.warehouses.forEach(function (warehouse) {
-                    warehouseSelect.append(new Option(warehouse.name, warehouse.id));
-                });
-                siteField.val(data.site_id);
-                emplacementSelect.empty().append('<option value="">-- Sélectionnez --</option>');
-            },
-            error: function () {
-                swal("Erreur!", "Error fetching warehouses for line.", "error");
-            }
-        });
-    });
-
-    document.getElementById('transfer-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const form = event.target;
-        const requiredFields = form.querySelectorAll('input[required], select[required]');
-        let formIsValid = true;
-    
-        requiredFields.forEach(function(field) {
-            if (!field.value.trim()) {
-                formIsValid = false;
-                field.classList.add('is-invalid');
-    
-                let existingError = field.parentNode.querySelector('.invalid-feedback');
-                if (!existingError) {
-                    let errorMessage = document.createElement('div');
-                    errorMessage.classList.add('invalid-feedback');
-                    errorMessage.textContent = 'Ce champ est requis.';
-                    field.parentNode.appendChild(errorMessage);
-                }
-            } else {
-                field.classList.remove('is-invalid');
-                let existingError = field.parentNode.querySelector('.invalid-feedback');
-                if (existingError) {
-                    existingError.remove();
-                }
-            }
-        });
-    
-        if (!formIsValid) {
-            swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
-        } else {
-            swal({
-                title: "Confirmer le transfert",
-                text: "Êtes-vous sûr de vouloir transférer cette quantité ?",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-                buttons: {
-                    cancel: "Non",
-                    confirm: "Oui"
-                },
-            }).then((willConfirm) => {
-                if (willConfirm) {
-                    const formData = new FormData(form);
-                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    
-                    $.ajax({
-                        type: "POST",
-                        url: "{% url 'transfer_move_line' %}",
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function(response) {
-                            if (response.success) {
-                                swal("Succès!", response.message, "success").then(function() {
-                                    window.location.reload(); 
-                                });
-                            } else {
-                                swal("Erreur", response.message, "error");
-                            }
-                        },
-                        error: function() {
-                            swal("Erreur", "Une erreur s'est produite, veuillez réessayer.", "error");
-                        }
-                    });
-                }
-            });
-        }
     });
 
 </script>
