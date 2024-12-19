@@ -78,6 +78,8 @@ class Product(BaseModel):
 
     def state_stock(self, site_id):
         qte = self.unit_qte(site_id)
+        if not self.alert_stock:
+            return 'Non défini'
         if qte > self.alert_stock:
             return 'En stock'
         elif qte < self.alert_stock and qte > 0:
