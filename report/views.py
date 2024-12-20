@@ -767,7 +767,7 @@ def validateMoveLine(request, move_line_id):
             if not adjusted:
                 return JsonResponse({'success': False, 'message': message})
             for detail in move_line.details.all():
-                detail.code = f"ID:{detail.id}MoveLine:{move_line.id};Product:{move_line.product.designation};Date:{move_line.move.date};Qte:{detail.qte}"
+                detail.code = f"Product:{move_line.product.id};Emplacement:{detail.emplacement.id};NLOT:{move_line.n_lot}"
                 if detail.emplacement.temp:
                     TemporaryEmplacementAlert.objects.get_or_create(line_detail=detail, write_uid=request.user, create_uid=request.user)
                 detail.save()

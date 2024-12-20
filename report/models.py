@@ -117,7 +117,12 @@ class Move(BaseModel):
 
     @property
     def bl_str(self):
-        return ', '.join([bl.num for bl in self.bls.all()]) 
+        return ', '.join([bl.num for bl in self.bls.all()])
+    
+    def confirm(self):
+        
+        self.state = 'Confirmé'
+        self.save()
 
     def __str__(self):
         if not self.line:  

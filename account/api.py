@@ -10,10 +10,8 @@ from .serializers import *
 import json
 from report.models import *
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import NotAuthenticated, NotFound
-from rest_framework import generics
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.views import APIView
-from django.db.models import Sum
 
 @csrf_exempt
 def login_api(request):
@@ -83,7 +81,7 @@ class SyncDataView(APIView):
 
         return Response(data)
     
-class MoveOutDetailsView(APIView):
+class ProductAvalibilityView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
@@ -93,7 +91,6 @@ class MoveOutDetailsView(APIView):
         if not site_id or not product_ids:
             return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
         
-
         products = Product.objects.filter(id__in=product_ids)
         product_data = []
 
@@ -101,10 +98,32 @@ class MoveOutDetailsView(APIView):
             stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
             unit_qte = product.unit_qte(site_id)
             
-            product_data.append({
-                'product': ProductSerializer(product).data,
-                'stock_details': stock_details,
-                'global_qte': unit_qte
-            })
+            product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
+        return Response(product_data)
+    
+class ConfirmMoveOutView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        move_line = request.data.get('move_id')
 
+        if not move_line:
+            return Response({"detail": "Sortie ID manquant"}, status=400)
+        
+        try:
+            move = Move.objects.get(id=move_line)
+            move.confirm()
+            return Response({"detail": "Sortie confirmée"}, status=200)
+        except Move.DoesNotExist:
+            return Response({"detail": "Sortie inexistante"}, status=404)
+        
+        move = MoveLine.objects.get(id=move_line)
+        products = Product.objects.filter(id__in=product_ids)
+        product_data = []
+
+        for product in products:
+            stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
+            unit_qte = product.unit_qte(site_id)
+            
+            product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
         return Response(product_data)
