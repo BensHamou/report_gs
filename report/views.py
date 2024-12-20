@@ -735,9 +735,14 @@ def move_line_detail(request, move_line_id):
 @admin_or_gs_required
 def confirmMoveLine(request, move_line_id):
     if request.method == 'POST':
-        move_line, success, validation = changeState(request, move_line_id, 'Confirmé')
+        try:
+            move_line = MoveLine.objects.get(id=move_line_id)
+        except MoveLine.DoesNotExist:
+            messages.success(request, 'Le Move n\'existe pas')
+            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+        success, validation = changeState(request, move_line, 'Confirmé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
+            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line_id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
@@ -746,7 +751,17 @@ def confirmMoveLine(request, move_line_id):
 @admin_or_gs_required
 def validateMoveLine(request, move_line_id):
     if request.method == 'POST':
-        move_line, success, validation = changeState(request, move_line_id, 'Validé')
+        try:
+            move_line = MoveLine.objects.get(id=move_line_id)
+        except MoveLine.DoesNotExist:
+            messages.success(request, 'Le Move n\'existe pas')
+            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+        
+        for detail in move_line.details.all():
+            if not detail.emplacement.can_stock(detail.palette):
+                return JsonResponse({'success': False, 'message': f'Emplacement {detail.emplacement} insuffisant pour stocker les palettes.'})
+            
+        success, validation = changeState(request, move_line, 'Validé')
         if success:
             adjusted, message = adjustStock(move_line)
             if not adjusted:
@@ -765,7 +780,7 @@ def validateMoveLine(request, move_line_id):
                     if source_line_detail.emplacement.temp and source_line_detail.qte == 0:
                         TemporaryEmplacementAlert.objects.filter(line_detail=source_line_detail).delete()
 
-            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line.id})
+            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line_id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
@@ -797,9 +812,14 @@ def adjustStock(ml):
 @admin_or_gs_required
 def cancelMoveLine(request, move_line_id):
     if request.method == 'POST':
-        move_line, success, validation = changeState(request, move_line_id, 'Annulé')
+        try:
+            move_line = MoveLine.objects.get(id=move_line_id)
+        except MoveLine.DoesNotExist:
+            messages.success(request, 'Le Move n\'existe pas')
+            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+        success, validation = changeState(request, move_line, 'Annulé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Move anulé avec succès.', 'move_line_id': move_line.id})
+            return JsonResponse({'success': True, 'message': 'Move anulé avec succès.', 'move_line_id': move_line_id})
         else:
             return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
@@ -814,20 +834,15 @@ def createValidation(request, move, new_state, refusal_reason=None):
     messages.success(request, f'Move set to {new_state} successfully')
     return validation
 
-def changeState(request, pk, action):
-    try:
-        move_line = MoveLine.objects.get(id=pk)
-        move = Move.objects.get(id=move_line.move.id)
-    except MoveLine.DoesNotExist:
-        messages.success(request, 'Le Move n\'existe pas')
-        return move_line, False, None
+def changeState(request, move_line, action):
+    move = move_line.move
     if move.state == action:
-        return move_line, True, None
+        return True, None
     reason = request.POST.get('refusal_reason', None)
     if move.state == 'Refusé' and action == 'Confirmé':
         reason = 'Correrction.'
     validation = createValidation(request, move, action, reason)
-    return move_line, True, validation
+    return True, validation
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -952,4 +967,3 @@ def generateQRCode(request, detail_id):
 
     except MoveLine.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Move non trouvé.'})
-    

@@ -59,7 +59,7 @@
                     {% if show_line_field %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="line" class="form-label">Ligne</label>
-                        <select name="line" id="line" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <select name="line" id="line" class="form-control custom-select" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Ligne --</option>
                             {% for line in lines %}
                                 <option value="{{ line.id }}">{{ line.designation }}</option>
@@ -72,7 +72,7 @@
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="gestionaire" class="form-label">Gestionaire</label>
-                        <select name="gestionaire" id="gestionaire" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <select name="gestionaire" id="gestionaire" class="form-control custom-select" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Gestionaire --</option>
                             {% for gestionaire in gestionaires %}
                             <option value="{{ gestionaire.id }}">{{ gestionaire.fullname }}</option>
@@ -84,7 +84,7 @@
                     {% endif %}
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="shift" class="form-label">Shift</label>
-                        <select name="shift" id="shift" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <select name="shift" id="shift" class="form-control custom-select" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Shift --</option>
                         </select>
                     </div>
@@ -104,13 +104,13 @@
             <div class="row mb-3 form-row" data-row-id="0">
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_0" class="form-label">Magasin</label>
-                    <select name="warehouse_0" class="form-control warehouse" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
+                    <select name="warehouse_0" class="form-control warehouse custom-select" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="emplacement_0" class="form-label">Emplacement</label>
-                    <select name="emplacement_0" class="form-control emplacement" id="emplacement_0" required>
+                    <select name="emplacement_0" class="form-control emplacement custom-select" id="emplacement_0" required>
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
@@ -128,6 +128,25 @@
     </form>
 </div>
 
+<style>
+    .custom-select {
+        appearance: none;
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 26" fill="gray"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+        background-size: 36px 36px;
+        padding-right: 30px;
+        font-size: 16px;
+        height: 40px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    .custom-select:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+</style>
 
 <script>
     let rowId = 1;

@@ -106,7 +106,7 @@
             <div class="col-lg-1 col-md-1 col-sm-12">
                 <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                 <div class="btn-group d-block">
-                    <button class="btn btn-success" type="button" data-toggle="modal" data-target="#printModal" 
+                    <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
                             data-line-detail-id="{{ detail.id }}" 
                             data-product-name="{{ detail.move_line.product.designation }}"
                             data-lot-number="{{ detail.move_line.n_lot }}"
@@ -246,22 +246,26 @@
         });
     }
 
-    $(document).on('show.bs.modal', '#printModal', function (event) {
-        const button = $(event.relatedTarget);
-        const modal = $(this);
-
-        modal.find('#modal-product-name').text(button.data('product-name'));
-        modal.find('#modal-lot-number').text(button.data('lot-number'));
-        modal.find('#modal-expiry-date').text(button.data('expiry-date'));
-        modal.find('#modal-production-date').text(button.data('production-date'));
-        modal.find('#modal-magasin').text(button.data('magasin'));
-        modal.find('#modal-emplacement').text(button.data('emplacement'));
-        modal.find('#ticket-count').val(button.data('palettes')).attr('max', button.data('palettes'));;
-        const detail_id = button.data('line-detail-id');
-        
-        const qrCodeImg = $('#qr-code-image');
-        qrCodeImg.attr('src', `/generate-qr-code/${detail_id}/`);
+    document.getElementById('printModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const modal = this;
+    
+        modal.querySelector('#modal-product-name').textContent = button.getAttribute('data-product-name');
+        modal.querySelector('#modal-lot-number').textContent = button.getAttribute('data-lot-number');
+        modal.querySelector('#modal-expiry-date').textContent = button.getAttribute('data-expiry-date');
+        modal.querySelector('#modal-production-date').textContent = button.getAttribute('data-production-date');
+        modal.querySelector('#modal-magasin').textContent = button.getAttribute('data-magasin');
+        modal.querySelector('#modal-emplacement').textContent = button.getAttribute('data-emplacement');
+    
+        const ticketCount = modal.querySelector('#ticket-count');
+        ticketCount.value = button.getAttribute('data-palettes');
+        ticketCount.max = button.getAttribute('data-palettes');
+    
+        const detailId = button.getAttribute('data-line-detail-id');
+        const qrCodeImg = modal.querySelector('#qr-code-image');
+        qrCodeImg.src = `/generate-qr-code/${detailId}/`;
     });
+    
 
 </script>
 

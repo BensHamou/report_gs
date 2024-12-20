@@ -226,7 +226,6 @@ class Validation(BaseModel):
     def __str__(self):
         return f"Validation - {str(str(self.move.id).zfill(4))} - {str(self.date)} ({self.old_state} -> {self.new_state})" 
     
-
 class Disponibility(BaseModel):
     emplacement = models.ForeignKey(Emplacement, related_name='disponibilities', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)

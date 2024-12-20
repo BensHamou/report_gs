@@ -16,7 +16,7 @@
         </li>
         {% endif %}
             <li class="nav-item mb-2">
-                <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_pf,move_in_form,edit_move_line_pf,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
+                <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_f,select_p,move_in_pf,move_in_mp,edit_move_line_pf,edit_move_line_mp,move_line_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
                     <i class="margiin fas fa-plus"></i> 
                     <span class="menu-text">Entré</span>
                 </a>

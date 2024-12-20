@@ -66,6 +66,16 @@ class Emplacement(BaseModel):
     temp = models.BooleanField(default=False)
     warehouse = models.ForeignKey(Warehouse, related_name='emplacements', on_delete=models.CASCADE)
 
+    @property
+    def available_capacity(self):
+        total_pallets = sum([d.palette for d in self.disponibilities.all()])
+        return self.capacity - total_pallets
+
+    def can_stock(self, palette):
+        if self.available_capacity < palette:
+            return False
+        return True
+
     def __str__(self):
         return f'{self.designation} - {self.warehouse}'
 

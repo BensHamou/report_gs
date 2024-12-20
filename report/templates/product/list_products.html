@@ -115,6 +115,10 @@
                         title: "Succès!",
                         text: data.message,
                         icon: "success",
+                    }).then(() => {
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
                     });
                 } else {
                     swal({

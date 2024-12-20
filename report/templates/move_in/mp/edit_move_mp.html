@@ -67,7 +67,7 @@
                 <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
-                    <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                    <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse custom-select" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                         {% for warehouse in warehouses %}
                         <option value="{{ warehouse.id }}" {% if warehouse.id == detail.warehouse_id %}selected{% endif %}>{{ warehouse.designation }}</option>
@@ -76,7 +76,7 @@
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
-                    <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement" id="emplacement_{{ forloop.counter0 }}" required>
+                    <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement custom-select" id="emplacement_{{ forloop.counter0 }}" required>
                         <option value="">-- Emplacement --</option>
                         {% for emplacement in emplacements %}
                             <option value="{{ emplacement.id }}" {% if emplacement.id == detail.emplacement_id %}selected{% endif %}>{{ emplacement.designation }}</option>
@@ -107,6 +107,25 @@
     </form>
 </div>
 
+<style>
+    .custom-select {
+        appearance: none;
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 26" fill="gray"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+        background-size: 36px 36px;
+        padding-right: 30px;
+        font-size: 16px;
+        height: 40px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    .custom-select:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+</style>
 
 <script>
     let rowId = {{ line_details|length }};
