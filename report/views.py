@@ -685,21 +685,6 @@ def update_move_mp(request, move_line_id):
 
 
 @login_required(login_url='login')
-@admin_or_gs_required
-def tarnsfer_list(request):
-    transfers = LineDetail.objects.filter(Q(move_line__move__gestionaire=request.user) | Q(move_line__move__line__in=request.user.lines.all().values('id')), move_line__move__is_transfer=True).order_by('-date_modified')    
-    filteredData = LineDetailFilter(request.GET, queryset=transfers)
-    transfers = filteredData.qs
-    page_size_param = request.GET.get('page_size')
-    page_size = int(page_size_param) if page_size_param else 12
-    paginator = Paginator(transfers, page_size)
-    page_number = request.GET.get('page')
-    page = paginator.get_page(page_number)
-    context = {'page': page, 'filteredData': filteredData}
-    return render(request, 'transfer_list.html', context)
-
-
-@login_required(login_url='login')
 @admin_or_gs_required        
 def move_line_detail(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
@@ -820,17 +805,6 @@ def get_emplacements_for_warehouse(request):
     emplacement_data = [{'id': emplacement.id, 'name': emplacement.designation} for emplacement in emplacements]
 
     return JsonResponse({'emplacements': emplacement_data})
-
-def get_transfers(request, detail_id):
-    detail = get_object_or_404(LineDetail, id=detail_id)
-    data = []
-
-    for t in detail.transfers.all():
-        move = t.move_line.move
-        data.append({ 'site': move.line.site.designation, 'line': move.line.designation, 'magasin': t.warehouse.designation, 
-                     'emplacement': t.emplacement.designation, 'qte': t.qte, 'date': move.date, 'state': move.state, 'n_lot': t.move_line.n_lot})
-        
-    return JsonResponse({'transfers': data})
 
 @login_required(login_url='login')
 @admin_or_gs_required

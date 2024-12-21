@@ -42,7 +42,6 @@ urlpatterns = [
     path('move-line/primary-product/update/<int:move_line_id>/', update_move_mp, name='update_move_mp'),
 
     path('move-line/delete/<int:move_line_id>/', delete_move, name='delete_move'),
-    path('transfer-lines/', tarnsfer_list, name='tarnsfer_list'),
     path('move-line/detail/<int:move_line_id>/', move_line_detail, name='move_line_detail'),
 
     path('move-line/confirm/<int:move_line_id>/', confirmMoveIn, name='confirm_move_line'),
@@ -50,10 +49,6 @@ urlpatterns = [
     path('move-line/validate/<int:move_line_id>/', validateMoveLine, name='validate_move_line'),
     
     path('generate-qr-code/<int:detail_id>/', generateQRCode, name='generate_qr_code'),
-
-    path('transfer-move-line/', transfer_quantity, name='transfer_move_line'),
-    path('get-detail-transfers/<int:detail_id>/', get_transfers, name='get_transfers'),
-
 
 ]
 

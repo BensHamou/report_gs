@@ -97,10 +97,7 @@
             </div>
             <div class="col-lg-{% if can_print %}2{% else %}4{% endif %} col-md-{% if can_print %}2{% else %}4{% endif %} col-sm-12">
                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
-                <p class="form-control" 
-                {% if detail.transfers.exists %}style="color: red"{% endif %}
-                {% if detail.move_line.move.is_transfer %}style="color: blue"{% endif %}
-                >{{ detail.qte }} {{ move_line.product.packing.unit }}</p>
+                <p class="form-control">{{ detail.qte }} {{ move_line.product.packing.unit }}</p>
             </div>
             {% if can_print %}
             <div class="col-lg-1 col-md-1 col-sm-12">
