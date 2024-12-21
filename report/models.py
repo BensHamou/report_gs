@@ -142,7 +142,6 @@ class MoveLine(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
-    mirrored_move = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transfer', blank=True, null=True)
 
     @property
     def qte(self):
@@ -286,7 +285,7 @@ class Validation(BaseModel):
     new_state = models.CharField(choices=MOVE_STATE, max_length=40)
     date = models.DateTimeField(auto_now_add=True) 
     actor = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True, related_name='validations', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
-    refusal_reason = models.CharField(null=True)
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='validations')
 
     def __str__(self):
         return f"Validation - {str(str(self.move.id).zfill(4))} - {str(self.date)} ({self.old_state} -> {self.new_state})" 
