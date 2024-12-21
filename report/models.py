@@ -114,6 +114,7 @@ class Move(BaseModel):
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
+    mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
 
     @property
     def bl_str(self):
@@ -122,14 +123,70 @@ class Move(BaseModel):
     def changeState(self, actor_id, new_state):
         if self.state == new_state:
             return True
-        try:
-            Validation.objects.create(old_state=self.state, new_state=new_state, actor_id=actor_id, move=self)
-            self.state = new_state
-            self.save()
-            return True
-        except Exception as e:
-            print(f'Error lors de changement d\'état : {e}')
-            return False
+        Validation.objects.create(old_state=self.state, new_state=new_state, actor_id=actor_id, move=self)
+        self.state = new_state
+        self.save()
+        return True
+        
+    def can_validate(self):
+        def check_emplacement(detail, operation):
+            if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
+                return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
+            elif operation == 'destock' and not detail.emplacement.can_destock(detail.palette):
+                return False, f"Ajustement entraînerait un stock négatif pour l'emplacement {detail.emplacement}."
+            return True, None
+
+        operation = 'stock' if self.type == 'Entré' else 'destock'
+        for ml in self.move_lines.all():
+            for detail in ml.details.all():
+                is_valid, error_message = check_emplacement(detail, operation)
+                if not is_valid:
+                    raise ValueError(f"{ml.n_lot} - {error_message}")
+        return True, 'Can stock'
+    
+    def integrate_in_stock(self):
+        is_entry = self.type == 'Entré'
+        for ml in self.move_lines.all():
+            for detail in ml.details.all():
+                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=ml.n_lot).first()
+                if is_entry:
+                    if ds:
+                        ds.qte += detail.qte
+                        ds.write_uid = ml.create_uid
+                    else:
+                        ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
+                                        production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot )
+                else:
+                    if not ds:
+                        raise ValueError(f"{ml.n_lot} - Stock introuvable.")
+                    ds.qte -= detail.qte
+                if ds.qte > 0:
+                    ds.save()
+                else:
+                    ds.delete()
+        return True, 'Stock ajusté avec succès.'
+
+    def do_after_validation(self, user):
+        if not self.integrate_in_stock():
+            raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
+        for ml in self.move_lines.all():
+            for detail in ml.details.all():
+                if not detail.generateCode(user):
+                    raise ValueError(f"{ml.n_lot} - Échec de la génération du code QR pour l'emplacement {detail.emplacement}.")
+        return True, 'Stock ajusté et codes QR générés avec succès.'
+    
+    def create_mirror(self):
+        if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer:
+            try:
+                mirror = Move.objects.create(site=self.site, gestionaire=self.gestionaire, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
+                self.mirror = mirror
+                self.save()
+                for ml in self.move_lines.all():
+                    move_mirror = MoveLine.objects.create(lot_number=ml.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=ml.qte)
+                    ml.mirror = move_mirror
+                    ml.save()
+            except Exception as e:
+                raise RuntimeError(f"Error during mirror creation: {e}")
 
     def __str__(self):
         if not self.line:  
@@ -140,6 +197,7 @@ class MoveLine(BaseModel):
     lot_number = models.CharField(max_length=255)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
+    mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
 
@@ -172,50 +230,8 @@ class MoveLine(BaseModel):
         else:
             return '/'
         
-    def canValidate(self):
-        def check_emplacement(detail, operation):
-            if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
-                return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
-            elif operation == 'destock' and not detail.emplacement.can_destock(detail.palette):
-                return False, f'Emplacement {detail.emplacement} ne peut pas avoir un nombre négatif de palettes'
-            return True, None
-
-        operation = 'stock' if self.move.type == 'Entré' else 'destock'
-        for detail in self.details.all():
-            is_valid, error_message = check_emplacement(detail, operation)
-            if not is_valid:
-                return False, error_message
-        return True, 'Can stock'
-    
-    def integrate_in_stock(self):
-        is_entry = self.move.type == 'Entré'
-        for detail in self.details.all():
-            ds = Disponibility.objects.filter(product=self.product,emplacement=detail.emplacement, n_lot=self.n_lot).first()
-            if is_entry:
-                if ds:
-                    ds.qte += detail.qte
-                    ds.write_uid = self.create_uid
-                else:
-                    ds = Disponibility(product=self.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=self.create_uid, 
-                                       production_date=self.move.date, expiry_date=self.expiry_date, write_uid=self.create_uid, n_lot=self.n_lot )
-            else:
-                if not ds:
-                    return False, 'Stock introuvable.'
-                ds.qte -= detail.qte
-            if ds.qte > 0:
-                ds.save()
-            else:
-                ds.delete()
-        return True, 'Stock ajusté avec succès.'
-
-    def do_after_validation(self, user):
-        if not self.integrate_in_stock():
-            return False, f'Entrée validé, mais échec d\'ajuster le stock.'
-        for detail in self.details.all():
-            if not detail.generateCode(user):
-                return False, f'Entrée validé, mais échec de la génération du code QR pour l\'emplacement {detail.emplacement}.'
-        return True, 'Stock ajusté et codes QR générés avec succès.'
-        
+    def __str__(self):
+        return f"[{self.id}] {self.product} - {self.qte}"
     
 class LineDetail(BaseModel):
     move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')

@@ -87,3 +87,4 @@ class ProductDisponibilitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'disponibility']
+

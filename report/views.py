@@ -365,11 +365,6 @@ def list_move(request):
 def delete_move(request, move_line_id):
     move_line = get_object_or_404(MoveLine, id=move_line_id)
     try:
-        if move_line.move.is_transfer:
-            for d in move_line.details.all():
-                original = LineDetail.objects.get(id=d.mirrored_move.id)
-                original.qte += d.qte
-                original.save()
         move = Move.objects.get(id=move_line.move.id)
         move_line.delete()
         if move.move_lines.all().count() == 0:
@@ -744,8 +739,8 @@ def confirmMoveIn(request, move_line_id):
         if success:
             return JsonResponse({'success': True, 'message': 'Entrée confirmé avec succès.', 'move_line_id': move_line_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-    return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la confirmation de l\'entrée.'})
+    return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -757,18 +752,21 @@ def validateMoveLine(request, move_line_id):
             messages.success(request, 'Entrée introuvable')
             return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
         
-        success, message = move_line.canValidate()
-        if not success:
-            return JsonResponse({'success': False, 'message': message})
+        try:
+            move_line.move.can_validate()
+        except ValueError as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+        
         success = move_line.move.changeState(request.user.id, 'Validé')
         if success:
-            success, message = move_line.do_after_validation(request.user)
-            if not success:
-                return JsonResponse({'success': False, 'message': message})
-            return JsonResponse({'success': True, 'message': message, 'move_line_id': move_line_id})
+            try:
+                success, message = move_line.move.do_after_validation(request.user)
+                return JsonResponse({'success': True, 'message': message, 'move_line_id': move_line_id})
+            except ValueError as e:
+                return JsonResponse({'success': False, 'message': str(e)})
         else:
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-    return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la validation de l\'entrée.'})
+    return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -783,66 +781,8 @@ def cancelMoveLine(request, move_line_id):
         if success:
             return JsonResponse({'success': True, 'message': 'Entrée annulé avec succès.', 'move_line_id': move_line_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-    return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
-
-@login_required(login_url='login')
-@admin_or_gs_required
-def transfer_quantity(request):
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                site_id = request.POST.get('site_id')
-                destination_line_id = request.POST.get('line')
-                destination_warehouse_id = request.POST.get('destination_warehouse')
-                destination_emplacement_id = request.POST.get('destination_emplacement')
-                destination_lot_number = request.POST.get('destination_lot')
-                transfer_quantity = int(request.POST.get('destination_qte', 0))
-                source_id = request.POST.get('source_id')
-
-                if not all([site_id, destination_line_id, destination_warehouse_id, destination_emplacement_id, destination_lot_number, transfer_quantity]):
-                    return JsonResponse({'success': False, 'message': 'Tous les champs sont obligatoires.'}, status=200)
-
-                if transfer_quantity <= 0:
-                    return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=200)
-                
-                source_line_detail = LineDetail.objects.get(id=source_id)
-                source_move_line = source_line_detail.move_line
-                already_transferred = source_line_detail.transfers.aggregate(total=models.Sum('qte'))['total'] or 0
-
-                if transfer_quantity > source_line_detail.qte:
-                    return JsonResponse({'success': False, 'message': 'La quantité à transférer dépasse la quantité disponible.'}, status=200)
-                elif already_transferred + transfer_quantity > source_line_detail.qte: 
-                        return JsonResponse({'success': False, 'message': f'La quantité à transférer dépasse la quantité disponible (Brouillon inclus).'}, status=200)
-                
-                move_year = source_move_line.move.date.year
-                existing_move_line = MoveLine.objects.filter(lot_number=destination_lot_number, move__line_id=destination_line_id, move__date__year=move_year).first()
-                
-                if existing_move_line:
-                    if not existing_move_line.move.is_transfer:
-                        return JsonResponse({'success': False, 'message': f'N° Lot {destination_lot_number} existe déjà.'}, status=200)
-                    elif not existing_move_line.move.state == 'Brouillon':
-                        return JsonResponse({'success': False, 'message': f'Il existe déjà un transfert validé avec le même N° Lot {destination_lot_number}, id = {existing_move_line.id}'}, status=200)
-                    else:
-                        LineDetail.objects.create(move_line=existing_move_line, warehouse_id=destination_warehouse_id, emplacement_id=destination_emplacement_id, 
-                                              qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
-                else:
-                    new_move = Move.objects.create(site_id=site_id,line_id=destination_line_id, gestionaire=request.user, date=source_move_line.move.date, 
-                                                is_transfer=True, type='Entré', write_uid=request.user, 
-                                                create_uid=request.user)
-
-                    new_move_line = MoveLine.objects.create(lot_number=destination_lot_number, product=source_move_line.product, 
-                                                            move=new_move, write_uid=request.user, create_uid=request.user)
-
-                    LineDetail.objects.create(move_line=new_move_line, warehouse_id=destination_warehouse_id, emplacement_id=destination_emplacement_id, 
-                                            qte=transfer_quantity, write_uid=request.user, create_uid=request.user, mirrored_move=source_line_detail)
-
-                return JsonResponse({'success': True, 'message': 'Le transfert a été effectué avec succès.'}, status=200)
-
-        except LineDetail.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Détail de ligne source introuvable.'}, status=200)
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Erreur lors du transfert : {str(e)}'}, status=200)
+            return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation de l\'entrée.'})
+    return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 
 # FETCH JSON

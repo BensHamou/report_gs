@@ -12,6 +12,7 @@ from report.models import *
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.views import APIView
+from django.db import transaction
 
 @csrf_exempt
 def login_api(request):
@@ -100,76 +101,132 @@ class ProductAvalibilityView(APIView):
             
             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
         return Response(product_data)
-    
-# class ConfirmMoveOutView(APIView):
-#     authentication_classes = [TokenAuthentication]
-#     permission_classes = [IsAuthenticated]
-#     def post(self, request, *args, **kwargs):
-#         move_line = request.data.get('move_id')
 
-#         if not move_line:
-#             return Response({"detail": "Sortie ID manquant"}, status=400)
-        
-#         try:
-#             move_line = MoveLine.objects.get(id=move_line)
-#             success = move_line.move.changeState(request.user.id, 'Confirmé')
-#             if success:
-#                 return JsonResponse({'success': True, 'message': 'Entrée confirmé avec succès.', 'move_line_id': move_line_id})
-#             return Response({"detail": "Sortie confirmée"}, status=200)
-#         except Move.DoesNotExist:
-#             return Response({"detail": "Sortie inexistante"}, status=404)
-        
-#         success = move_line.move.changeState(request.user.id, 'Confirmé')
-#         if success:
-#             return JsonResponse({'success': True, 'message': 'Entrée confirmé avec succès.', 'move_line_id': move_line_id})
-#         else:
-#             return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-        
-#         move = MoveLine.objects.get(id=move_line)
-#         products = Product.objects.filter(id__in=product_ids)
-#         product_data = []
 
-#         for product in products:
-#             stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
-#             unit_qte = product.unit_qte(site_id)
-            
-#             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
-#         return Response(product_data)
-    
-# api_body = {
-#     'user_id': 1,
-#     'is_transfer': True/False,
-#     'transferred_products': [
-#         {
-#             'product_id': 1,
-#             'from': [
-#                 {
-#                     'emplacement_id': 1,
-#                     'qte': 10,
-#                     'n_lot': 'lot1'
-#                 },
-#                 {
-#                     'emplacement_id': 2,
-#                     'qte': 11,
-#                     'n_lot': 'lot2'
-#                 },
-#             ]
-#         },
-#         {
-#             'product_id': 2,
-#             'from': [
-#                 {
-#                     'emplacement_id': 3,
-#                     'qte': 12,
-#                     'n_lot': 'lot3'
-#                 },
-#                 {
-#                     'emplacement_id': 4,
-#                     'qte': 13,
-#                     'n_lot': 'lot4'
-#                 },
-#             ]
-#         }
-#     ]
-# }
+class CreateMoveOut(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get('user_id')
+        is_transfer = request.data.get('is_transfer', False)
+        transferred_products = request.data.get('transferred_products', [])
+        n_bls = request.data.get('n_bls', [])
+
+        if not user_id:
+            return Response({"detail": "User ID manquant"}, status=400)
+        if not transferred_products:
+            return Response({"detail": "Produits manquants"}, status=400)
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "Utilisateur introuvable"}, status=404)
+
+        try:
+            move = Move.objects.create(site=user.default_site, gestionaire=user, type='Sortie', 
+                                       is_transfer=is_transfer, state='Brouillon', date=timezone.now())
+
+            for product_data in transferred_products:
+                product_id = product_data.get('product_id')
+                from_emplacements = product_data.get('from', [])
+                try:
+                    product = Product.objects.get(id=product_id)
+                except Product.DoesNotExist:
+                    raise ValueError(f"Produit introuvable (ID: {product_id})")
+
+                move_line = MoveLine.objects.create(product=product, move=move, n_lot='/')
+
+                for from_data in from_emplacements:
+                    emplacement_id = from_data.get('emplacement_id')
+                    qte = from_data.get('qte')
+                    n_lot = from_data.get('n_lot')
+
+                    try:
+                        emplacement = Emplacement.objects.get(id=emplacement_id)
+                    except Emplacement.DoesNotExist:
+                        raise ValueError(f"Emplacement introuvable (ID: {emplacement_id})")
+
+                    LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, 
+                                              emplacement=emplacement, qte=qte, n_lot=n_lot)
+
+            for bl_data in n_bls:
+                numero = bl_data.get('numero')
+                is_annexe = bl_data.get('is_annexe', False)
+                if not numero:
+                    raise ValueError("Numéro BL manquant")
+                MoveBL.objects.create(move=move, numero=numero, is_annexe=is_annexe)
+            return Response({"detail": "Mouvement créé avec succès", "move_id": move.id}, status=201)
+        
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+        except Exception as e:
+            return Response({"detail": "Erreur interne du serveur"}, status=500)
+
+class ConfirmMoveOut(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        move_line_id = request.data.get('move_line_id')
+
+        if not move_line_id:
+            return Response({"detail": "Sorté ID manquant."}, status=400)
+
+        try:
+            move_line = MoveLine.objects.get(id=move_line_id)
+            success = move_line.move.changeState(request.user.id, 'Confirmé')
+            if not success:
+                return Response({"detail": "Erreur lors de la confirmation de la sortie."}, status=400)
+            return Response({"detail": "Sortie confirmée avec succès."}, status=200)
+        except MoveLine.DoesNotExist:
+            return Response({"detail": "Sortée introuvable."}, status=404)
+
+class CancelMoveOut(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        move_line_id = request.data.get('move_line_id')
+
+        if not move_line_id:
+            return Response({"detail": "Sorté ID manquant."}, status=400)
+
+        try:
+            move_line = MoveLine.objects.get(id=move_line_id)
+            success = move_line.move.changeState(request.user.id, 'Annulé')
+            if not success:
+                return Response({"detail": "Erreur lors de l'annulation de la sortie."}, status=400)
+            return Response({"detail": "Sortie annulé avec succès."}, status=200)
+        except MoveLine.DoesNotExist:
+            return Response({"detail": "Sortée introuvable."}, status=404)
+
+class ValidateMoveOut(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        move_line_id = request.data.get('move_line_id')
+        if not move_line_id:
+            return Response({"detail": "Sortée ID manquant."}, status=400)
+        try:
+            move_line = MoveLine.objects.select_related('move').get(id=move_line_id)
+            move = move_line.move
+            move.can_validate()
+            move.do_after_validation(user=request.user)
+            if not move.changeState(request.user.id, 'Validé'):
+                return Response({"detail": "Échec de la validation de l'état."}, status=400)
+
+            if move.is_transfer:
+                move.create_mirror()
+            return Response({"detail": "Sortée validée avec succès."}, status=200)
+        except MoveLine.DoesNotExist:
+            return Response({"detail": "Sortée introuvable."}, status=404)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
+        except RuntimeError as e:
+            return Response({"detail": str(e)}, status=400)
+        except Exception as e:
+            return Response({"detail": "Erreur interne du serveur."}, status=500)
+        
 
