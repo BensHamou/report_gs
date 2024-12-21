@@ -733,18 +733,18 @@ def move_line_detail(request, move_line_id):
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def confirmMoveLine(request, move_line_id):
+def confirmMoveIn(request, move_line_id):
     if request.method == 'POST':
         try:
             move_line = MoveLine.objects.get(id=move_line_id)
         except MoveLine.DoesNotExist:
-            messages.success(request, 'Le Move n\'existe pas')
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
-        success, validation = changeState(request, move_line, 'Confirmé')
+            messages.success(request, 'Entrée introuvable')
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
+        success = move_line.move.changeState(request.user.id, 'Confirmé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line_id})
+            return JsonResponse({'success': True, 'message': 'Entrée confirmé avec succès.', 'move_line_id': move_line_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
 
 @login_required(login_url='login')
@@ -754,59 +754,21 @@ def validateMoveLine(request, move_line_id):
         try:
             move_line = MoveLine.objects.get(id=move_line_id)
         except MoveLine.DoesNotExist:
-            messages.success(request, 'Le Move n\'existe pas')
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+            messages.success(request, 'Entrée introuvable')
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
         
-        for detail in move_line.details.all():
-            if not detail.emplacement.can_stock(detail.palette):
-                return JsonResponse({'success': False, 'message': f'Emplacement {detail.emplacement} insuffisant pour stocker les palettes.'})
-            
-        success, validation = changeState(request, move_line, 'Validé')
+        success, message = move_line.canValidate()
+        if not success:
+            return JsonResponse({'success': False, 'message': message})
+        success = move_line.move.changeState(request.user.id, 'Validé')
         if success:
-            adjusted, message = adjustStock(move_line)
-            if not adjusted:
+            success, message = move_line.do_after_validation(request.user)
+            if not success:
                 return JsonResponse({'success': False, 'message': message})
-            for detail in move_line.details.all():
-                detail.code = f"Product:{move_line.product.id};Emplacement:{detail.emplacement.id};NLOT:{move_line.n_lot}"
-                if detail.emplacement.temp:
-                    TemporaryEmplacementAlert.objects.get_or_create(line_detail=detail, write_uid=request.user, create_uid=request.user)
-                detail.save()
-            if move_line.move.is_transfer:
-                for detail in move_line.details.all():
-                    source_line_detail = detail.mirrored_move
-                    source_line_detail.qte -= detail.qte
-                    source_line_detail.code = f"ID:{source_line_detail.id}MoveLine:{source_line_detail.move_line.id};Product:{source_line_detail.move_line.product.designation};Date:{source_line_detail.move_line.move.date};Qte:{source_line_detail.qte}"
-                    source_line_detail.save()
-                    if source_line_detail.emplacement.temp and source_line_detail.qte == 0:
-                        TemporaryEmplacementAlert.objects.filter(line_detail=source_line_detail).delete()
-
-            return JsonResponse({'success': True, 'message': 'Move confirmé avec succès.', 'move_line_id': move_line_id})
+            return JsonResponse({'success': True, 'message': message, 'move_line_id': move_line_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
-
-def adjustStock(ml):
-    is_entry = ml.move.type == 'Entré'
-    for detail in ml.details.all():
-        ds = Disponibility.objects.filter(product=ml.product, emplacement=detail.emplacement, n_lot=ml.n_lot).first()
-        if is_entry:
-            if ds:
-                ds.qte += detail.qte
-            else:
-                ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
-                                    production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid,n_lot=ml.n_lot)
-            ds.save()
-            return True, 'Stock ajusté avec succès.'
-        else:
-            if ds and ds.qte >= detail.qte:
-                ds.qte -= detail.qte
-                ds.save()
-                if ds.qte == 0:
-                    ds.delete()
-            elif ds.qte < detail.qte:
-                return False, 'Stock insuffisant pour la sortie.'
-            else:
-                return False, 'Stock introuvable.'
 
 @login_required(login_url='login')
 @admin_or_gs_required
@@ -815,34 +777,14 @@ def cancelMoveLine(request, move_line_id):
         try:
             move_line = MoveLine.objects.get(id=move_line_id)
         except MoveLine.DoesNotExist:
-            messages.success(request, 'Le Move n\'existe pas')
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
-        success, validation = changeState(request, move_line, 'Annulé')
+            messages.success(request, 'Entrée introuvable')
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
+        success = move_line.move.changeState(request.user.id, 'Annulé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Move anulé avec succès.', 'move_line_id': move_line_id})
+            return JsonResponse({'success': True, 'message': 'Entrée annulé avec succès.', 'move_line_id': move_line_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Move n\'existe pas.'})
+            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
     return JsonResponse({'success': False, 'message': 'Méthode de demande non valide.'})
-
-def createValidation(request, move, new_state, refusal_reason=None):
-    old_state = move.state
-    move.state = new_state
-    actor = request.user
-    validation = Validation(old_state=old_state, new_state=new_state, actor=actor, refusal_reason=refusal_reason, move=move)
-    move.save()
-    validation.save()
-    messages.success(request, f'Move set to {new_state} successfully')
-    return validation
-
-def changeState(request, move_line, action):
-    move = move_line.move
-    if move.state == action:
-        return True, None
-    reason = request.POST.get('refusal_reason', None)
-    if move.state == 'Refusé' and action == 'Confirmé':
-        reason = 'Correrction.'
-    validation = createValidation(request, move, action, reason)
-    return True, validation
 
 @login_required(login_url='login')
 @admin_or_gs_required

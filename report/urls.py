@@ -45,7 +45,7 @@ urlpatterns = [
     path('transfer-lines/', tarnsfer_list, name='tarnsfer_list'),
     path('move-line/detail/<int:move_line_id>/', move_line_detail, name='move_line_detail'),
 
-    path('move-line/confirm/<int:move_line_id>/', confirmMoveLine, name='confirm_move_line'),
+    path('move-line/confirm/<int:move_line_id>/', confirmMoveIn, name='confirm_move_line'),
     path('move-line/cancel/<int:move_line_id>/', cancelMoveLine, name='cancel_move_line'),
     path('move-line/validate/<int:move_line_id>/', validateMoveLine, name='validate_move_line'),
     

@@ -1,12 +1,12 @@
 from account.models import BaseModel, Line, Emplacement, Warehouse, Shift, Site
 from django.template.defaultfilters import slugify
+from django.db.models import Sum, Q
 from PIL import Image as PILImage
 from django.utils import timezone
-from django.db.models import Sum, Q
-from django.db import models
-import os
-import math
 from datetime import timedelta
+from django.db import models
+import math
+import os
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -119,10 +119,17 @@ class Move(BaseModel):
     def bl_str(self):
         return ', '.join([bl.num for bl in self.bls.all()])
     
-    def confirm(self):
-        
-        self.state = 'Confirmé'
-        self.save()
+    def changeState(self, actor_id, new_state):
+        if self.state == new_state:
+            return True
+        try:
+            Validation.objects.create(old_state=self.state, new_state=new_state, actor_id=actor_id, move=self)
+            self.state = new_state
+            self.save()
+            return True
+        except Exception as e:
+            print(f'Error lors de changement d\'état : {e}')
+            return False
 
     def __str__(self):
         if not self.line:  
@@ -135,6 +142,7 @@ class MoveLine(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
+    mirrored_move = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transfer', blank=True, null=True)
 
     @property
     def qte(self):
@@ -164,9 +172,51 @@ class MoveLine(BaseModel):
                 return self.lot_number
         else:
             return '/'
+        
+    def canValidate(self):
+        def check_emplacement(detail, operation):
+            if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
+                return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
+            elif operation == 'destock' and not detail.emplacement.can_destock(detail.palette):
+                return False, f'Emplacement {detail.emplacement} ne peut pas avoir un nombre négatif de palettes'
+            return True, None
+
+        operation = 'stock' if self.move.type == 'Entré' else 'destock'
+        for detail in self.details.all():
+            is_valid, error_message = check_emplacement(detail, operation)
+            if not is_valid:
+                return False, error_message
+        return True, 'Can stock'
     
-    def __str__(self):
-        return f"[{self.id}] {self.product} - {self.qte} - {self.lot_number}"
+    def integrate_in_stock(self):
+        is_entry = self.move.type == 'Entré'
+        for detail in self.details.all():
+            ds = Disponibility.objects.filter(product=self.product,emplacement=detail.emplacement, n_lot=self.n_lot).first()
+            if is_entry:
+                if ds:
+                    ds.qte += detail.qte
+                    ds.write_uid = self.create_uid
+                else:
+                    ds = Disponibility(product=self.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=self.create_uid, 
+                                       production_date=self.move.date, expiry_date=self.expiry_date, write_uid=self.create_uid, n_lot=self.n_lot )
+            else:
+                if not ds:
+                    return False, 'Stock introuvable.'
+                ds.qte -= detail.qte
+            if ds.qte > 0:
+                ds.save()
+            else:
+                ds.delete()
+        return True, 'Stock ajusté avec succès.'
+
+    def do_after_validation(self, user):
+        if not self.integrate_in_stock():
+            return False, f'Entrée validé, mais échec d\'ajuster le stock.'
+        for detail in self.details.all():
+            if not detail.generateCode(user):
+                return False, f'Entrée validé, mais échec de la génération du code QR pour l\'emplacement {detail.emplacement}.'
+        return True, 'Stock ajusté et codes QR générés avec succès.'
+        
     
 class LineDetail(BaseModel):
     move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')
@@ -174,7 +224,6 @@ class LineDetail(BaseModel):
     emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
     code = models.CharField(max_length=255, null=True, blank=True)
-    mirrored_move = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transfers', blank=True, null=True)
     n_lot = models.CharField(max_length=255, null=True, blank=True)
 
     @property
@@ -188,7 +237,19 @@ class LineDetail(BaseModel):
         if self.move_line.product.qte_per_cond and self.qte:
             return math.ceil(self.qte / self.move_line.product.qte_per_cond)
         return 0
-    
+        
+    def generateCode(self, user):
+        try:
+            self.code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.move_line.n_lot}"
+            if self.emplacement.temp:
+                TemporaryEmplacementAlert.objects.get_or_create(line_detail=self, write_uid=user, create_uid=user)
+            self.save()
+
+            return True
+        except Exception as e:
+            print(f'Error lors de génération de code : {e}')
+            return False
+
     class Meta:
         constraints = [models.CheckConstraint(check=models.Q(qte__gte=0), name="qte_positive")]
 
@@ -225,8 +286,7 @@ class Validation(BaseModel):
     new_state = models.CharField(choices=MOVE_STATE, max_length=40)
     date = models.DateTimeField(auto_now_add=True) 
     actor = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True, related_name='validations', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
-    refusal_reason = models.TextField(blank=True, null=True)
-    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='validations')
+    refusal_reason = models.CharField(null=True)
 
     def __str__(self):
         return f"Validation - {str(str(self.move.id).zfill(4))} - {str(self.date)} ({self.old_state} -> {self.new_state})" 

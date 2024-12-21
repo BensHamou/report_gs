@@ -104,7 +104,7 @@ DATABASES = {
     #   'USER': 'puma_gs',
     #   'PASSWORD': 'puma_gs',
     #   'HOST': '10.10.10.20',
-    #   'PORT': '5172',
+    #   'PORT': '5176',
     #},
     #'default': {
     # 'ENGINE': 'django.db.backends.postgresql',
