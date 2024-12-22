@@ -121,33 +121,21 @@ class CreateMoveOut(APIView):
 
         try:
             user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"detail": "Utilisateur introuvable"}, status=404)
-
-        try:
             move = Move.objects.create(site=user.default_site, gestionaire=user, type='Sortie', 
                                        is_transfer=is_transfer, state='Brouillon', date=timezone.now())
 
             for product_data in transferred_products:
                 product_id = product_data.get('product_id')
                 from_emplacements = product_data.get('from', [])
-                try:
-                    product = Product.objects.get(id=product_id)
-                except Product.DoesNotExist:
-                    raise ValueError(f"Produit introuvable (ID: {product_id})")
+                product = Product.objects.get(id=product_id)
 
-                move_line = MoveLine.objects.create(product=product, move=move, n_lot='/')
-
+                move_line = MoveLine.objects.create(move=move, product=product, lot_number='/')
+                
                 for from_data in from_emplacements:
                     emplacement_id = from_data.get('emplacement_id')
                     qte = from_data.get('qte')
                     n_lot = from_data.get('n_lot')
-
-                    try:
-                        emplacement = Emplacement.objects.get(id=emplacement_id)
-                    except Emplacement.DoesNotExist:
-                        raise ValueError(f"Emplacement introuvable (ID: {emplacement_id})")
-
+                    emplacement = Emplacement.objects.get(id=emplacement_id)
                     LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, 
                                               emplacement=emplacement, qte=qte, n_lot=n_lot)
 
@@ -158,11 +146,24 @@ class CreateMoveOut(APIView):
                     raise ValueError("Numéro BL manquant")
                 MoveBL.objects.create(move=move, numero=numero, is_annexe=is_annexe)
             return Response({"detail": "Mouvement créé avec succès", "move_id": move.id}, status=201)
-        
+       
+        except User.DoesNotExist:
+            return Response({"detail": "Utilisateur introuvable"}, status=404)
+        except Product.DoesNotExist:
+            move.delete()
+            return Response({"detail": f"Produit introuvable (ID: {product_id})"}, status=400)
+        except Emplacement.DoesNotExist:
+            move.delete()
+            return Response({"detail": f"Emplacement introuvable (ID: {emplacement_id})"}, status=400)
+        except Exception as e:
+            move.delete()
+            return Response({"detail": f"Erreur lors de la création de mouvement - {e}"}, status=400)
         except ValueError as e:
+            move.delete()
             return Response({"detail": str(e)}, status=400)
         except Exception as e:
-            return Response({"detail": "Erreur interne du serveur"}, status=500)
+            move.delete()
+            return Response({"detail": f"Erreur interne du serveur - {e}"}, status=500)
 
 class ConfirmMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
