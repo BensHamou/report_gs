@@ -148,7 +148,7 @@ class Move(BaseModel):
         is_entry = self.type == 'Entré'
         for ml in self.move_lines.all():
             for detail in ml.details.all():
-                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=ml.n_lot).first()
+                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
                 if is_entry:
                     if ds:
                         ds.qte += detail.qte
@@ -173,6 +173,12 @@ class Move(BaseModel):
             for detail in ml.details.all():
                 if not detail.generateCode(user):
                     raise ValueError(f"{ml.n_lot} - Échec de la génération du code QR pour l'emplacement {detail.emplacement}.")
+        if self.is_transfer:
+            self.create_mirror()
+            return True, 'Stock ajusté et Transfer miroire créé avec succès.'
+        
+        if self.type == 'Sortie':
+            return True, 'Stock ajusté avec succès.'
         return True, 'Stock ajusté et codes QR générés avec succès.'
     
     def create_mirror(self):
@@ -222,6 +228,8 @@ class MoveLine(BaseModel):
 
     @property
     def n_lot(self):
+        if self.move.is_transfer:
+            return '/'
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':
                 return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'

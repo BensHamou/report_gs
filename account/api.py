@@ -218,8 +218,6 @@ class ValidateMoveOut(APIView):
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
 
-            if move.is_transfer:
-                move.create_mirror()
             return Response({"detail": "Sortée validée avec succès."}, status=200)
         except MoveLine.DoesNotExist:
             return Response({"detail": "Sortée introuvable."}, status=404)

@@ -92,9 +92,10 @@
 <div class="d-flex justify-content-center" style="padding: 15px;">
     {% if can_confirm %}
         <button class="btn-validate mr-2" onclick="confirmMoveLine('{{ move_line.id }}')">Confirmer</button>
-    {% endif %}
-    {% if can_confirm %}
         <button class="btn-cancel" onclick="cancelMoveLine('{{ move_line.id }}')">Annuler</button>
+    {% endif %}
+    {% if can_validate %}
+        <button class="btn-validate mr-2" onclick="validateMoveLine('{{ move_line.id }}')">Valider</button>
     {% endif %}
 </div>
 {% include 'modal.html' %}
@@ -124,6 +125,42 @@
                 $.ajax({
                     type: "POST",
                     url: "{% url 'confirm_move_line' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    function validateMoveLine(moveLineId) {
+        swal({
+            title: "Valider l'entrée",
+            text: "Êtes-vous sûr de vouloir valider cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'validate_move_line' 0 %}".replace('0', moveLineId),
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
                     },
