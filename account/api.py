@@ -111,6 +111,7 @@ class CreateMoveOut(APIView):
     def post(self, request, *args, **kwargs):
         user_id = request.data.get('user_id')
         is_transfer = request.data.get('is_transfer', False)
+        transfer_to = request.data.get('transfer_to', None)
         transferred_products = request.data.get('transferred_products', [])
         n_bls = request.data.get('n_bls', [])
 
@@ -118,10 +119,13 @@ class CreateMoveOut(APIView):
             return Response({"detail": "User ID manquant"}, status=400)
         if not transferred_products:
             return Response({"detail": "Produits manquants"}, status=400)
+        
+        if is_transfer and not transfer_to:
+            return Response({"detail": "Site de transfert manquant"}, status=400)
 
         try:
             user = User.objects.get(id=user_id)
-            move = Move.objects.create(site=user.default_site, gestionaire=user, type='Sortie', 
+            move = Move.objects.create(site=user.default_site, transfer_to_id=transfer_to, gestionaire=user, type='Sortie', 
                                        is_transfer=is_transfer, state='Brouillon', date=timezone.now())
 
             for product_data in transferred_products:

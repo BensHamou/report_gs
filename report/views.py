@@ -338,10 +338,10 @@ def list_move(request):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     today = date.today()
-    move_out_today = MoveLine.objects.filter(move__state='Confirmé', move__type='Sortie', move__date=today)
+    move_out_today = MoveLine.objects.filter(move__state='Validé', move__type='Sortie', move__date=today)
     palettes_today = sum(m.palette for m in move_out_today)
 
-    move_lines = MoveLine.objects.filter(move__state='Confirmé', move__type='Sortie').select_related('product')
+    move_lines = MoveLine.objects.filter(move__state='Validé', move__type='Sortie').select_related('product')
     
     product_totals = {}
     for move_line in move_lines:

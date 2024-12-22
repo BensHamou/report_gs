@@ -114,6 +114,7 @@ class Move(BaseModel):
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
+    transfer_to = models.ForeignKey(Site, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers')
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
 
     @property
@@ -169,13 +170,15 @@ class Move(BaseModel):
     def do_after_validation(self, user):
         if not self.integrate_in_stock():
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
-        for ml in self.move_lines.all():
-            for detail in ml.details.all():
-                if not detail.generateCode(user):
-                    raise ValueError(f"{ml.n_lot} - Échec de la génération du code QR pour l'emplacement {detail.emplacement}.")
+        
         if self.is_transfer:
             self.create_mirror()
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
+        else:
+            for ml in self.move_lines.all():
+                for detail in ml.details.all():
+                    if not detail.generateCode(user):
+                        raise ValueError(f"{ml.n_lot} - Échec de la génération du code QR pour l'emplacement {detail.emplacement}.")
         
         if self.type == 'Sortie':
             return True, 'Stock ajusté avec succès.'
@@ -184,7 +187,7 @@ class Move(BaseModel):
     def create_mirror(self):
         if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer:
             try:
-                mirror = Move.objects.create(site=self.site, gestionaire=self.gestionaire, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
+                mirror = Move.objects.create(site=self.transfer_to, gestionaire=self.gestionaire, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
