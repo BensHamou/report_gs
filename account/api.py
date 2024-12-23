@@ -13,6 +13,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.views import APIView
 from django.db import transaction
+from datetime import datetime
 
 @csrf_exempt
 def login_api(request):
@@ -49,10 +50,10 @@ class StandardResultsSetPagination(PageNumberPagination):
 def move_list_api(request):
     try:
         user = request.user
-        moves = MoveLine.objects.filter(Q(move__line__in=user.lines.all().values('id')) | Q(move__line__isnull=True, move__site=user.default_site)).order_by('-date_modified')
+        moves = Move.objects.filter(Q(line__in=user.lines.all().values('id')) | Q(line__isnull=True, site=user.default_site)).order_by('-date_modified')
         paginator = StandardResultsSetPagination()
         paginated_moves = paginator.paginate_queryset(moves, request)
-        serializer = MoveLineSerializer(paginated_moves, many=True)
+        serializer = MoveSerializer(paginated_moves, many=True)
         return paginator.get_paginated_response(serializer.data)
     except NotAuthenticated:
         return Response({'error': 'L\'utilisateur doit être authentifié pour accéder à cette ressource.'}, status=401)
@@ -88,6 +89,7 @@ class ProductAvalibilityView(APIView):
     def post(self, request, *args, **kwargs):
         site_id = request.data.get('site_id')
         product_ids = request.data.get('product_ids')
+        is_transfer = request.data.get('is_transfer', False)
 
         if not site_id or not product_ids:
             return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
@@ -97,6 +99,8 @@ class ProductAvalibilityView(APIView):
 
         for product in products:
             stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
+            if is_transfer:
+                stock_details = sorted(stock_details, key=lambda x: datetime.strptime(x['production_date'], '%Y-%m-%d'))
             unit_qte = product.unit_qte(site_id)
             
             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})

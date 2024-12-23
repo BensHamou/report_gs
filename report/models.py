@@ -118,6 +118,14 @@ class Move(BaseModel):
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
 
     @property
+    def palette(self):
+        return sum(ml.palette for ml in self.move_lines.all()) or 0
+    
+    @property
+    def qte(self):
+        return sum(ml.qte for ml in self.move_lines.all()) or 0
+    
+    @property
     def bl_str(self):
         return ', '.join([bl.num for bl in self.bls.all()])
     
@@ -197,6 +205,26 @@ class Move(BaseModel):
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
 
+    @property
+    def display_type(self):
+        if self.type == 'Entré' and not self.is_transfer and len(self.move_lines.all()) == 1:
+            return 'Entré'
+        elif self.type == 'Entré' and self.is_transfer:
+            return 'Transfer Entrant'
+        elif self.type == 'Sortie' and self.is_transfer:
+            return 'Transfer Sortant'
+        else:
+            return 'Sortie'
+    
+    def is_in_mp(self):
+        return all([ml.product.type == 'Matière Première' for ml in self.move_lines.all()]) and not self.is_transfer and self.type == 'Entré'
+    
+    @property
+    def n_lots(self):
+        if self.is_transfer or self.type == 'Sortie':
+            return '/'
+        return ', '.join([ml.n_lot for ml in self.move_lines.all()])
+
     def __str__(self):
         if not self.line:  
             return f"[{self.id}] {self.site} - {self.date}"
@@ -235,12 +263,12 @@ class MoveLine(BaseModel):
             return '/'
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':
-                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}'
+                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}' or '/'
             else:
                 return self.lot_number
         else:
             return '/'
-        
+
     def __str__(self):
         return f"[{self.id}] {self.product} - {self.qte}"
     

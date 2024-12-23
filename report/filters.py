@@ -36,7 +36,7 @@ class ProductFilter(django_filters.FilterSet):
         model = Product
         fields = ['search', 'family', 'packing']
 
-class MoveLineFilter(django_filters.FilterSet):
+class MoveFilter(django_filters.FilterSet):
     TYPE_CHOICES = [
         ('all', 'Tous'),
         ('entree', 'Entré'),
@@ -56,37 +56,37 @@ class MoveLineFilter(django_filters.FilterSet):
     site = django_filters.CharFilter(field_name="move__site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
     warehouse = django_filters.CharFilter(method='filter_by_warehouse', widget=forms.TextInput(attrs=getAttrs('search2', 'Entrepôt')))
     emplacement = django_filters.CharFilter(method='filter_by_emplacement', widget=forms.TextInput(attrs=getAttrs('search2', 'Emplacement')))
-    lot_number = django_filters.CharFilter(field_name="lot_number", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Lot')))
-    start_date = django_filters.DateFilter(field_name="move__date", lookup_expr='gte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Début')))
-    end_date = django_filters.DateFilter(field_name="move__date", lookup_expr='lte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Fin')))
-    product = django_filters.CharFilter(field_name="product__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Produit')))
+    lot_number = django_filters.CharFilter(field_name="move_lines__lot_number", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Lot')))
+    start_date = django_filters.DateFilter(field_name="date", lookup_expr='gte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Début')))
+    end_date = django_filters.DateFilter(field_name="date", lookup_expr='lte', widget=forms.DateInput(attrs=getAttrs('date', 'Date Fin')))
+    product = django_filters.CharFilter(field_name="move_lines__product__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Produit')))
 
     state = django_filters.ChoiceFilter(method='filter_by_state', choices=STATE_REPORT, empty_label=None, initial='Tous', widget=forms.Select(attrs=getAttrs('select')))
 
     def filter_by_state(self, queryset, name, value):
         if value == 'Tous':
-            return queryset.filter(move__state__in=['Brouillon', 'Confirmé', 'Annulé'])
+            return queryset.filter(state__in=['Brouillon', 'Confirmé', 'Annulé'])
         else:
-            return queryset.filter(move__state=value)
+            return queryset.filter(state=value)
     
     def filter_by_type(self, queryset, name, value):
         if value == 'all':
-            return queryset.filter(move__type__in=['Entré', 'Sortie'])
+            return queryset.filter(type__in=['Entré', 'Sortie'])
         elif value == 'entree':
-            return queryset.filter(move__type='Entré', move__is_transfer=False)
+            return queryset.filter(type='Entré', is_transfer=False)
         elif value == 'entree_transfer':
-            return queryset.filter(Q(move__type='Entré') | Q(move__is_transfer=True))
+            return queryset.filter(Q(type='Entré') | Q(is_transfer=True))
         elif value == 'transfer':
-            return queryset.filter(move__is_transfer=True)
+            return queryset.filter(is_transfer=True)
         elif value == 'sortie':
-            return queryset.filter(move__type='Sortie', move__is_transfer=False)
+            return queryset.filter(type='Sortie', is_transfer=False)
         return queryset
 
     def filter_by_warehouse(self, queryset, name, value):
-        return queryset.filter(details__warehouse__designation__icontains=value).distinct()
+        return queryset.filter(move_lines__details__warehouse__designation__icontains=value).distinct()
 
     def filter_by_emplacement(self, queryset, name, value):
-        return queryset.filter(details__emplacement__designation__icontains=value).distinct()
+        return queryset.filter(move_lines__details__emplacement__designation__icontains=value).distinct()
 
     class Meta:
         model = MoveLine

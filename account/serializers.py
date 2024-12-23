@@ -10,23 +10,26 @@ class LineDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'warehouse', 'emplacement', 'n_lot', 'qte', 'palette']
 
 class MoveLineSerializer(serializers.ModelSerializer):
+    n_lot = serializers.ReadOnlyField()
+    expiry_date = serializers.ReadOnlyField()
+    qte = serializers.ReadOnlyField()
+    palette = serializers.ReadOnlyField()
     details = LineDetailSerializer(many=True, read_only=True)
-    production_date = serializers.DateField(source='move.date', read_only=True)
-    expiry_date = serializers.DateField(read_only=True)
-    n_lot = serializers.CharField(read_only=True)
-    gestionaire = serializers.CharField(source='move.gestionaire.fullname', read_only=True)
-    state = serializers.CharField(source='move.state', read_only=True)
-    bls = serializers.CharField(source='move.bl_str', read_only=True)
-    type = serializers.CharField(source='move.type', read_only=True)
-    is_transfer = serializers.CharField(source='move.is_transfer', read_only=True)
-    is_transfer = serializers.CharField(source='move.is_transfer', read_only=True)
-    line = serializers.CharField(source='move.line', read_only=True)
-    site = serializers.CharField(source='move.site', read_only=True)
-    shift = serializers.CharField(source='move.shift', read_only=True)
 
     class Meta:
         model = MoveLine
-        fields = ['id',  'product', 'expiry_date',  'production_date',  'details', 'qte', 'palette', 'n_lot', 'state', 
+        fields = ['id',  'product', 'expiry_date',  'details', 'qte', 'palette', 'n_lot']
+        
+class MoveSerializer(serializers.ModelSerializer):
+    n_lots = serializers.ReadOnlyField()
+    gestionaire = serializers.CharField(source='gestionaire.fullname', read_only=True)
+    qte = serializers.ReadOnlyField()
+    palette = serializers.ReadOnlyField()
+    move_lines = MoveLineSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Move
+        fields = ['id', 'date',  'move_lines', 'qte', 'palette', 'n_lots', 'state', 
                   'gestionaire', 'bls', 'type', 'is_transfer', 'line', 'site', 'date_created', 'shift']
 
 

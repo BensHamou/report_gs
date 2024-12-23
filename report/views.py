@@ -329,8 +329,8 @@ def categories_view(request):
 @login_required(login_url='login')
 @admin_or_gs_required
 def list_move(request):
-    moves = MoveLine.objects.filter(Q(move__gestionaire=request.user) | Q(move__line__in=request.user.lines.all().values('id'))).order_by('-date_modified')    
-    filteredData = MoveLineFilter(request.GET, queryset=moves)
+    moves = Move.objects.filter(Q(gestionaire=request.user) | Q(line__in=request.user.lines.all().values('id'))).order_by('-date_modified')    
+    filteredData = MoveFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
     page_size = int(page_size_param) if page_size_param else 12
@@ -338,7 +338,7 @@ def list_move(request):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     today = date.today()
-    move_out_today = MoveLine.objects.filter(move__state='Validé', move__type='Sortie', move__date=today)
+    move_out_today = Move.objects.filter(state='Validé', type='Sortie', date=today)
     palettes_today = sum(m.palette for m in move_out_today)
 
     move_lines = MoveLine.objects.filter(move__state='Validé', move__type='Sortie').select_related('product')
@@ -362,17 +362,14 @@ def list_move(request):
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def delete_move(request, move_line_id):
-    move_line = get_object_or_404(MoveLine, id=move_line_id)
+def delete_move(request, move_id):
+    move = get_object_or_404(Move, id=move_id)
     try:
-        move = Move.objects.get(id=move_line.move.id)
-        move_line.delete()
-        if move.move_lines.all().count() == 0:
-            move.delete()
-        messages.success(request, "Move supprimée avec succès.")
+        move.delete()
+        messages.success(request, "Movement supprimée avec succès.")
     except Exception as e:
-        messages.error(request, f"Erreur lors de la suppression du move : {e}")
-    return redirect(getRedirectionURL(request, reverse('move_lines')))
+        messages.error(request, f"Erreur lors de la suppression du Movement : {e}")
+    return redirect(getRedirectionURL(request, reverse('moves')))
 
 # MOVE IN - Produit Fini
 
@@ -420,10 +417,10 @@ def edit_move_in_view(request, move_line_id):
     user = request.user
     user_lines = user.lines.all()
     is_admin = user.role == 'Admin'
-    default_line = move_line.move.line
-    show_line_field = user_lines.count() > 1
+    default_line = move_line.move.line or user_lines.first()
+    show_line_field = user_lines.count() > 1 and not move.is_transfer
     gestionaires = default_line.users.filter(Q(role='Gestionaire') | Q(role='Admin'))
-    default_shifts = move.line.shifts.all()
+    default_shifts = default_line.shifts.all()
 
     context = {
         'move': move_line.move,
@@ -437,7 +434,7 @@ def edit_move_in_view(request, move_line_id):
         'is_admin': is_admin,
         'show_line_field': show_line_field,
         'warehouses': default_line.site.warehouses.all(),
-        'emplacements': Emplacement.objects.all(),
+        'emplacements': Emplacement.objects.all()
     }
     return render(request, 'edit_move.html', context)
 
@@ -478,7 +475,7 @@ def create_move_pf(request):
                         line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                                 n_lot=n_lot, qte=int(qte), create_uid=request.user, write_uid=request.user)
 
-                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
+                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
 
         except Exception as e:
             print(str(e))
@@ -490,68 +487,83 @@ def update_move_pf(request, move_line_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                site_id = request.POST.get('site')
-                line_id = request.POST.get('line')
+                site_id = request.POST.get('site', None)
+                line_id = request.POST.get('line', None)
                 shift_id = request.POST.get('shift', None)
-                gestionaire_id = request.POST.get('gestionaire')
-                lot_number = request.POST.get('lot_number')
-                production_date = request.POST.get('production_date')
-                production_year = datetime.strptime(production_date, "%Y-%m-%d").year
-
-                if not (line_id and gestionaire_id):
-                    return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
-
+                gestionaire_id = request.POST.get('gestionaire', None)
+                lot_number = request.POST.get('lot_number', None)
+                production_date = request.POST.get('production_date', None)
+                do_check = request.POST.get('do_check')
                 move_line = MoveLine.objects.get(id=move_line_id)
 
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
-                if existing_move_line.exists():
-                    return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+                if do_check == 0:
+                    production_year = datetime.strptime(production_date, "%Y-%m-%d").year
+
+                    if not (line_id and gestionaire_id):
+                        return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
+
+                    existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
+                    if existing_move_line.exists() and do_check == 0:
+                        return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+
+                n_lot = move_line.n_lot
 
                 move = Move.objects.get(id=move_line.move.id)
                 if not move.is_transfer:
+                    move.site_id = site_id
+                    move.line_id = line_id
+                    move.gestionaire_id = gestionaire_id
+                    move.date = production_date
+                    move_line.lot_number = lot_number
+                    
+                    existing_line_details = LineDetail.objects.filter(move_line=move_line)
+                    existing_ids = [str(detail.id) for detail in existing_line_details]
+                    to_update_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and request.POST[key]]
+                    to_add_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and not request.POST[key]]
+                    to_update_ids = [request.POST.get(f'detail_id_{row_id}') for row_id in to_update_rows]
+                    to_delete_ids = [detail_id for detail_id in existing_ids if detail_id not in to_update_ids]
+
+                    LineDetail.objects.filter(id__in=to_delete_ids).delete()
+
+                    for row_id in to_update_rows:
+                        detail_id = request.POST.get(f'detail_id_{row_id}')
+                        warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                        emplacement_id = request.POST.get(f'emplacement_{row_id}')
+                        qte = request.POST.get(f'qte_{row_id}')
+                        if warehouse_id and emplacement_id and qte:
+                            LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte), write_uid=request.user, n_lot=n_lot)
+
+                    for row_id in to_add_rows:
+                        warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                        emplacement_id = request.POST.get(f'emplacement_{row_id}')
+                        qte = request.POST.get(f'qte_{row_id}')
+
+                        if warehouse_id and emplacement_id and qte:
+                            LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, n_lot=n_lot, 
+                                                    qte=int(qte), write_uid=request.user, create_uid=move_line.create_uid)
                     if shift_id:
                         move.shift_id = shift_id
                     else:
                         return JsonResponse({'success': False, 'message': 'Le champs Shift est obligatoire.'}, status=200)
                     
-                move.site_id = site_id
-                move.line_id = line_id
-                move.gestionaire_id = gestionaire_id
-                move.date = production_date
+                else:
+                    row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
+                    for row_id in row_ids:
+                        warehouse_id = request.POST.get(f'warehouse_{row_id}')
+                        emplacement_id = request.POST.get(f'emplacement_{row_id}')
+                        qte = request.POST.get(f'qte_{row_id}')
+
+                        if warehouse_id and emplacement_id and qte:
+                            line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
+                                                                    n_lot=n_lot, qte=int(qte), create_uid=request.user, write_uid=request.user)
+                
                 move.write_uid = request.user
                 move.save()
-
-                move_line.lot_number = lot_number
                 move_line.write_uid = request.user
                 move_line.save()
 
-                n_lot = move_line.n_lot
 
-                existing_line_details = LineDetail.objects.filter(move_line=move_line)
-                existing_ids = [str(detail.id) for detail in existing_line_details]
-                to_update_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and request.POST[key]]
-                to_add_rows = [key.split('_')[2] for key in request.POST.keys() if key.startswith('detail_id_') and not request.POST[key]]
-                to_update_ids = [request.POST.get(f'detail_id_{row_id}') for row_id in to_update_rows]
-                to_delete_ids = [detail_id for detail_id in existing_ids if detail_id not in to_update_ids]
 
-                LineDetail.objects.filter(id__in=to_delete_ids).delete()
-
-                for row_id in to_update_rows:
-                    detail_id = request.POST.get(f'detail_id_{row_id}')
-                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    emplacement_id = request.POST.get(f'emplacement_{row_id}')
-                    qte = request.POST.get(f'qte_{row_id}')
-                    if warehouse_id and emplacement_id and qte:
-                        LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte), write_uid=request.user, n_lot=n_lot)
-
-                for row_id in to_add_rows:
-                    warehouse_id = request.POST.get(f'warehouse_{row_id}')
-                    emplacement_id = request.POST.get(f'emplacement_{row_id}')
-                    qte = request.POST.get(f'qte_{row_id}')
-
-                    if warehouse_id and emplacement_id and qte:
-                        LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, n_lot=n_lot, 
-                                                  qte=int(qte), write_uid=request.user, create_uid=move_line.create_uid)
 
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
         except Move.DoesNotExist:
@@ -559,6 +571,7 @@ def update_move_pf(request, move_line_id):
         except MoveLine.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Entré non trouvée.'}, status=200)
         except Exception as e:
+            print(str(e))
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
 
 # MOVE IN - Matière Première
@@ -614,7 +627,7 @@ def create_move_mp(request):
                         line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                                 n_lot=n_lot, qte=int(qte), create_uid=request.user, write_uid=request.user)
 
-                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.id}, status=200)
+                return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
 
         except Exception as e:
             print(str(e))
@@ -684,89 +697,84 @@ def update_move_mp(request, move_line_id):
             return JsonResponse({'success': False, 'message': f'Erreur lors du traitement de la demande: {str(e)}'}, status=500)
 
 
+# VIEWS 
+
 @login_required(login_url='login')
 @admin_or_gs_required        
-def move_line_detail(request, move_line_id):
-    move_line = get_object_or_404(MoveLine, id=move_line_id)
-    can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move_line.move.state == 'Validé'
+def move_detail(request, move_id):
+    move = get_object_or_404(Move, id=move_id)
+    can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé'
     if request.user.role == 'Admin':
         can_edit = True
-        can_cancel = move_line.move.state == 'Brouillon'
-        can_confirm = move_line.move.state == 'Brouillon'
-        can_validate = move_line.move.state == 'Confirmé'
-    elif request.user.role == 'Gestionaire' and move_line.move.gestionaire == request.user:
-        can_edit = move_line.move.state == 'Brouillon'
-        can_cancel = move_line.move.state == 'Brouillon'
-        can_confirm = move_line.move.state == 'Brouillon'
-    elif request.user.role == 'Validateur' and move_line.move.site == request.user.default_site:
-        can_validate = move_line.move.state == 'Confirmé'
+        can_cancel = move.state == 'Brouillon'
+        can_confirm = move.state == 'Brouillon'
+        can_validate = move.state == 'Confirmé'
+    elif request.user.role == 'Gestionaire' and move.gestionaire == request.user:
+        can_edit = move.state == 'Brouillon'
+        can_cancel = move.state == 'Brouillon'
+        can_confirm = move.state == 'Brouillon'
+    elif request.user.role == 'Validateur' and move.site == request.user.default_site:
+        can_validate = move.state == 'Confirmé'
 
-    lines = Line.objects.all()
-
-    context = {'move_line': move_line, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_validate': can_validate, 
-               'can_print': can_print, 'lines': lines}
-    if move_line.move.type == 'Sortie':
-        return render(request, 'move_out_details.html', context)
-    elif move_line.product.type == 'Matière Première':
-        return render(request, 'details_move_mp.html', context)
+    context = {'move': move, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_validate': can_validate, 'can_print': can_print}
     return render(request, 'details_move.html', context)
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def confirmMoveIn(request, move_line_id):
+def confirmMove(request, move_id):
     if request.method == 'POST':
         try:
-            move_line = MoveLine.objects.get(id=move_line_id)
-        except MoveLine.DoesNotExist:
-            messages.success(request, 'Entrée introuvable')
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-        success = move_line.move.changeState(request.user.id, 'Confirmé')
+            move = Move.objects.get(id=move_id)
+        except Move.DoesNotExist:
+            messages.success(request, 'Movement introuvable')
+            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+        success = move.changeState(request.user.id, 'Confirmé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Entrée confirmé avec succès.', 'move_line_id': move_line_id})
+            return JsonResponse({'success': True, 'message': 'Movement confirmé avec succès.', 'move_id': move_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de la confirmation de l\'entrée.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la confirmation du movement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def validateMoveLine(request, move_line_id):
+def validateMove(request, move_id):
     if request.method == 'POST':
         try:
-            move_line = MoveLine.objects.get(id=move_line_id)
-        except MoveLine.DoesNotExist:
-            messages.success(request, 'Entrée introuvable')
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
+            move = Move.objects.get(id=move_id)
+        except Move.DoesNotExist:
+            messages.success(request, 'Movement introuvable')
+            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
         
         try:
-            move_line.move.can_validate()
+            move.can_validate()
         except ValueError as e:
             return JsonResponse({'success': False, 'message': str(e)})
         
-        success = move_line.move.changeState(request.user.id, 'Validé')
+        success = move.changeState(request.user.id, 'Validé')
         if success:
             try:
-                success, message = move_line.move.do_after_validation(request.user)
-                return JsonResponse({'success': True, 'message': message, 'move_line_id': move_line_id})
+                success, message = move.do_after_validation(request.user)
+                return JsonResponse({'success': True, 'message': message, 'move_id': move_id})
             except ValueError as e:
                 return JsonResponse({'success': False, 'message': str(e)})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de la validation de l\'entrée.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la validation du movement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
 @admin_or_gs_required
-def cancelMoveLine(request, move_line_id):
+def cancelMove(request, move_id):
     if request.method == 'POST':
         try:
-            move_line = MoveLine.objects.get(id=move_line_id)
-        except MoveLine.DoesNotExist:
-            messages.success(request, 'Entrée introuvable')
-            return JsonResponse({'success': False, 'message': 'Entrée introuvable.'})
-        success = move_line.move.changeState(request.user.id, 'Annulé')
+            move = Move.objects.get(id=move_id)
+        except Move.DoesNotExist:
+            messages.success(request, 'Movement introuvable')
+            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+        success = move.changeState(request.user.id, 'Annulé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Entrée annulé avec succès.', 'move_line_id': move_line_id})
+            return JsonResponse({'success': True, 'message': 'Movement annulé avec succès.', 'move_id': move_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation de l\'entrée.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation du movement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 
@@ -795,6 +803,14 @@ def get_warehouses_for_line(request):
     warehouse_data = [{'id': warehouse.id, 'name': warehouse.designation} for warehouse in warehouses]
 
     return JsonResponse({'warehouses': warehouse_data, 'site_id': line.site.id})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def get_warehouses_for_site(request):
+    site_id = request.GET.get('site_id')
+    warehouses = Warehouse.objects.filter(site__id=site_id)
+    warehouse_data = [{'id': warehouse.id, 'name': warehouse.designation} for warehouse in warehouses]
+    return JsonResponse({'warehouses': warehouse_data})
 
 @login_required(login_url='login')
 @admin_or_gs_required

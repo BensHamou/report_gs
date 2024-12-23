@@ -1,0 +1,385 @@
+{% extends "main.html" %}
+{% load static %}
+
+{% block title %}
+    Détails de movement
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'moves' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Rapports</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Détails de movement</h4>
+    </div>
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">Voir les informations ({{ move.display_type }} - {{ move.state }})</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-toggle="modal" data-target="#validationsModal" style="background-color: #1d71b8;">
+            <span class="d-none d-sm-inline p-3">Cycle</span>
+            <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
+        </button>
+    </div>
+</div>
+
+<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h4 class="mb-4 section-title" style="color: #0082cd;">Information Générale</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="site" class="form-label">Site</label>
+                    <p class="form-control">{{ move.site }}</p>
+                </div>
+                {% if move.line %}
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <label for="line" class="form-label">Ligne</label>
+                        <p class="form-control">{{ move.line }}</p>
+                    </div>
+                {% endif %}
+                {% if move.shift %}
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <label for="shift" class="form-label">Shift</label>
+                        <p class="form-control">{{ move.shift }}</p>
+                    </div>
+                {% endif %}
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="gestionaire" class="form-label">Gestionaire</label>
+                    <p class="form-control">{{ move.gestionaire }}</p>
+                </div>
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="date" class="form-label">Date de movement</label>
+                    <p class="form-control">{{ move.date }}</p>
+                </div>
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="qte" class="form-label">Quantité Globale</label>
+                    <p class="form-control">{{ move.qte }}</p>
+                </div>
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="palette" class="form-label">Nombre Palettes</label>
+                    <p class="form-control">{{ move.palette }}</p>
+                </div>
+                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                    <label for="date_created" class="form-label">Créer le</label>
+                    <p class="form-control">{{ move.date_created }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-2 section-title" style="color: #0082cd;">Lignes de Movement</h4>
+        </div>
+    </div>
+    {% for line in move.move_lines.all %}
+        {% if line.product.type == 'Matière Première' %}
+            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-end">
+                        {% if can_edit %}
+                            <button type="button" class="btn" onclick="window.location=constructUrl('{% url 'edit_move_line_mp' line.id %}')" style="background-color: transparent; color: #1d71b8;">
+                                <i class="fas fa-edit d-inline"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                        <div class="row">
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="n_lot" class="form-label">N Lot</label>
+                                <p class="form-control">{{ line.n_lot }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="product" class="form-label">Produit</label>
+                                <p class="form-control">{{ line.product }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="qte" class="form-label">Quantité</label>
+                                <p class="form-control">{{ line.qte }} {{ line.product.packing.unit }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="palette" class="form-label">Nombre Palettes</label>
+                                <p class="form-control">{{ line.palette }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="details-container">
+                    {% for detail in line.details.all %}
+                        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
+                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                                <p class="form-control">{{ detail.warehouse.designation }}</p>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-12">
+                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                                <p class="form-control">{{ detail.emplacement.designation }}</p>
+                            </div>
+                            <div class="col-lg-{% if can_print %}2{% else %}4{% endif %} col-md-{% if can_print %}2{% else %}4{% endif %} col-sm-12">
+                                <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
+                                <p class="form-control">{{ detail.qte }} {{ move_line.product.packing.unit|default:'Kg' }}</p>
+                            </div>
+                            {% if can_print %}
+                            <div class="col-lg-1 col-md-1 col-sm-12">
+                                <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
+                                <div class="btn-group d-block">
+                                    <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
+                                            data-line-detail-id="{{ detail.id }}" 
+                                            data-product-name="{{ detail.move_line.product.designation }}"
+                                            data-lot-number="{{ detail.move_line.n_lot }}"
+                                            data-expiry-date="{{ detail.move_line.expiry_date|default:'/' }}"
+                                            data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                            data-magasin="{{ detail.warehouse.designation }}"
+                                            data-emplacement="{{ detail.emplacement.designation }}"
+                                            data-palettes="{{ detail.move_line.palette }}">
+                                        <i class="fas fa-print"></i> 
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-end">
+                        {% if can_edit %}
+                            <button type="button" class="btn" onclick="window.location=constructUrl('{% url 'edit_move_line_pf' line.id %}')" style="background-color: transparent; color: #1d71b8;">
+                                <i class="fas fa-edit d-inline"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
+                        <div class="row">
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="n_lot" class="form-label">N Lot</label>
+                                <p class="form-control">{{ line.n_lot }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="expiry_date" class="form-label">Date d'expiration</label>
+                                <p class="form-control">{{ line.expiry_date|date:'d M Y' }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="qte" class="form-label">Quantité</label>
+                                <p class="form-control">{{ line.qte }} {{ line.product.packing.unit }}</p>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-2">
+                                <label for="palette" class="form-label">Nombre Palettes</label>
+                                <p class="form-control">{{ line.palette }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">
+                        <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ line.product.designation }}</p>
+                        <img src="{{ line.product.image.url }}" alt="{{ line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                    </div>
+                </div>
+                <div class="row" id="details-container">
+                    {% for detail in line.details.all %}
+                    <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
+                        <div class="col-lg-4 col-md-4 col-sm-12">
+                            <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                            <p class="form-control">{{ detail.warehouse.designation }}</p>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-12">
+                            <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                            <p class="form-control">{{ detail.emplacement.designation }}</p>
+                        </div>
+                        <div class="col-lg-{% if can_print %}2{% else %}4{% endif %} col-md-{% if can_print %}2{% else %}4{% endif %} col-sm-12">
+                            <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
+                            <p class="form-control">{{ detail.qte }} {{ line.product.packing.unit }}</p>
+                        </div>
+                        {% if can_print %}
+                        <div class="col-lg-1 col-md-1 col-sm-12">
+                            <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
+                            <div class="btn-group d-block">
+                                <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
+                                        data-line-detail-id="{{ detail.id }}" 
+                                        data-product-name="{{ detail.move_line.product.designation }}"
+                                        data-lot-number="{{ detail.move_line.n_lot }}"
+                                        data-expiry-date="{{ detail.move_line.expiry_date }}"
+                                        data-production-date="{{ detail.move_line.move.date }}"
+                                        data-magasin="{{ detail.warehouse.designation }}"
+                                        data-emplacement="{{ detail.emplacement.designation }}"
+                                        data-palettes="{{ detail.move_line.palette }}">
+                                    <i class="fas fa-print"></i> 
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div class="d-flex justify-content-center" style="padding: 15px;">
+    {% if can_confirm %}
+        <button class="btn-validate mr-2" onclick="confirmMoveLine('{{ move.id }}')">Confirmer</button>
+        <button class="btn-cancel" onclick="cancelMoveLine('{{ move.id }}')">Annuler</button>
+    {% endif %}
+    {% if can_validate %}
+        <button class="btn-validate mr-2" onclick="validateMoveLine('{{ move.id }}')">Valider</button>
+    {% endif %}
+</div>
+{% include 'modal.html' %}
+{% include 'print_modal.html' %}
+
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" ></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+<script>
+    function confirmMoveLine(moveLineId) {
+        swal({
+            title: "Confirmer l'entrée",
+            text: "Êtes-vous sûr de vouloir confirmer cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'confirm_move' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+    
+    function cancelMoveLine(moveLineId) {
+        swal({
+            title: "Annuler l'entrée",
+            text: "Êtes-vous sûr de vouloir annuler cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willCancel) => {
+            if (willCancel) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'cancel_move' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    function validateMoveLine(moveLineId) {
+        swal({
+            title: "Valider l'entrée",
+            text: "Êtes-vous sûr de vouloir valider cette entrée ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'validate_move' 0 %}".replace('0', moveLineId),
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
+
+    document.getElementById('printModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const modal = this;
+    
+        modal.querySelector('#modal-product-name').textContent = button.getAttribute('data-product-name');
+        modal.querySelector('#modal-lot-number').textContent = button.getAttribute('data-lot-number');
+        modal.querySelector('#modal-expiry-date').textContent = button.getAttribute('data-expiry-date');
+        modal.querySelector('#modal-production-date').textContent = button.getAttribute('data-production-date');
+        modal.querySelector('#modal-magasin').textContent = button.getAttribute('data-magasin');
+        modal.querySelector('#modal-emplacement').textContent = button.getAttribute('data-emplacement');
+    
+        const ticketCount = modal.querySelector('#ticket-count');
+        ticketCount.value = button.getAttribute('data-palettes');
+        ticketCount.max = button.getAttribute('data-palettes');
+    
+        const detailId = button.getAttribute('data-line-detail-id');
+        const qrCodeImg = modal.querySelector('#qr-code-image');
+        qrCodeImg.src = `/generate-qr-code/${detailId}/`;
+    });
+
+</script>
+
+{% endblock %}

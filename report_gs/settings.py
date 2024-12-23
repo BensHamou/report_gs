@@ -64,9 +64,9 @@ TEMPLATES = [
                  os.path.join(BASE_DIR, 'account', 'templates', 'user'), os.path.join(BASE_DIR, 'account', 'templates', 'emplacement'),
                  os.path.join(BASE_DIR, 'account', 'templates', 'warehouse'), os.path.join(BASE_DIR, 'report', 'templates', 'family'),
                  os.path.join(BASE_DIR, 'report', 'templates', 'product'), os.path.join(BASE_DIR, 'report', 'templates', 'packing'),
-                 os.path.join(BASE_DIR, 'report', 'templates', 'move_in'), os.path.join(BASE_DIR, 'report', 'templates', 'move_out'),
-                 os.path.join(BASE_DIR, 'report', 'templates', 'fragment'), os.path.join(BASE_DIR, 'report', 'templates', 'move_in', 'mp'),
-                 os.path.join(BASE_DIR, 'report', 'templates', 'move_in', 'pf')
+                 os.path.join(BASE_DIR, 'report', 'templates', 'move'), os.path.join(BASE_DIR, 'report', 'templates', 'move_out'),
+                 os.path.join(BASE_DIR, 'report', 'templates', 'fragment'), os.path.join(BASE_DIR, 'report', 'templates', 'move', 'mp'),
+                 os.path.join(BASE_DIR, 'report', 'templates', 'move', 'pf')
                 ],
         "APP_DIRS": True,
         "OPTIONS": {
