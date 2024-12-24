@@ -30,7 +30,7 @@ def login_api(request):
 
             if user is not None:
                 token, _ = Token.objects.get_or_create(user=user)
-                return JsonResponse({'success': True, 'token': token.key, 'fullname': user.fullname, 'default_site': user.default_site.id}, status=200)
+                return JsonResponse({'success': True, 'token': token.key, 'fullname': user.fullname, 'default_site': user.default_site.id, 'role': user.role}, status=200)
             else:
                 return JsonResponse({'success': False, 'message': 'Identifiants invalides.'}, status=401)
 
@@ -106,7 +106,6 @@ class ProductAvalibilityView(APIView):
             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
         return Response(product_data)
 
-
 class CreateMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -137,7 +136,7 @@ class CreateMoveOut(APIView):
                 from_emplacements = product_data.get('from', [])
                 product = Product.objects.get(id=product_id)
 
-                move_line = MoveLine.objects.create(move=move, product=product, lot_number='/', create_uid=user, write_uid=user)
+                move_line = MoveLine.objects.create(move=move, product=product, lot_number='/', create_uid=user, write_uid=user, lost_qte=0)
                 
                 for from_data in from_emplacements:
                     emplacement_id = from_data.get('emplacement_id')
@@ -177,37 +176,57 @@ class ConfirmMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
-        move_line_id = request.data.get('move_line_id')
-
-        if not move_line_id:
-            return Response({"detail": "Sorté ID manquant."}, status=400)
-
+        move_id = request.data.get('move_id')
+        if not move_id:
+            return Response({"detail": "Movement ID manquant."}, status=400)
         try:
-            move_line = MoveLine.objects.get(id=move_line_id)
-            success = move_line.move.changeState(request.user.id, 'Confirmé')
+            move = Move.objects.get(id=move_id)
+            move.check_can_confirm_transfer()
+            success = move.changeState(request.user.id, 'Confirmé')
             if not success:
-                return Response({"detail": "Erreur lors de la confirmation de la sortie."}, status=400)
-            return Response({"detail": "Sortie confirmée avec succès."}, status=200)
+                return Response({"detail": "Erreur lors de la confirmation du movement."}, status=400)
+            return Response({"detail": "Movement confirmée avec succès."}, status=200)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=400)
         except MoveLine.DoesNotExist:
-            return Response({"detail": "Sortée introuvable."}, status=404)
+            return Response({"detail": "Movement introuvable."}, status=404)
 
 class CancelMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
-        move_line_id = request.data.get('move_line_id')
+        move_id = request.data.get('move_id')
 
-        if not move_line_id:
-            return Response({"detail": "Sorté ID manquant."}, status=400)
+        if not move_id:
+            return Response({"detail": "Movement ID manquant."}, status=400)
 
         try:
-            move_line = MoveLine.objects.get(id=move_line_id)
-            success = move_line.move.changeState(request.user.id, 'Annulé')
+            move = Move.objects.get(id=move_id)
+            success = move.changeState(request.user.id, 'Annulé')
             if not success:
-                return Response({"detail": "Erreur lors de l'annulation de la sortie."}, status=400)
-            return Response({"detail": "Sortie annulé avec succès."}, status=200)
+                return Response({"detail": "Erreur lors de l'annulation du movement."}, status=400)
+            return Response({"detail": "Movement annulé avec succès."}, status=200)
         except MoveLine.DoesNotExist:
-            return Response({"detail": "Sortée introuvable."}, status=404)
+            return Response({"detail": "Movement introuvable."}, status=404)
+        
+class DeleteMoveOut(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self, request, *args, **kwargs):
+        move_id = request.data.get('move_id')
+
+        if not move_id:
+            return Response({"detail": "Movement ID manquant."}, status=400)
+
+        try:
+            move = Move.objects.get(id=move_id)
+            if move.state == 'Brouillon':
+                move.delete()
+                return Response({"detail": "Movement supprimé avec succès."}, status=200)
+            else:
+                return Response({"detail": "Impossible de supprimer un movement confirmé."}, status=400)
+        except MoveLine.DoesNotExist:
+            return Response({"detail": "Movement introuvable."}, status=404)
 
 class ValidateMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
@@ -215,20 +234,19 @@ class ValidateMoveOut(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        move_line_id = request.data.get('move_line_id')
-        if not move_line_id:
-            return Response({"detail": "Sortée ID manquant."}, status=400)
+        move_id = request.data.get('move_id')
+        if not move_id:
+            return Response({"detail": "Movement ID manquant."}, status=400)
         try:
-            move_line = MoveLine.objects.select_related('move').get(id=move_line_id)
-            move = move_line.move
-            move.can_validate()
+            move = Move.objects.get(id=move_id)
+            # move.can_validate()
             move.do_after_validation(user=request.user)
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
 
-            return Response({"detail": "Sortée validée avec succès."}, status=200)
+            return Response({"detail": "Movement validée avec succès."}, status=200)
         except MoveLine.DoesNotExist:
-            return Response({"detail": "Sortée introuvable."}, status=404)
+            return Response({"detail": "Movement introuvable."}, status=404)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         except RuntimeError as e:

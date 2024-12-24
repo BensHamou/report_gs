@@ -200,12 +200,21 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=d.qte)
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=d.qte, lost_qte=0)
                         ml.mirror = move_mirror
                         ml.save()
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
 
+    def check_can_confirm_transfer(self):
+        if self.is_transfer and self.type == 'Entré':
+            if not self.move_lines.all():
+                raise ValueError('Aucune ligne de mouvement pour le transfert')
+            for ml in self.move_lines.all():
+                if not (ml.transfered_qte - ml.lost_qte - ml.qte) == 0:
+                    raise ValueError('Quantité transférée non égale à la quantité reçue')
+        return True
+    
     @property
     def display_type(self):
         if self.type == 'Entré' and not self.is_transfer and len(self.move_lines.all()) == 1:
@@ -238,6 +247,7 @@ class MoveLine(BaseModel):
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
+    lost_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     @property
     def qte(self):
@@ -257,6 +267,10 @@ class MoveLine(BaseModel):
     @property
     def palette(self):
         return sum(detail.palette for detail in self.details.all()) or 0
+
+    @property
+    def is_out(self):
+        return self.move.type == 'Sortie'
 
     @property
     def n_lot(self):
