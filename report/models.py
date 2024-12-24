@@ -199,9 +199,10 @@ class Move(BaseModel):
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
-                    move_mirror = MoveLine.objects.create(lot_number=ml.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=ml.qte)
-                    ml.mirror = move_mirror
-                    ml.save()
+                    for d in ml.details.all():
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=d.qte)
+                        ml.mirror = move_mirror
+                        ml.save()
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
 
@@ -260,7 +261,7 @@ class MoveLine(BaseModel):
     @property
     def n_lot(self):
         if self.move.is_transfer:
-            return '/'
+            return self.lot_number
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':
                 return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}' or '/'

@@ -25,12 +25,13 @@ class MoveSerializer(serializers.ModelSerializer):
     gestionaire = serializers.CharField(source='gestionaire.fullname', read_only=True)
     qte = serializers.ReadOnlyField()
     palette = serializers.ReadOnlyField()
+    bl_str = serializers.ReadOnlyField()
     move_lines = MoveLineSerializer(many=True, read_only=True)
 
     class Meta:
         model = Move
         fields = ['id', 'date',  'move_lines', 'qte', 'palette', 'n_lots', 'state', 
-                  'gestionaire', 'bls', 'type', 'is_transfer', 'line', 'site', 'date_created', 'shift']
+                  'gestionaire', 'bl_str', 'type', 'is_transfer', 'line', 'site', 'date_created', 'shift']
 
 
 class SiteSerializer(serializers.ModelSerializer):
