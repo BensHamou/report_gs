@@ -633,10 +633,12 @@ def confirmMove(request, move_id):
         except Move.DoesNotExist:
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
-        try:
-            move.check_can_confirm_transfer()
-        except ValueError as e:
-            return JsonResponse({'success': False, 'message': 'Quantité transférée non égale à la quantité reçue'})
+        
+        if move.is_transfer and move.type == 'Entré':
+            try:
+                move.check_can_confirm_transfer()
+            except ValueError as e:
+                return JsonResponse({'success': False, 'message': 'Quantité transférée non égale à la quantité reçue'})
         success = move.changeState(request.user.id, 'Confirmé')
         if success:
             return JsonResponse({'success': True, 'message': 'Movement confirmé avec succès.', 'move_id': move_id})

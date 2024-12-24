@@ -181,7 +181,8 @@ class ConfirmMoveOut(APIView):
             return Response({"detail": "Movement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
-            move.check_can_confirm_transfer()
+            if move.is_transfer and move.type == 'Entré':
+                move.check_can_confirm_transfer()
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
                 return Response({"detail": "Erreur lors de la confirmation du movement."}, status=400)
