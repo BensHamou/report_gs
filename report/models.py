@@ -140,7 +140,8 @@ class Move(BaseModel):
     def can_validate(self):
         def check_emplacement(detail, operation):
             if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
-                return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
+                return True, None
+                # return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
             elif operation == 'destock' and not detail.emplacement.can_destock(detail.palette):
                 return False, f"Ajustement entraînerait un stock négatif pour l'emplacement {detail.emplacement}."
             return True, None

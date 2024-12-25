@@ -240,7 +240,7 @@ class ValidateMoveOut(APIView):
             return Response({"detail": "Movement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
-            # move.can_validate()
+            move.can_validate()
             move.do_after_validation(user=request.user)
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)

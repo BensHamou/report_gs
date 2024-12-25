@@ -15,6 +15,7 @@ import qrcode
 from datetime import date, datetime
 from .utils import getMProducts
 from django.utils.timezone import now, timedelta
+from .cron import check_temp_emplacements
 
 # PACKING
 
@@ -607,6 +608,7 @@ def update_move_mp(request, move_line_id):
 @login_required(login_url='login')
 @admin_or_gs_required        
 def move_detail(request, move_id):
+    check_temp_emplacements()
     move = get_object_or_404(Move, id=move_id)
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
@@ -656,10 +658,10 @@ def validateMove(request, move_id):
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
         
-        # try:
-        #     move.can_validate()
-        # except ValueError as e:
-        #     return JsonResponse({'success': False, 'message': str(e)})
+        try:
+            move.can_validate()
+        except ValueError as e:
+            return JsonResponse({'success': False, 'message': str(e)})
         
         success = move.changeState(request.user.id, 'Validé')
         if success:

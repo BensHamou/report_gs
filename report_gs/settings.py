@@ -105,22 +105,22 @@ DATABASES = {
     #   'HOST': '10.10.10.20',
     #   'PORT': '5176',
     #},
-    #'default': {
-    # 'ENGINE': 'django.db.backends.postgresql',
-    # 'NAME': 'PumaGS',
-    # 'USER': 'puma_gs',
-    # 'PASSWORD': 'puma_gs',
-    # 'HOST': '127.0.0.1',
-    # 'PORT': '5432',
-    #},
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
+     'ENGINE': 'django.db.backends.postgresql',
+     'NAME': 'PumaGS',
+     'USER': 'puma_gs',
+     'PASSWORD': 'puma_gs',
+     'HOST': '127.0.0.1',
+     'PORT': '5432',
+    },
+    #'default': {
+    #    'ENGINE': 'django.db.backends.postgresql',
+    #    'NAME': os.environ.get('DB_NAME'),
+    #    'USER': os.environ.get('DB_USER'),
+    #    'PASSWORD': os.environ.get('DB_PASS'),
+    #    'HOST': os.environ.get('DB_HOST'),
+    #    'PORT': os.environ.get('DB_PORT'),
+    #}
 }
 
 
@@ -166,7 +166,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'pumatransplaninng@gmail.com'
-EMAIL_HOST_PASSWORD = 'hvywqabtuhfipwnq'
+EMAIL_HOST_USER = 'pumapaiement@gmail.com'
+EMAIL_HOST_PASSWORD = 'ctybajcnepviiqah'
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'pumatransplaninng@gmail.com'
+DEFAULT_FROM_EMAIL = 'pumapaiement@gmail.com'
