@@ -49,6 +49,7 @@ class MoveFilter(django_filters.FilterSet):
         ('Tous', 'Tous'),
         ('Brouillon', 'Brouillon'),
         ('Confirmé', 'Confirmé'),
+        ('Validé', 'Validé'),
         ('Annulé', 'Annulé')
     ]
     
@@ -65,7 +66,7 @@ class MoveFilter(django_filters.FilterSet):
 
     def filter_by_state(self, queryset, name, value):
         if value == 'Tous':
-            return queryset.filter(state__in=['Brouillon', 'Confirmé', 'Annulé'])
+            return queryset.filter(state__in=['Brouillon', 'Confirmé', 'Validé', 'Annulé'])
         else:
             return queryset.filter(state=value)
     

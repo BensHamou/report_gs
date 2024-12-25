@@ -87,7 +87,7 @@ class Product(BaseModel):
         return 'Rupture'
     
     def last_entry_date(self, site_id):
-        last_entry = MoveLine.objects.filter(product=self, move__type='Entré', move__state='Confirmé', move__site_id=site_id).order_by('-move__date').first()
+        last_entry = MoveLine.objects.filter(product=self, move__type='Entré', move__state='Validé', move__site_id=site_id).order_by('-move__date').first()
         return last_entry.move.date if last_entry else None
     
     def __str__(self):
@@ -165,6 +165,11 @@ class Move(BaseModel):
                     else:
                         ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
                                         production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot )
+                    
+                    if detail.emplacement.temp:
+                        ds.save()
+                        TemporaryEmplacementAlert.objects.get_or_create(dispo=ds, write_uid=detail.create_uid, create_uid=detail.create_uid)
+
                 else:
                     if not ds:
                         raise ValueError(f"{ml.n_lot} - Stock introuvable.")
@@ -310,8 +315,6 @@ class LineDetail(BaseModel):
     def generateCode(self, user):
         try:
             self.code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.move_line.n_lot}"
-            if self.emplacement.temp:
-                TemporaryEmplacementAlert.objects.get_or_create(line_detail=self, write_uid=user, create_uid=user)
             self.save()
 
             return True
@@ -324,11 +327,6 @@ class LineDetail(BaseModel):
 
     def __str__(self):
         return f"{self.move_line.product} - {self.qte}"
-
-class TemporaryEmplacementAlert(BaseModel):
-    line_detail = models.OneToOneField(LineDetail, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(auto_now_add=True)
-    email_sent = models.BooleanField(default=False)
 
 class MoveBL(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='bls')
@@ -373,4 +371,9 @@ class Disponibility(BaseModel):
         if self.product.qte_per_pal and self.qte:
             return math.ceil(self.qte / self.product.qte_per_pal)
         return 0
-    
+
+class TemporaryEmplacementAlert(BaseModel):
+    dispo = models.OneToOneField(Disponibility, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(auto_now_add=True)
+    email_sent = models.BooleanField(default=False)
+
