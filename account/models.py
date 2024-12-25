@@ -75,6 +75,7 @@ class Emplacement(BaseModel):
         return self.available_capacity >= palette
     
     def can_destock(self, palette):
+        return (self.available_capacity - palette) >= 0
         return palette <= (self.capacity - self.available_capacity)
 
     def __str__(self):
