@@ -312,9 +312,7 @@ def syncMProducts(request):
                 product, created = Product.objects.update_or_create(
                     odoo_id=odoo_id,
                     defaults={'designation': designation, 'type': 'Matière Première', 
-                              'create_uid': request.user, 'write_uid': request.user,}
-                )
-
+                              'create_uid': request.user, 'write_uid': request.user})
                 if created:
                     product.qte_per_pal = 0
                     product.qte_per_cond = 0
