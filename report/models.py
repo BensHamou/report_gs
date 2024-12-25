@@ -151,7 +151,10 @@ class Move(BaseModel):
             for detail in ml.details.all():
                 is_valid, error_message = check_emplacement(detail, operation)
                 if not is_valid:
-                    raise ValueError(f"{ml.n_lot} - {error_message}")
+                    raise ValueError(f"{detail.n_lot} - {error_message}")
+                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
+                if not ds and operation == 'destock':
+                    raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
         return True, 'Can stock'
     
     def integrate_in_stock(self):
@@ -173,7 +176,7 @@ class Move(BaseModel):
 
                 else:
                     if not ds:
-                        raise ValueError(f"{ml.n_lot} - Stock introuvable.")
+                        raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
                 if ds.qte > 0:
                     ds.save()
@@ -212,13 +215,15 @@ class Move(BaseModel):
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
 
-    def check_can_confirm_transfer(self):
-        if self.is_transfer and self.type == 'Entré':
-            if not self.move_lines.all():
-                raise ValueError('Aucune ligne de mouvement pour le transfert')
-            for ml in self.move_lines.all():
-                if not (ml.transfered_qte - ml.lost_qte - ml.qte) == 0:
-                    raise ValueError('Quantité transférée non égale à la quantité reçue')
+    def check_can_confirm(self):
+        if not self.move_lines.all():
+            raise ValueError('Aucune ligne de mouvement.')
+        for ml in self.move_lines.all():
+            if not ml.details.all():
+                raise ValueError(f'Aucun détail de ligne de movement - N LOT {ml.n_lot}.')
+            if self.is_transfer and self.type == 'Entré' and not (ml.transfered_qte - ml.lost_qte - ml.qte) == 0:
+                raise ValueError('Quantité transférée non égale à la quantité reçue')
+            
         return True
     
     @property

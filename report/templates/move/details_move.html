@@ -27,7 +27,7 @@
         <p style="font-size: 18px; color: #133356;">Voir les informations ({{ move.display_type }} - {{ move.state }})</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-toggle="modal" data-target="#validationsModal" style="background-color: #1d71b8;">
+        <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-bs-toggle="modal" data-bs-target="#validationsModal" style="background-color: #1d71b8;">
             <span class="d-none d-sm-inline p-3">Cycle</span>
             <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
         </button>
@@ -45,23 +45,23 @@
             <div class="row">
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="site" class="form-label">Site</label>
-                    <p class="form-control">{{ move.site }}</p>
+                    <p class="custom-text-box">{{ move.site }}</p>
                 </div>
                 {% if move.line %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
                         <label for="line" class="form-label">Ligne</label>
-                        <p class="form-control">{{ move.line }}</p>
+                        <p class="custom-text-box">{{ move.line }}</p>
                     </div>
                 {% endif %}
                 {% if move.shift %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
                         <label for="shift" class="form-label">Shift</label>
-                        <p class="form-control">{{ move.shift }}</p>
+                        <p class="custom-text-box">{{ move.shift }}</p>
                     </div>
                 {% endif %}
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="gestionaire" class="form-label">Gestionaire</label>
-                    <p class="form-control">{{ move.gestionaire }}</p>
+                    <p class="custom-text-box">{{ move.gestionaire }}</p>
                 </div>
                 {% if move.type == 'Sortie' %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
@@ -71,19 +71,19 @@
                 {% endif %}
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="date" class="form-label">Date de movement</label>
-                    <p class="form-control">{{ move.date }}</p>
+                    <p class="custom-text-box">{{ move.date }}</p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
-                    <p class="form-control">{{ move.qte }}</p>
+                    <p class="custom-text-box">{{ move.qte }}</p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="palette" class="form-label">Nombre Palettes</label>
-                    <p class="form-control">{{ move.palette }}</p>
+                    <p class="custom-text-box">{{ move.palette|default:"Produit non géré par palette" }}</p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="date_created" class="form-label">Créer le</label>
-                    <p class="form-control">{{ move.date_created }}</p>
+                    <p class="custom-text-box">{{ move.date_created }}</p>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
                             {% if not line.is_out %}
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="n_lot" class="form-label">N Lot</label>
-                                    <p class="form-control">{{ line.n_lot }}</p>
+                                    <p class="custom-text-box">{{ line.n_lot }}</p>
                                 </div>
                             {% endif %}
                             <div class="col-lg-6 col-12 mb-2">
@@ -121,20 +121,20 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
-                                <p class="form-control">{{ line.qte }} {{ line.product.packing.unit }}</p>
+                                <p class="custom-text-box">{{ line.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="form-control">{{ line.palette }}</p>
+                                <p class="custom-text-box">{{ line.palette|default:"Produit non géré par palette" }}</p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                                    <p class="form-control">{{ line.transfered_qte }}</p>
+                                    <p class="custom-text-box">{{ line.transfered_qte }}</p>
                                 </div>
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="lost_qte" class="form-label">Quantité Perdue</label>
-                                    <p class="form-control">{{ line.lost_qte }}</p>
+                                    <p class="custom-text-box">{{ line.lost_qte }}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -146,20 +146,20 @@
                             {% if line.is_out %}
                                 <div class="col-lg-3 col-md-3 col-sm-12">
                                     <label for="lot_{{ forloop.counter0 }}" class="form-label">N° Lot</label>
-                                    <p class="form-control">{{ detail.n_lot }}</p>
+                                    <p class="custom-text-box">{{ detail.n_lot }}</p>
                                 </div>
                             {% endif %}
                             <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
                                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
-                                <p class="form-control">{{ detail.warehouse.designation }}</p>
+                                <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
                             </div>
                             <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
-                                <p class="form-control">{{ detail.emplacement.designation }}</p>
+                                <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
                             </div>
                             <div class="col-lg-{% if can_print %}2{% elif line.is_out %}3{% else %}4{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}4{% endif %} col-sm-12">
                                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
-                                <p class="form-control">{{ detail.qte }} {{ line.product.packing.unit }}</p>
+                                <p class="custom-text-box">{{ detail.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
                             {% if can_print %}
                                 <div class="col-lg-1 col-md-1 col-sm-12">
@@ -198,29 +198,29 @@
                             {% if not line.is_out %}
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="n_lot" class="form-label">N Lot</label>
-                                    <p class="form-control">{{ line.n_lot }}</p>
+                                    <p class="custom-text-box">{{ line.n_lot }}</p>
                                 </div>
                             {% endif %}
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="expiry_date" class="form-label">Date d'expiration</label>
-                                <p class="form-control">{{ line.expiry_date|date:'d M Y' }}</p>
+                                <p class="custom-text-box">{{ line.expiry_date|date:'d M Y' }}</p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
-                                <p class="form-control">{{ line.qte }} {{ line.product.packing.unit }}</p>
+                                <p class="custom-text-box">{{ line.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="form-control">{{ line.palette }}</p>
+                                <p class="custom-text-box">{{ line.palette|default:"Produit non géré par palette" }}</p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                                    <p class="form-control">{{ line.transfered_qte }}</p>
+                                    <p class="custom-text-box">{{ line.transfered_qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                 </div>
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="lost_qte" class="form-label">Quantité Perdue</label>
-                                    <p class="form-control">{{ line.lost_qte }}</p>
+                                    <p class="custom-text-box">{{ line.lost_qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -236,20 +236,24 @@
                             {% if line.is_out %}
                                 <div class="col-lg-3 col-md-3 col-sm-12">
                                     <label for="lot_{{ forloop.counter0 }}" class="form-label">N° Lot</label>
-                                    <p class="form-control">{{ detail.n_lot }}</p>
+                                    <p class="custom-text-box">{{ detail.n_lot }}</p>
                                 </div>
                             {% endif %}
-                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
-                                <p class="form-control">{{ detail.warehouse.designation }}</p>
+                                <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
-                                <p class="form-control">{{ detail.emplacement.designation }}</p>
+                                <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if can_print %}2{% elif line.is_out %}3{% else %}4{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
+                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Palette</label>
+                                <p class="custom-text-box">{{ detail.palette }}</p>
+                            </div>
+                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
-                                <p class="form-control">{{ detail.qte }} {{ line.product.packing.unit }}</p>
+                                <p class="custom-text-box">{{ detail.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
                             {% if can_print %}
                                 <div class="col-lg-1 col-md-1 col-sm-12">

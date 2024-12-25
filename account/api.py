@@ -14,6 +14,9 @@ from rest_framework.exceptions import NotAuthenticated
 from rest_framework.views import APIView
 from django.db import transaction
 from datetime import datetime
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+
 
 @csrf_exempt
 def login_api(request):
@@ -182,15 +185,14 @@ class ConfirmMoveOut(APIView):
             return Response({"detail": "Movement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
-            if move.is_transfer and move.type == 'Entré':
-                move.check_can_confirm_transfer()
+            move.check_can_confirm()
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
                 return Response({"detail": "Erreur lors de la confirmation du movement."}, status=400)
             return Response({"detail": "Movement confirmée avec succès."}, status=200)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
-        except MoveLine.DoesNotExist:
+        except Move.DoesNotExist:
             return Response({"detail": "Movement introuvable."}, status=404)
 
 class CancelMoveOut(APIView):
@@ -208,7 +210,7 @@ class CancelMoveOut(APIView):
             if not success:
                 return Response({"detail": "Erreur lors de l'annulation du movement."}, status=400)
             return Response({"detail": "Movement annulé avec succès."}, status=200)
-        except MoveLine.DoesNotExist:
+        except Move.DoesNotExist:
             return Response({"detail": "Movement introuvable."}, status=404)
         
 class DeleteMoveOut(APIView):
@@ -227,7 +229,7 @@ class DeleteMoveOut(APIView):
                 return Response({"detail": "Movement supprimé avec succès."}, status=200)
             else:
                 return Response({"detail": "Impossible de supprimer un movement confirmé."}, status=400)
-        except MoveLine.DoesNotExist:
+        except Move.DoesNotExist:
             return Response({"detail": "Movement introuvable."}, status=404)
 
 class ValidateMoveOut(APIView):
@@ -247,7 +249,7 @@ class ValidateMoveOut(APIView):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
 
             return Response({"detail": "Movement validée avec succès."}, status=200)
-        except MoveLine.DoesNotExist:
+        except Move.DoesNotExist:
             return Response({"detail": "Movement introuvable."}, status=404)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
@@ -255,5 +257,31 @@ class ValidateMoveOut(APIView):
             return Response({"detail": str(e)}, status=400)
         except Exception as e:
             return Response({"detail": "Erreur interne du serveur."}, status=500)
-        
+    
+class SendWarningEmail(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get('user_id')
+
+        if not user_id:
+            return Response({"detail": "User ID manquant."}, status=400)
+        try:
+            user = User.objects.get(id=user_id)
+            subject = f'Tente de scan incorrecte'
+
+            html_message = render_to_string('fragment/warning.html', {'user': user})
+            addresses = user.default_site.address.split('&')
+            if not addresses:
+                addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+            addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
+            email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+            email.attach_alternative(html_message, "text/html") 
+            email.send()   
+            return Response({"detail": "Mail envoyé avec succès."}, status=200)
+        except Exception as e:
+            return Response({"detail": "Erreur interne du serveur."}, status=500)
+    
 

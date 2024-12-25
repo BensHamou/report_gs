@@ -309,11 +309,17 @@ def syncMProducts(request):
             for mp in getMProducts():
                 designation = f'[{mp[2]}] {mp[1]}'
                 odoo_id = mp[0]
-                Product.objects.update_or_create(
+                product, created = Product.objects.update_or_create(
                     odoo_id=odoo_id,
-                    defaults={'designation': designation, 'type': 'Matière Première', 'create_uid': request.user, 'write_uid': request.user, 
-                              'qte_per_pal': 0, 'qte_per_cond': 0, 'alert_stock': 0}
+                    defaults={'designation': designation, 'type': 'Matière Première', 
+                              'create_uid': request.user, 'write_uid': request.user,}
                 )
+
+                if created:
+                    product.qte_per_pal = 0
+                    product.qte_per_cond = 0
+                    product.alert_stock = 0
+                    product.save()
             return JsonResponse({'success': True, 'message': 'Matière Première synchronisés avec succès.'})
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur pendant la synchronisation: {str(e)}'})
@@ -420,7 +426,7 @@ def edit_move_in_view(request, move_line_id):
     user_lines = user.lines.all()
     is_admin = user.role == 'Admin'
     default_line = move_line.move.line or user_lines.first()
-    show_line_field = user_lines.count() > 1 and not move.is_transfer
+    show_line_field = user_lines.count() > 1 and not move.is_transfer and not move.type == 'Sortie'
     gestionaires = default_line.users.filter(Q(role='Gestionaire') | Q(role='Admin'))
     default_shifts = default_line.shifts.all()
 
@@ -635,11 +641,11 @@ def confirmMove(request, move_id):
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
         
-        if move.is_transfer and move.type == 'Entré':
-            try:
-                move.check_can_confirm_transfer()
-            except ValueError as e:
-                return JsonResponse({'success': False, 'message': 'Quantité transférée non égale à la quantité reçue'})
+        try:
+            move.check_can_confirm()
+        except ValueError as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+            
         success = move.changeState(request.user.id, 'Confirmé')
         if success:
             return JsonResponse({'success': True, 'message': 'Movement confirmé avec succès.', 'move_id': move_id})
@@ -770,7 +776,9 @@ def handleDetails(request, move_line):
             emplacement_id = request.POST.get(f'emplacement_{row_id}')
             qte = request.POST.get(f'qte_{row_id}')
             if warehouse_id and emplacement_id and qte:
-                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte), write_uid=request.user, n_lot=n_lot)
+                if move_line.product.type == 'Produit Fini':
+                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
+                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=qte, write_uid=request.user, n_lot=n_lot)
 
         for row_id in to_add_rows:
             warehouse_id = request.POST.get(f'warehouse_{row_id}')
@@ -778,8 +786,10 @@ def handleDetails(request, move_line):
             qte = request.POST.get(f'qte_{row_id}')
 
             if warehouse_id and emplacement_id and qte:
+                if move_line.product.type == 'Produit Fini':
+                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
                 LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, n_lot=n_lot, 
-                                        qte=int(qte), write_uid=request.user, create_uid=move_line.create_uid)
+                                        qte=qte, write_uid=request.user, create_uid=move_line.create_uid)
     else:
         row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
         for row_id in row_ids:
@@ -788,6 +798,8 @@ def handleDetails(request, move_line):
             qte = request.POST.get(f'qte_{row_id}')
 
             if warehouse_id and emplacement_id and qte:
+                if move_line.product.type == 'Produit Fini':
+                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
-                                                        n_lot=n_lot, qte=int(qte), create_uid=request.user, write_uid=request.user)
+                                                        n_lot=n_lot, qte=qte, create_uid=request.user, write_uid=request.user)
                 

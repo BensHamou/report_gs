@@ -69,7 +69,7 @@
                 {% endif %}
 
                 <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="packing" class="form-label" style="color: #5d5d5d;">Conditionnement</label>
+                    <label for="packing" class="form-label" style="color: #5d5d5d;">Unité</label>
                     {{ form.packing }}
                     {% if form.packing.errors %}
                         <small class="text-danger">{{ form.packing.errors }}</small>
@@ -77,7 +77,7 @@
                 </div>
 
                 <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="qte_per_cond" class="form-label" style="color: #5d5d5d;">Quantité par conditionnement</label>
+                    <label for="qte_per_cond" class="form-label" style="color: #5d5d5d;">Quantité par unité</label>
                     {{ form.qte_per_cond }}
                     {% if form.qte_per_cond.errors %}
                         <small class="text-danger">{{ form.qte_per_cond.errors }}</small>

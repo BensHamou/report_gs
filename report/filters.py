@@ -25,7 +25,7 @@ class PackingFilter(django_filters.FilterSet):
         fields = ['search']
 
 class ProductFilter(django_filters.FilterSet):
-    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..')))
+    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..', other={'style': 'width: 100%;'})))
     family = django_filters.ModelChoiceFilter(queryset=Family.objects.all(), empty_label='Choisir Famille')
     packing = django_filters.ModelChoiceFilter(queryset=Packing.objects.all(), empty_label='Choisir Conditionnement')
 

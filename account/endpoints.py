@@ -10,5 +10,6 @@ urlpatterns = [
     path('api/confirm-move-out/', ConfirmMoveOut.as_view(), name='confirm_move_out'),
     path('api/delete-move-out/', DeleteMoveOut.as_view(), name='confirm_move_out'),
     path('api/cancel-move-out/', CancelMoveOut.as_view(), name='cancel_move_out'),
-    path('api/validate-move-out/', ValidateMoveOut.as_view(), name='validate_move_out')
+    path('api/validate-move-out/', ValidateMoveOut.as_view(), name='validate_move_out'),
+    path('api/send-email/', SendWarningEmail.as_view(), name='send_warning_email')
 ]

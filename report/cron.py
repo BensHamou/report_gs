@@ -20,7 +20,7 @@ def send_alert(alert):
 
     addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
 
-    email = EmailMultiAlternatives(subject, None, 'Puma Paiement', addresses)
+    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
     email.send()    
 

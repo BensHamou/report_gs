@@ -3,7 +3,7 @@
         <div class="modal-content custom-content-style">
             <div class="modal-header custom-header">
                 <h5 class="modal-title" id="validationsModalLabel">Cycle de Validation</h5>
-                <button type="button" class="btn-close text-white" data-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <table class="table table-striped">
@@ -17,7 +17,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for validation in move_line.move.validations.all %}
+                        {% for validation in move.validations.all %}
                             <tr>
                                 <td>{{ validation.old_state }}</td>
                                 <td>{{ validation.new_state }}</td>
@@ -34,7 +34,7 @@
                 </table>
             </div>
             <div class="modal-footer custom-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
         </div>
     </div>

@@ -28,7 +28,9 @@
                 {% endif %}
                 <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control mb-2 mb-md-0 me-2" style="width: auto;">
                 <button type="submit" class="btn btn-primary mb-2 mb-md-0 me-2" style="background-color: #1d71b8;">Appliquer</button>
-                <a href="{% url 'create_product' %}" class="btn btn-primary mb-2 mb-md-0" style="background-color: #1d71b8;">Nouveau</a>
+                {% if is_pf %}
+                    <a href="{% url 'create_product' %}" class="btn btn-primary mb-2 mb-md-0" style="background-color: #1d71b8;">Nouveau</a>
+                {% endif %}
                 {% if not is_pf %}
                     <a href="#" id="sync-mproducts-btn" class="btn btn-primary mb-2 mb-md-0 ml-2" style="background-color: #1d71b8;">
                         <i class="fas fa-download"></i>

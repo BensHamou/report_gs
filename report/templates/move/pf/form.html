@@ -115,9 +115,9 @@
                     </select>
                 </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="qte_0" class="form-label">Quantity</label>
+                    <label for="qte_0" class="form-label">Palettes</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Palettes" style="background-color: #ffffff; padding-left: 30px;" required>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>
@@ -177,6 +177,8 @@
         if (e.target.closest('[data-delete-row]')) {
             const row = e.target.closest('.form-row');
             row.remove();
+            calculateGlobalQte();
+            calculatePaletteTotal();
         }
     });
 
@@ -261,59 +263,57 @@
         lineSelect.dispatchEvent(new Event('change'));
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const productionDateField = document.getElementById("production_date");
-        const expireDateField = document.getElementById("expire_date");
-        const globalQteField = document.getElementById("global_qte");
-        const paletteTotalField = document.getElementById("palette_total");
-        const detailsContainer = document.getElementById("details-container");
-    
-        const productDelaisExpiration = {{ product.delais_expiration }};
-        const qtePerPalette = {{ product.qte_per_pal }};
-    
-        const calculateExpireDate = () => {
-            const productionDate = new Date(productionDateField.value);
-            if (!isNaN(productionDate)) {
-                const expireDate = new Date(productionDate);
-                expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
-                expireDateField.value = expireDate.toISOString().split("T")[0];
-            }
-        };
-    
-        const calculateGlobalQte = () => {
-            let totalQte = 0;
-            detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
-                totalQte += parseFloat(qteInput.value) || 0;
-            });
-            globalQteField.value = totalQte;
-        };
-        
-        const calculatePaletteTotal = () => {
-            let totalPalettes = 0;
-            detailsContainer.querySelectorAll(".form-row").forEach((row) => {
-                const qteInput = row.querySelector(".qte");
-                const qte = parseFloat(qteInput.value) || 0;
-                const totalPalettesForRow = Math.ceil(qte / qtePerPalette);
-                totalPalettes += totalPalettesForRow;
-            });
-            paletteTotalField.value = totalPalettes;
-        };
-    
-        productionDateField.addEventListener("change", () => {
-            calculateExpireDate();
+    const productionDateField = document.getElementById("production_date");
+    const expireDateField = document.getElementById("expire_date");
+    const globalQteField = document.getElementById("global_qte");
+    const paletteTotalField = document.getElementById("palette_total");
+    const detailsContainer = document.getElementById("details-container");
+
+    const productDelaisExpiration = {{ product.delais_expiration }};
+    const qtePerPalette = {{ product.qte_per_pal }};
+
+    const calculateExpireDate = () => {
+        const productionDate = new Date(productionDateField.value);
+        if (!isNaN(productionDate)) {
+            const expireDate = new Date(productionDate);
+            expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
+            expireDateField.value = expireDate.toISOString().split("T")[0];
+        }
+    };
+
+    const calculateGlobalQte = () => {
+        let totalQte = 0;
+        detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
+            totalQte += parseFloat(qteInput.value) || 0;
         });
+        paletteTotalField.value = totalQte;
+    };
     
-        detailsContainer.addEventListener("input", (e) => {
-            if (e.target.matches(".qte")) {
-                calculateGlobalQte();
-                calculatePaletteTotal();
-            }
+    const calculatePaletteTotal = () => {
+        let totalPalettes = 0;
+        detailsContainer.querySelectorAll(".form-row").forEach((row) => {
+            const qteInput = row.querySelector(".qte");
+            const qte = parseFloat(qteInput.value) || 0;
+            const totalPalettesForRow = Math.ceil(qte * qtePerPalette);
+            totalPalettes += totalPalettesForRow;
         });
-    
+        globalQteField.value = totalPalettes;
+    };
+
+    productionDateField.addEventListener("change", () => {
         calculateExpireDate();
-        calculateGlobalQte();
-        calculatePaletteTotal();
     });
+
+    detailsContainer.addEventListener("input", (e) => {
+        if (e.target.matches(".qte")) {
+            calculateGlobalQte();
+            calculatePaletteTotal();
+        }
+    });
+
+    calculateExpireDate();
+    calculateGlobalQte();
+    calculatePaletteTotal();
 
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');

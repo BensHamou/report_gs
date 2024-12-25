@@ -58,17 +58,22 @@
         const qrCodeImage = document.getElementById('qr-code-image');
         const img = new Image();
 
-        img.onload = function () {
+        img.crossOrigin = "Anonymous";
+        img.src = qrCodeImage.src;
+
+        img.onload = function() {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = img.width;
             canvas.height = img.height;
             context.drawImage(img, 0, 0);
-
             const base64Image = canvas.toDataURL('image/png');
             const printWindow = window.open('', '_blank');
 
+            console.log(base64Image);
+
             if (printWindow) {
+                console.log('HERE')
                 let printContent = '';
                 for (let i = 0; i < ticketCount; i++) {
                     printContent += `
@@ -76,7 +81,7 @@
                             <div class="fixed-header">grupopuma Algérie</div>
                             <table style="width: 100%; height: 100%; border-collapse: collapse;">
                                 <tr style="height: 60%;">
-                                    <td style="text-align: center; vertical-align: middle; border: 1.6px solid #000; border-top: 0px solid #000;">
+                                    <td style="text-align: center; vertical-align: middle; border: 1.7px solid #000; border-top: 0px solid #000;">
                                         <img src="${base64Image}" alt="QR Code" style="max-width: 60%; height: auto;">
                                     </td>
                                 </tr>
@@ -141,14 +146,18 @@
                     </html>
                 `);
                 printWindow.document.close();
-                printWindow.print();
-                printWindow.onafterprint = () => printWindow.close();
+
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.onafterprint = () => printWindow.close();
+                }, 500);
+                
             } else {
                 alert("Erreur! Veuillez autoriser les popups pour continuer.");
             }
         };
-
-        img.crossOrigin = "Anonymous";
-        img.src = qrCodeImage.src;
+        img.onerror = function() {
+            alert("Erreur lors du chargement de l'image QR.  Veuillez réessayer.");
+        };
     });
 </script>
