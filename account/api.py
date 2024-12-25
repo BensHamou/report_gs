@@ -90,6 +90,7 @@ class ProductAvalibilityView(APIView):
         site_id = request.data.get('site_id')
         product_ids = request.data.get('product_ids')
         is_transfer = request.data.get('is_transfer', False)
+        print(is_transfer)
 
         if not site_id or not product_ids:
             return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
@@ -100,7 +101,7 @@ class ProductAvalibilityView(APIView):
         for product in products:
             stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
             if not is_transfer:
-                stock_details = sorted(stock_details, key=lambda x: datetime.strptime(x['production_date'], '%Y-%m-%d'))
+                stock_details = sorted(stock_details, key=lambda x: datetime.strptime(x['expiry_date'], '%Y-%m-%d'))
             unit_qte = product.unit_qte(site_id)
             
             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
