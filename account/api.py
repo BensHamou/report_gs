@@ -99,7 +99,7 @@ class ProductAvalibilityView(APIView):
 
         for product in products:
             stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
-            if is_transfer:
+            if not is_transfer:
                 stock_details = sorted(stock_details, key=lambda x: datetime.strptime(x['production_date'], '%Y-%m-%d'))
             unit_qte = product.unit_qte(site_id)
             
