@@ -608,7 +608,6 @@ def update_move_mp(request, move_line_id):
 @login_required(login_url='login')
 @admin_or_gs_required        
 def move_detail(request, move_id):
-    check_temp_emplacements()
     move = get_object_or_404(Move, id=move_id)
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
