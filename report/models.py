@@ -160,6 +160,7 @@ class Move(BaseModel):
     def integrate_in_stock(self):
         is_entry = self.type == 'Entré'
         for ml in self.move_lines.all():
+            pal = ml.qte_per_pal or 999999999
             for detail in ml.details.all():
                 ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
                 if is_entry:
@@ -179,7 +180,7 @@ class Move(BaseModel):
                     if not ds:
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
-                    ds.palette -= math.floor(detail.qte / ds.product.qte_per_pal)
+                    ds.palette -= math.floor(detail.qte / pal)
                 if ds.qte > 0:
                     ds.save()
                 else:
