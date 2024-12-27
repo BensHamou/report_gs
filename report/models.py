@@ -165,9 +165,10 @@ class Move(BaseModel):
                 if is_entry:
                     if ds:
                         ds.qte += detail.qte
+                        ds.palette += detail.palette
                         ds.write_uid = ml.create_uid
                     else:
-                        ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
+                        ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, palette=detail.palette, create_uid=ml.create_uid, 
                                         production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot)
                     
                     if detail.emplacement.temp:
@@ -178,6 +179,8 @@ class Move(BaseModel):
                     if not ds:
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
+                    if ds.product.qte_per_pal > detail.qte:
+                        ds.palette -= 1
                 if ds.qte > 0:
                     ds.save()
                 else:
@@ -265,13 +268,6 @@ class MoveLine(BaseModel):
     @property
     def qte(self):
         return self.details.aggregate(total=models.Sum('qte'))['total'] or 0
-
-    # @property
-    # def expiry_date(self):
-    #     if self.product.type == 'Produit Fini':
-    #         return self.move.date + timedelta(days=self.product.delais_expiration) 
-    #     else:
-    #         return datetime(2099, 12, 31)
 
     @property
     def package(self):
@@ -370,11 +366,6 @@ class Disponibility(BaseModel):
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
-    @property
-    def palette(self):
-        if self.product.qte_per_pal and self.qte:
-            return math.ceil(self.qte / self.product.qte_per_pal)
-        return 0
 
 class TemporaryEmplacementAlert(BaseModel):
     dispo = models.OneToOneField(Disponibility, on_delete=models.CASCADE)
