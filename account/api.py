@@ -93,8 +93,6 @@ class ProductAvalibilityView(APIView):
         site_id = request.data.get('site_id')
         product_ids = request.data.get('product_ids')
         is_transfer = request.data.get('is_transfer', False)
-        print(is_transfer)
-
         if not site_id or not product_ids:
             return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
         

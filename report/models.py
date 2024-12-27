@@ -3,7 +3,7 @@ from django.template.defaultfilters import slugify
 from django.db.models import Sum, Q
 from PIL import Image as PILImage
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from django.db import models
 import math
 import os
@@ -167,8 +167,9 @@ class Move(BaseModel):
                         ds.qte += detail.qte
                         ds.write_uid = ml.create_uid
                     else:
+                        ed = ml.expiry_date or datetime(2099, 12, 31)
                         ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
-                                        production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot )
+                                        production_date=ml.move.date, expiry_date=ed, write_uid=ml.create_uid, n_lot=ml.n_lot )
                     
                     if detail.emplacement.temp:
                         ds.save()
@@ -269,7 +270,7 @@ class MoveLine(BaseModel):
         if self.product.type == 'Produit Fini':
             return self.move.date + timedelta(days=self.product.delais_expiration) 
         else:
-            return None
+            return datetime(2099, 12, 31)
 
     @property
     def package(self):

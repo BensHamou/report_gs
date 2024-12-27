@@ -620,7 +620,7 @@ def move_detail(request, move_id):
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
     elif request.user.role == 'Gestionaire' and move.gestionaire == request.user:
-        can_edit = move.state == 'Brouillon'
+        can_edit = move.state == 'Brouillon' and move.type == 'Entré'
         can_cancel = move.state == 'Brouillon'
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:

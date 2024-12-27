@@ -97,14 +97,14 @@ CORS_ALLOW_HEADERS = [
 ]
 
 DATABASES = {
-    #'default': {
+    # 'default': {
     #   'ENGINE': 'django.db.backends.postgresql',
     #   'NAME': 'PumaGS',
     #   'USER': 'puma_gs',
     #   'PASSWORD': 'puma_gs',
     #   'HOST': '10.10.10.20',
     #   'PORT': '5176',
-    #},
+    # },
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql',
     #     'NAME': 'PumaGS',
