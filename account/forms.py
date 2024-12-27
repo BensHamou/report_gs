@@ -63,13 +63,14 @@ class UserForm(BaseModelForm):
 class SiteForm(BaseModelForm):
     class Meta:
         model = Site
-        fields = ['designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a']
+        fields = ['designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     address = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Adresse')))
     email = forms.EmailField(widget=forms.EmailInput(attrs=getAttrs('control', 'Email')))
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
+    prefix_btr = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BTR')))
 
 class LineForm(BaseModelForm):
     class Meta:

@@ -61,7 +61,7 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-2">
+            <div class="col-lg-4 col-md-12 mb-2">
                 <label for="prefix_bl" class="form-label" style="color: #5d5d5d;">Préfixe BL</label>
                 {{ form.prefix_bl }}
                 {% if form.prefix_bl.errors %}
@@ -69,11 +69,19 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-2">
+            <div class="col-lg-4 col-md-12 mb-2">
                 <label for="prefix_bl_a" class="form-label" style="color: #5d5d5d;">Préfixe BL Annex</label>
                 {{ form.prefix_bl_a }}
                 {% if form.prefix_bl_a.errors %}
                     <small class="text-danger">{{ form.prefix_bl_a.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-2">
+                <label for="prefix_btr" class="form-label" style="color: #5d5d5d;">Préfixe BTR</label>
+                {{ form.prefix_btr }}
+                {% if form.prefix_btr.errors %}
+                    <small class="text-danger">{{ form.prefix_btr.errors }}</small>
                 {% endif %}
             </div>
         </div>

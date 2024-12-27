@@ -34,6 +34,7 @@ Paramètre Sites
                     <th class="table-header">Email</th>
                     <th class="table-header">Préfixe BL</th>
                     <th class="table-header">Préfixe BL Annex</th>
+                    <th class="table-header">Préfixe BTR</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
                 </tr>
             </thead>
@@ -47,6 +48,7 @@ Paramètre Sites
                         <td class="table-text">{{ site.email }}</td>
                         <td class="table-text">{{ site.prefix_bl }}</td>
                         <td class="table-text">{{ site.prefix_bl_a }}</td>
+                        <td class="table-text">{{ site.prefix_btr }}</td>
                         <td class="text-center p-0 m-0">
                             <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_site' site.id %}')" 
                                 class="btn" style="color: #5d5d5d;">

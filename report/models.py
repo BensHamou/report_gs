@@ -337,7 +337,9 @@ class MoveBL(BaseModel):
 
     @property
     def num(self):
-        if self.is_annexe:
+        if self.move.is_transfer:
+            return f'{self.move.site.prefix_btr}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
+        elif self.is_annexe:
             return f'{self.move.site.prefix_bl_a}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
         else:
             return f'{self.move.site.prefix_bl}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
