@@ -217,6 +217,8 @@ class Move(BaseModel):
                     for d in ml.details.all():
                         move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=ml.expiry_date, mirror=ml, 
                                                               move=mirror, transfered_qte=d.qte, lost_qte=0)
+                        # move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=ml, 
+                        #                                       move=mirror, transfered_qte=d.qte, lost_qte=0)
                         ml.mirror = move_mirror
                         ml.save()
             except Exception as e:
@@ -305,6 +307,7 @@ class LineDetail(BaseModel):
     emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
     palette = models.PositiveIntegerField(default=0)
+    # expiry_date = models.DateField(null=True, blank=True)
     code = models.CharField(max_length=255, null=True, blank=True)
     n_lot = models.CharField(max_length=255, null=True, blank=True)
 

@@ -145,9 +145,12 @@ class CreateMoveOut(APIView):
                     qte = from_data.get('qte')
                     palette = from_data.get('palette')
                     n_lot = from_data.get('n_lot')
+                    # expiry_date = from_data.get('expiry_date')
                     emplacement = Emplacement.objects.get(id=emplacement_id)
                     LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, 
                                               emplacement=emplacement, qte=qte, palette=palette, n_lot=n_lot, create_uid=user, write_uid=user)
+                    # LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, expiry_date=expiry_date,
+                    #                           emplacement=emplacement, qte=qte, palette=palette, n_lot=n_lot, create_uid=user, write_uid=user)
 
             for bl_data in n_bls:
                 numero = bl_data.get('numero')
@@ -184,6 +187,10 @@ class ConfirmMoveOut(APIView):
             return Response({"detail": "Movement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
+
+            if move.state != 'Brouillon':
+                return Response({"detail": "Impossible de confirmer un mouvement déjà confirmé."}, status=400)
+
             move.check_can_confirm()
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
@@ -205,6 +212,10 @@ class CancelMoveOut(APIView):
 
         try:
             move = Move.objects.get(id=move_id)
+
+            if move.state != 'Brouillon':
+                return Response({"detail": "Impossible d'annuler un mouvement confirmé."}, status=400)
+            
             success = move.changeState(request.user.id, 'Annulé')
             if not success:
                 return Response({"detail": "Erreur lors de l'annulation du movement."}, status=400)
@@ -242,6 +253,9 @@ class ValidateMoveOut(APIView):
             return Response({"detail": "Movement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
+
+            if move.state != 'Confirmé':
+                return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
             move.can_validate()
             move.do_after_validation(user=request.user)
             if not move.changeState(request.user.id, 'Validé'):

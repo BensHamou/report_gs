@@ -655,6 +655,9 @@ def confirmMove(request, move_id):
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
         
+        if move.state != 'Brouillon':
+            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Brouillon pour être confirmé.'})
+        
         try:
             move.check_can_confirm()
         except ValueError as e:
@@ -676,6 +679,9 @@ def validateMove(request, move_id):
         except Move.DoesNotExist:
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+        
+        if move.state != 'Confirmé':
+            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Confirmé pour être validé.'})
         
         try:
             move.can_validate()
@@ -702,6 +708,10 @@ def cancelMove(request, move_id):
         except Move.DoesNotExist:
             messages.success(request, 'Movement introuvable')
             return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+        
+        if move.state != 'Brouillon':
+            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Brouillon pour être annulé.'})
+
         success = move.changeState(request.user.id, 'Annulé')
         if success:
             return JsonResponse({'success': True, 'message': 'Movement annulé avec succès.', 'move_id': move_id})

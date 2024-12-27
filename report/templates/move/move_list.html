@@ -1,4 +1,5 @@
 {% extends "main.html" %}
+{% load static %}
 
 {% block title %}
     Rapports
@@ -40,8 +41,11 @@
                 <small class="stat-widget-title">Top produit scanner</small>
                 {% if top_product.designation %}
                     <div>
-                        <img src="{{ top_product.image }}" alt="{{ top_product.designation }}" style="height: 160px; object-fit: contain;">
+                        <img src="{% if top_product.image %}{{ top_product.image }}{% else %}{% static 'img/mp.png' %}{% endif %}" alt="{{ top_product.designation }}" style="height: {% if top_product.image %}160px{% else %}100px{% endif %}; object-fit: contain;">
                     </div>
+                    {% if not top_product.image %}
+                        <span class="text-primary" style="font-size: 0.7rem;">{{ top_product.designation  }}</span>
+                    {% endif %}
                 {% else %}
                     <span class="text-muted">Aucun produit scanné</span>
                 {% endif %}
