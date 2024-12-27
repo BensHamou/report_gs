@@ -182,7 +182,8 @@ class Move(BaseModel):
                     if not ds:
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
-                    ds.palette -= math.floor(detail.qte / pal)
+                    ds.nqte += detail.qte
+                    ds.palette -= math.floor(ds.nqte / pal)
                 if ds.qte > 0:
                     ds.save()
                 else:
@@ -364,6 +365,7 @@ class Disponibility(BaseModel):
     product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)
     n_lot = models.CharField(max_length=50)
     qte = models.PositiveIntegerField()
+    nqte = models.PositiveIntegerField(default=0)
     palette = models.PositiveIntegerField(default=0)
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
