@@ -205,11 +205,11 @@
                                     <label for="n_lot" class="form-label">N Lot</label>
                                     <p class="custom-text-box">{{ line.n_lot }}</p>
                                 </div>
+                                <div class="col-lg-6 col-12 mb-2">
+                                    <label for="expiry_date" class="form-label">Date d'expiration</label>
+                                    <p class="custom-text-box">{{ line.expiry_date|date:'d M Y' }}</p>
+                                </div>
                             {% endif %}
-                            <div class="col-lg-6 col-12 mb-2">
-                                <label for="expiry_date" class="form-label">Date d'expiration</label>
-                                <p class="custom-text-box">{{ line.expiry_date|date:'d M Y' }}</p>
-                            </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ line.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
