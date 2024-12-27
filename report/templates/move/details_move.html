@@ -71,7 +71,7 @@
                 {% endif %}
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="date" class="form-label">Date de movement</label>
-                    <p class="custom-text-box">{{ move.date }}</p>
+                    <p class="custom-text-box">{{ move.date|default:'/' }}</p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
@@ -149,15 +149,19 @@
                                     <p class="custom-text-box">{{ detail.n_lot }}</p>
                                 </div>
                             {% endif %}
-                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                                 <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
                                 <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if can_print %}2{% elif line.is_out %}3{% else %}4{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}4{% endif %} col-sm-12">
+                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
+                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Palette</label>
+                                <p class="custom-text-box">{{ detail.palette }}</p>
+                            </div>
+                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
                                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ detail.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
@@ -169,11 +173,12 @@
                                                 data-line-detail-id="{{ detail.id }}" 
                                                 data-product-name="{{ detail.move_line.product.designation }}"
                                                 data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.move_line.expiry_date }}"
-                                                data-production-date="{{ detail.move_line.move.date }}"
+                                                data-expiry-date="{{ detail.move_line.expiry_date|default:'/' }}"
+                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
                                                 data-magasin="{{ detail.warehouse.designation }}"
                                                 data-emplacement="{{ detail.emplacement.designation }}"
-                                                data-palettes="{{ detail.move_line.palette }}">
+                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                data-palettes="{{ detail.palette }}">
                                             <i class="fas fa-print"></i> 
                                         </button>
                                     </div>
@@ -263,11 +268,12 @@
                                                 data-line-detail-id="{{ detail.id }}" 
                                                 data-product-name="{{ detail.move_line.product.designation }}"
                                                 data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.move_line.expiry_date }}"
-                                                data-production-date="{{ detail.move_line.move.date }}"
+                                                data-expiry-date="{{ detail.move_line.expiry_date|default:'/' }}"
+                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
                                                 data-magasin="{{ detail.warehouse.designation }}"
                                                 data-emplacement="{{ detail.emplacement.designation }}"
-                                                data-palettes="{{ detail.move_line.palette }}">
+                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                data-palettes="{{ detail.palette }}">
                                             <i class="fas fa-print"></i> 
                                         </button>
                                     </div>
@@ -415,6 +421,7 @@
         modal.querySelector('#modal-expiry-date').textContent = button.getAttribute('data-expiry-date');
         modal.querySelector('#modal-production-date').textContent = button.getAttribute('data-production-date');
         modal.querySelector('#modal-magasin').textContent = button.getAttribute('data-magasin');
+        modal.querySelector('#modal-shift').textContent = button.getAttribute('data-shift');
         modal.querySelector('#modal-emplacement').textContent = button.getAttribute('data-emplacement');
     
         const ticketCount = modal.querySelector('#ticket-count');

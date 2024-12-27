@@ -454,6 +454,7 @@ def create_move_pf(request):
                 line_id = request.POST.get('line')
                 shift_id = request.POST.get('shift')
                 gestionaire_id = request.POST.get('gestionaire')
+                expiry_date = request.POST.get('expiry_date')
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
                 product = request.POST.get('product')
@@ -465,7 +466,8 @@ def create_move_pf(request):
                     return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
-                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, write_uid=request.user, lost_qte=0)
+                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, 
+                                                    expiry_date=expiry_date, write_uid=request.user, lost_qte=0)
                 handleDetails(request, move_line)
 
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
@@ -485,7 +487,8 @@ def update_move_pf(request, move_line_id):
                 shift_id = request.POST.get('shift', None)
                 gestionaire_id = request.POST.get('gestionaire', None)
                 lot_number = request.POST.get('lot_number', None)
-                production_date = request.POST.get('production_date', None)
+                production_date = request.POST.get('production_date', False) or None
+                expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 lost_qte = request.POST.get('lost_qte', 0)
                 do_check = request.POST.get('do_check')
                 move_line = MoveLine.objects.get(id=move_line_id)
@@ -512,6 +515,7 @@ def update_move_pf(request, move_line_id):
                 move.save()
                 move_line.write_uid = request.user
                 move_line.lost_qte = lost_qte
+                move_line.expiry_date = expiry_date
                 move_line.save()
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
         except Move.DoesNotExist:
@@ -556,11 +560,14 @@ def create_move_mp(request):
                 lot_number = request.POST.get('lot_number')
                 product = request.POST.get('product')
                 observation = request.POST.get('observation', '/')
+                production_date = request.POST.get('production_date', False) or None
+                expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 if not site_id or not lot_number or not product:
                     return JsonResponse({'success': False, 'message': 'Les champs Site, N° Lot et Produit sont obligatoires.'}, status=200)
                 cu = request.user
-                move = Move.objects.create(site_id=site_id, gestionaire=cu, state='Brouillon', type='Entré', create_uid=cu, write_uid=cu)
-                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, observation=observation, move_id=move.id, create_uid=cu, write_uid=cu, lost_qte=0)
+                move = Move.objects.create(site_id=site_id, gestionaire=cu, state='Brouillon', type='Entré', create_uid=cu, write_uid=cu, date=production_date)
+                move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, observation=observation, move_id=move.id, 
+                                                    expiry_date=expiry_date, create_uid=cu, write_uid=cu, lost_qte=0)
                 handleDetails(request, move_line)
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
 
@@ -578,6 +585,8 @@ def update_move_mp(request, move_line_id):
                 lot_number = request.POST.get('lot_number')
                 product = request.POST.get('product')
                 observation = request.POST.get('observation', '/')
+                production_date = request.POST.get('production_date', False) or None
+                expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 lost_qte = request.POST.get('lost_qte', 0)
                 if not site_id or not lot_number or not product:
                     return JsonResponse({'success': False, 'message': 'Les champs Site, N° Lot et Produit sont obligatoires.'}, status=200)
@@ -586,16 +595,23 @@ def update_move_mp(request, move_line_id):
                 move = Move.objects.get(id=move_line.move.id)
                 cu = request.user
 
-                move.site_id = site_id
-                move.gestionaire = cu
-                move.write_uid = cu
-                move.save()
+                try:
 
-                move_line.lot_number = lot_number
-                move_line.observation = observation
-                move_line.write_uid = cu
-                move_line.lost_qte = lost_qte
-                move_line.save()
+                    move.site_id = site_id
+                    move.gestionaire = cu
+                    move.write_uid = cu
+                    move.date = production_date
+                    move.save()
+
+                    move_line.lot_number = lot_number
+                    move_line.observation = observation
+                    move_line.write_uid = cu
+                    move_line.lost_qte = lost_qte
+                    move_line.expiry_date = expiry_date
+                    move_line.save()
+                except Exception as e:
+                    print(str(e))
+                    return JsonResponse({'success': False, 'message': f'Erreur lors de la mise à jour de l\'entrée: {str(e)}'}, status=500)
                 handleDetails(request, move_line)
                             
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
@@ -772,32 +788,30 @@ def handleDetails(request, move_line):
             detail_id = request.POST.get(f'detail_id_{row_id}')
             warehouse_id = request.POST.get(f'warehouse_{row_id}')
             emplacement_id = request.POST.get(f'emplacement_{row_id}')
+            palette = request.POST.get(f'palette_{row_id}')
             qte = request.POST.get(f'qte_{row_id}')
-            if warehouse_id and emplacement_id and qte:
-                if move_line.product.type == 'Produit Fini':
-                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
-                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=qte, write_uid=request.user, n_lot=n_lot)
+            if warehouse_id and emplacement_id and qte and palette:
+                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte),
+                                                               palette=int(palette), write_uid=request.user, n_lot=n_lot)
 
         for row_id in to_add_rows:
             warehouse_id = request.POST.get(f'warehouse_{row_id}')
             emplacement_id = request.POST.get(f'emplacement_{row_id}')
+            palette = request.POST.get(f'palette_{row_id}')
             qte = request.POST.get(f'qte_{row_id}')
 
-            if warehouse_id and emplacement_id and qte:
-                if move_line.product.type == 'Produit Fini':
-                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
+            if warehouse_id and emplacement_id and qte and palette:
                 LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, n_lot=n_lot, 
-                                        qte=qte, write_uid=request.user, create_uid=move_line.create_uid)
+                                          qte=int(qte), palette=int(palette), write_uid=request.user, create_uid=move_line.create_uid)
     else:
         row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
         for row_id in row_ids:
             warehouse_id = request.POST.get(f'warehouse_{row_id}')
             emplacement_id = request.POST.get(f'emplacement_{row_id}')
+            palette = request.POST.get(f'palette_{row_id}')
             qte = request.POST.get(f'qte_{row_id}')
 
-            if warehouse_id and emplacement_id and qte:
-                if move_line.product.type == 'Produit Fini':
-                    qte = math.ceil(float(qte) * move_line.product.qte_per_pal)
+            if warehouse_id and emplacement_id and qte and palette:
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
-                                                        n_lot=n_lot, qte=qte, create_uid=request.user, write_uid=request.user)
+                                                        n_lot=n_lot, qte=int(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
                 

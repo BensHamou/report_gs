@@ -27,6 +27,8 @@
                     <div class="col-md-6 text-left mt-5">
                         <p class="text-muted m-0">N° Lot:</p>
                         <strong class="text-dark" id="modal-lot-number"></strong>
+                        <p class="text-muted m-0 mt-1">Shift:</p>
+                        <strong class="text-dark" id="modal-shift"></strong>
                     </div>
                     <div class="col-md-3 text-left mt-5">
                         <p class="text-muted m-0">Magasin:</p>
@@ -70,10 +72,7 @@
             const base64Image = canvas.toDataURL('image/png');
             const printWindow = window.open('', '_blank');
 
-            console.log(base64Image);
-
             if (printWindow) {
-                console.log('HERE')
                 let printContent = '';
                 for (let i = 0; i < ticketCount; i++) {
                     printContent += `
@@ -91,27 +90,29 @@
                                             <tr style="height: 66%;">
                                                 <td style="text-align: left; width: 50%; vertical-align: middle; border: 1px solid #000;">
                                                     <p style="padding: 8px;">Produit:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-product-name').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 18px;">${document.getElementById('modal-product-name').textContent}</strong>
                                                 </td>
                                                 <td style="text-align: left; border: 1px solid #000;" colspan="2">
                                                     <p style="padding: 8px;">Date d'expiration:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-expiry-date').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 26px;">${document.getElementById('modal-expiry-date').textContent}</strong>
                                                     <p style="padding: 8px;">Date de production:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-production-date').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 26px;">${document.getElementById('modal-production-date').textContent}</strong>
                                                 </td>
                                             </tr>
                                             <tr style="height: 34%;">
                                                 <td style="text-align: left; width: 50%; vertical-align: middle; border: 1px solid #000;">
                                                     <p style="padding: 8px;">N° Lot:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-lot-number').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 22px;">${document.getElementById('modal-lot-number').textContent}</strong>
+                                                    <p style="padding: 8px;">Shift:</p>
+                                                    <strong style="padding: 8px; font-size: 22px;">${document.getElementById('modal-shift').textContent}</strong>
                                                 </td>
                                                 <td style="text-align: left; border: 1px solid #000; width: 25%;">
                                                     <p style="padding: 8px;">Magasin:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-magasin').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 22px;">${document.getElementById('modal-magasin').textContent}</strong>
                                                 </td>
                                                 <td style="text-align: left; border: 1px solid #000; width: 25%;">
                                                     <p style="padding: 8px;">Emplacement:</p>
-                                                    <strong style="padding: 8px;">${document.getElementById('modal-emplacement').textContent}</strong>
+                                                    <strong style="padding: 8px; font-size: 22px;">${document.getElementById('modal-emplacement').textContent}</strong>
                                                 </td>
                                             </tr>
                                         </table>

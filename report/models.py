@@ -167,9 +167,8 @@ class Move(BaseModel):
                         ds.qte += detail.qte
                         ds.write_uid = ml.create_uid
                     else:
-                        ed = ml.expiry_date or datetime(2099, 12, 31)
                         ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, create_uid=ml.create_uid, 
-                                        production_date=ml.move.date, expiry_date=ed, write_uid=ml.create_uid, n_lot=ml.n_lot )
+                                        production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot)
                     
                     if detail.emplacement.temp:
                         ds.save()
@@ -210,7 +209,8 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, mirror=ml, move=mirror, transfered_qte=d.qte, lost_qte=0)
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=ml.expiry_date, mirror=ml, 
+                                                              move=mirror, transfered_qte=d.qte, lost_qte=0)
                         ml.mirror = move_mirror
                         ml.save()
             except Exception as e:
@@ -260,17 +260,18 @@ class MoveLine(BaseModel):
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
     lost_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
 
     @property
     def qte(self):
         return self.details.aggregate(total=models.Sum('qte'))['total'] or 0
 
-    @property
-    def expiry_date(self):
-        if self.product.type == 'Produit Fini':
-            return self.move.date + timedelta(days=self.product.delais_expiration) 
-        else:
-            return datetime(2099, 12, 31)
+    # @property
+    # def expiry_date(self):
+    #     if self.product.type == 'Produit Fini':
+    #         return self.move.date + timedelta(days=self.product.delais_expiration) 
+    #     else:
+    #         return datetime(2099, 12, 31)
 
     @property
     def package(self):
@@ -304,14 +305,9 @@ class LineDetail(BaseModel):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='details')
     emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
+    palette = models.PositiveIntegerField(default=0)
     code = models.CharField(max_length=255, null=True, blank=True)
     n_lot = models.CharField(max_length=255, null=True, blank=True)
-
-    @property
-    def palette(self):
-        if self.move_line.product.qte_per_pal and self.qte:
-            return math.ceil(self.qte / self.move_line.product.qte_per_pal)
-        return 0
 
     @property
     def package(self):
@@ -370,6 +366,7 @@ class Disponibility(BaseModel):
     product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)
     n_lot = models.CharField(max_length=50)
     qte = models.PositiveIntegerField()
+    palette = models.PositiveIntegerField(default=0)
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 

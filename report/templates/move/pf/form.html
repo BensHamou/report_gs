@@ -45,7 +45,7 @@
                         <input type="number" name="lot_number" id="lot_number" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="production_date" class="form-label">Production Date</label>
+                        <label for="production_date" class="form-label">Date de production</label>
                         <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
@@ -89,8 +89,8 @@
                         </select>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="expire_date" class="form-label">Date d'expiration</label>
-                        <input type="date" name="expire_date" id="expire_date" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
+                        <label for="expiry_date" class="form-label expire">Date d'expiration</label>
+                        <input type="date" name="expiry_date" id="expiry_date" readonly class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                 </div>
             </div>
@@ -102,22 +102,26 @@
         </div>
         <div class="row mt-4" id="details-container">
             <div class="row mb-3 form-row" data-row-id="0">
-                <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="col-lg-3 col-md-6 col-sm-12">
                     <label for="warehouse_0" class="form-label">Magasin</label>
                     <select name="warehouse_0" class="form-control warehouse custom-select" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                     </select>
                 </div>
-                <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="col-lg-3 col-md-6 col-sm-12">
                     <label for="emplacement_0" class="form-label">Emplacement</label>
                     <select name="emplacement_0" class="form-control emplacement custom-select" id="emplacement_0" required>
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
-                <div class="col-lg-4 col-md-6 col-sm-12">
-                    <label for="qte_0" class="form-label">Palettes</label>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <label for="palette_0" class="form-label">Palette</label>
+                    <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Palettes" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" readonly placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>
@@ -264,13 +268,12 @@
     }
 
     const productionDateField = document.getElementById("production_date");
-    const expireDateField = document.getElementById("expire_date");
+    const expireDateField = document.getElementById("expiry_date");
     const globalQteField = document.getElementById("global_qte");
     const paletteTotalField = document.getElementById("palette_total");
     const detailsContainer = document.getElementById("details-container");
-
-    const productDelaisExpiration = {{ product.delais_expiration }};
-    const qtePerPalette = {{ product.qte_per_pal }};
+    const productDelaisExpiration = {{ product.delais_expiration|default:0 }};
+    const qtePerPalette = {{ product.qte_per_pal|default:0 }};
 
     const calculateExpireDate = () => {
         const productionDate = new Date(productionDateField.value);
@@ -286,28 +289,36 @@
         detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
             totalQte += parseFloat(qteInput.value) || 0;
         });
-        paletteTotalField.value = totalQte;
-    };
+        globalQteField.value = totalQte;
+    };    
     
     const calculatePaletteTotal = () => {
         let totalPalettes = 0;
-        detailsContainer.querySelectorAll(".form-row").forEach((row) => {
-            const qteInput = row.querySelector(".qte");
-            const qte = parseFloat(qteInput.value) || 0;
-            const totalPalettesForRow = Math.ceil(qte * qtePerPalette);
-            totalPalettes += totalPalettesForRow;
+        detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
+            totalPalettes += parseFloat(paletteInput.value) || 0;
         });
-        globalQteField.value = totalPalettes;
+        paletteTotalField.value = totalPalettes;
     };
 
+    const calculateQuantity = () => {
+        detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
+            const qteInput = paletteInput.closest('.form-row').querySelector('.qte');
+            const palette = parseFloat(paletteInput.value) || 0;
+            const qtePerPalette = {{ product.qte_per_pal|default:0 }};
+            const neighboringQte = palette * qtePerPalette;
+            qteInput.value = neighboringQte;
+        });
+        calculateGlobalQte();
+    };
+    
     productionDateField.addEventListener("change", () => {
         calculateExpireDate();
     });
 
     detailsContainer.addEventListener("input", (e) => {
-        if (e.target.matches(".qte")) {
-            calculateGlobalQte();
+        if (e.target.matches(".palette")) {
             calculatePaletteTotal();
+            calculateQuantity();
         }
     });
 
@@ -318,6 +329,12 @@
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
         let formIsValid = true;
+        document.querySelectorAll('.qte').forEach((qte) => {
+            qte.removeAttribute('readonly');
+        });
+        document.querySelectorAll('.expire').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
     
         requiredFields.forEach(function(field) {
             if (!field.value.trim()) {
@@ -343,6 +360,12 @@
         });
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+            document.querySelectorAll('.qte').forEach((qte) => {
+                qte.addAttribute('readonly');
+            });
+            document.querySelectorAll('.expire').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
         } else {
             swal({
                 title: "Confirmer la modification",

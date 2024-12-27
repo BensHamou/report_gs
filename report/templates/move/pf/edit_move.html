@@ -46,7 +46,7 @@
                         <input type="text" name="lot_number" id="lot_number" class="form-control" value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="production_date" class="form-label">Production Date</label>
+                        <label for="production_date" class="form-label">Date de production</label>
                         <input type="date" name="production_date" id="production_date" class="form-control" value="{{ move_line.move.date|date:'Y-m-d' }}" style="background-color: #ffffff; padding-left: 30px;" required {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}disabled{% endif %}>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
@@ -105,8 +105,8 @@
                         </div>
                     {% endif %}
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="expire_date" class="form-label">Date d'expiration</label>
-                        <input type="date" name="expire_date" id="expire_date" class="form-control" readonly value="{{ move_line.expire_date }}" style="background-color: #ffffff; padding-left: 30px;">
+                        <label for="expiry_date" class="form-label expire">Date d'expiration</label>
+                        <input type="date" name="expiry_date" id="expiry_date" readonly class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
             {% for detail in line_details %}
                 <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
                     <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-3 col-md-6 col-sm-12">
                         <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                         <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse custom-select" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Magasin --</option>
@@ -128,7 +128,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-3 col-md-6 col-sm-12">
                         <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
                         <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement custom-select" id="emplacement_{{ forloop.counter0 }}" required>
                             <option value="">-- Emplacement --</option>
@@ -137,11 +137,15 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
-                        <label for="qte_{{ forloop.counter0 }}" class="form-label">Palettes</label>
+                    <div class="col-lg-3 col-md-6 col-sm-12">
+                        <label for="palette_{{ forloop.counter0 }}" class="form-label">Palette</label>
+                        <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palettes" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-12">
+                        <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                         <div class="d-flex flex-column">
                             <div class="d-flex">
-                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Palettes" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" readonly class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
                                 {% if forloop.first %}
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -158,22 +162,31 @@
                 </div>
             {% empty %}
                 <div class="row mb-3 form-row" data-row-id="0">
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-3 col-md-6 col-sm-12">
                             <label for="warehouse_0" class="form-label">Magasin</label>
                             <select name="warehouse_0" class="form-control warehouse custom-select" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                                 <option value="">-- Magasin --</option>
                             </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
+                    <div class="col-lg-3 col-md-6 col-sm-12">
                             <label for="emplacement_0" class="form-label">Emplacement</label>
                             <select name="emplacement_0" class="form-control emplacement custom-select" id="emplacement_0" required>
                                 <option value="">-- Emplacement --</option>
                             </select>
                     </div>
-                    <div class="col-lg-4 col-md-6 col-sm-12">
-                            <label for="qte_0" class="form-label">Quantity</label>
+                    <div class="col-lg-3 col-md-6 col-sm-12">
+                            <label for="palette_0" class="form-label">Palette</label>
                             <div class="d-flex">
-                                <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                                    <i class="fas fa-plus" style="color: #0082cd"></i>
+                                </button>
+                            </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-sm-12">
+                            <label for="qte_0" class="form-label">Quantité</label>
+                            <div class="d-flex">
+                                <input type="number" name="qte_0" id="qte_0" class="form-control qte" readonly placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
                                 </button>
@@ -338,85 +351,99 @@
         }
     });
     
-        const productionDateField = document.getElementById("production_date");
-        const expireDateField = document.getElementById("expire_date");
-        const globalQteField = document.getElementById("global_qte");
-        const paletteTotalField = document.getElementById("palette_total");
-        const detailsContainer = document.getElementById("details-container");
-    
-        const productDelaisExpiration = {{ product.delais_expiration }};
-        const qtePerPalette = {{ product.qte_per_pal }};
-    
-        const calculateExpireDate = () => {
-            const productionDate = new Date(productionDateField.value);
-            if (!isNaN(productionDate)) {
-                const expireDate = new Date(productionDate);
-                expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
-                expireDateField.value = expireDate.toISOString().split("T")[0];
-            }
-        };
-    
-        const calculateGlobalQte = () => {
-            let totalQte = 0;
-            detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
-                totalQte += parseFloat(qteInput.value) || 0;
-            });
-            paletteTotalField.value = totalQte;
-        };
-        
-        const calculatePaletteTotal = () => {
-            let totalPalettes = 0;
-            detailsContainer.querySelectorAll(".form-row").forEach((row) => {
-                const qteInput = row.querySelector(".qte");
-                const qte = parseFloat(qteInput.value) || 0;
-                const totalPalettesForRow = Math.ceil(qte * qtePerPalette);
-                totalPalettes += totalPalettesForRow;
-            });
-            globalQteField.value = totalPalettes;
-        };
-    
-        productionDateField.addEventListener("change", () => {
-            calculateExpireDate();
-        });
-    
-        detailsContainer.addEventListener("input", (e) => {
-            if (e.target.matches(".qte")) {
-                calculateGlobalQte();
-                calculatePaletteTotal();
-            }
-        });
+    const productionDateField = document.getElementById("production_date");
+    const expireDateField = document.getElementById("expiry_date");
+    const globalQteField = document.getElementById("global_qte");
+    const paletteTotalField = document.getElementById("palette_total");
+    const detailsContainer = document.getElementById("details-container");
+    const productDelaisExpiration = {{ product.delais_expiration|default:0 }};
+    const qtePerPalette = {{ product.qte_per_pal|default:0 }};
 
-        document.querySelectorAll('.form-row').forEach(function(row) {
-            const warehouseId = row.dataset.warehouseId;
-            const emplacementSelect = row.querySelector('.emplacement');
-            if (warehouseId) {
-                fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
-                        data.emplacements.forEach(emplacement => {
-                            const option = document.createElement('option');
-                            option.value = emplacement.id;
-                            option.textContent = emplacement.name;
-                            emplacementSelect.appendChild(option);
-                        });
-                        const defaultEmplacementId = row.dataset.emplacementId;
-                        if (defaultEmplacementId) {
-                            emplacementSelect.value = defaultEmplacementId;
-                        }
-                    })
-                    .catch(error => console.error('Error fetching emplacements:', error));
-            }
+    const calculateExpireDate = () => {
+        const productionDate = new Date(productionDateField.value);
+        if (!isNaN(productionDate)) {
+            const expireDate = new Date(productionDate);
+            expireDate.setDate(expireDate.getDate() + productDelaisExpiration);
+            expireDateField.value = expireDate.toISOString().split("T")[0];
+        }
+    };
+
+    const calculateGlobalQte = () => {
+        let totalQte = 0;
+        detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
+            totalQte += parseFloat(qteInput.value) || 0;
         });
+        globalQteField.value = totalQte;
+    };    
     
-        calculateExpireDate();
+    const calculatePaletteTotal = () => {
+        let totalPalettes = 0;
+        detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
+            totalPalettes += parseFloat(paletteInput.value) || 0;
+        });
+        paletteTotalField.value = totalPalettes;
+    };
+
+    const calculateQuantity = () => {
+        detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
+            const qteInput = paletteInput.closest('.form-row').querySelector('.qte');
+            const palette = parseFloat(paletteInput.value) || 0;
+            const qtePerPalette = {{ product.qte_per_pal|default:0 }};
+            const neighboringQte = palette * qtePerPalette;
+            qteInput.value = neighboringQte;
+        });
         calculateGlobalQte();
-        calculatePaletteTotal();
+    };
+    
+    productionDateField.addEventListener("change", () => {
+        calculateExpireDate();
+    });
+
+    detailsContainer.addEventListener("input", (e) => {
+        if (e.target.matches(".palette")) {
+            calculatePaletteTotal();
+            calculateQuantity();
+        }
+    });
+
+
+    document.querySelectorAll('.form-row').forEach(function(row) {
+        const warehouseId = row.dataset.warehouseId;
+        const emplacementSelect = row.querySelector('.emplacement');
+        if (warehouseId) {
+            fetch(`{% url 'get_emplacements_for_warehouse' %}?warehouse_id=${warehouseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    emplacementSelect.innerHTML = '<option value="">-- Emplacement --</option>';
+                    data.emplacements.forEach(emplacement => {
+                        const option = document.createElement('option');
+                        option.value = emplacement.id;
+                        option.textContent = emplacement.name;
+                        emplacementSelect.appendChild(option);
+                    });
+                    const defaultEmplacementId = row.dataset.emplacementId;
+                    if (defaultEmplacementId) {
+                        emplacementSelect.value = defaultEmplacementId;
+                    }
+                })
+                .catch(error => console.error('Error fetching emplacements:', error));
+        }
+    });
+    
+    calculateExpireDate();
+    calculateGlobalQte();
+    calculatePaletteTotal();
 
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
         let formIsValid = true;
         const do_check = document.getElementById("do_check").value;
+        document.querySelectorAll('.qte').forEach((qte) => {
+            qte.removeAttribute('readonly');
+        });
+        document.querySelectorAll('.expire').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
         if (do_check == 0) {
             requiredFields.forEach(function(field) {
                 if (!field.value.trim()) {
@@ -447,6 +474,12 @@
 
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+            document.querySelectorAll('.qte').forEach((qte) => {
+                qte.addAttribute('readonly');
+            });
+            document.querySelectorAll('.expire').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
         } else {
             swal({
                 title: "Confirmer la modification",

@@ -120,7 +120,7 @@
                         <td class="table-text">{{ disponibility.n_lot }}</td>
                         <td class="table-text">{{ disponibility.product }}</td>
                         <td class="table-text">{{ disponibility.qte }} {{ disponibility.product.packing.unit|default:'Kg' }}</td>
-                        <td class="table-text">{{ disponibility.production_date|date:'d M Y' }}</td>
+                        <td class="table-text">{{ disponibility.production_date|date:'d M Y'|default:'/' }}</td>
                         <td class="table-text">{{ disponibility.expiry_date|date:'d M Y' }}</td>
                     </tr>
                 {% endfor %}
