@@ -160,7 +160,9 @@ class Move(BaseModel):
     def integrate_in_stock(self):
         is_entry = self.type == 'Entré'
         for ml in self.move_lines.all():
-            pal = ml.qte_per_pal or 999999999
+            pal = ml.qte_per_pal
+            if pal == 0:
+                pal = 99999999
             for detail in ml.details.all():
                 ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
                 if is_entry:
