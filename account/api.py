@@ -135,18 +135,20 @@ class CreateMoveOut(APIView):
 
             for product_data in transferred_products:
                 product_id = product_data.get('product_id')
+                expiry_date = product_data.get('expiry_date')
                 from_emplacements = product_data.get('from', [])
                 product = Product.objects.get(id=product_id)
 
-                move_line = MoveLine.objects.create(move=move, product=product, lot_number='/', create_uid=user, write_uid=user, lost_qte=0)
+                move_line = MoveLine.objects.create(move=move, product=product, expiry_date=expiry_date, lot_number='/', create_uid=user, write_uid=user, lost_qte=0)
                 
                 for from_data in from_emplacements:
                     emplacement_id = from_data.get('emplacement_id')
                     qte = from_data.get('qte')
+                    palette = from_data.get('palette')
                     n_lot = from_data.get('n_lot')
                     emplacement = Emplacement.objects.get(id=emplacement_id)
                     LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, 
-                                              emplacement=emplacement, qte=qte, n_lot=n_lot, create_uid=user, write_uid=user)
+                                              emplacement=emplacement, qte=qte, palette=palette, n_lot=n_lot, create_uid=user, write_uid=user)
 
             for bl_data in n_bls:
                 numero = bl_data.get('numero')
