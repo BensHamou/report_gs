@@ -180,7 +180,7 @@ class Move(BaseModel):
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
                     if ds.product.qte_per_pal > detail.qte:
-                        ds.palette -= 1
+                        ds.palette -= math.floor(detail.qte / ds.product.qte_per_pal)
                 if ds.qte > 0:
                     ds.save()
                 else:
