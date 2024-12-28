@@ -463,9 +463,9 @@ def create_move_pf(request):
                 production_year = datetime.strptime(production_date, "%Y-%m-%d").year
                 if not (site_id and line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
-                existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, move__line_id=line_id, product__type='Produit Fini')
-                if existing_move_line.exists():
-                    return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+                # existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, move__line_id=line_id, product__type='Produit Fini')
+                # if existing_move_line.exists():
+                    # return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, 
@@ -498,9 +498,9 @@ def update_move_pf(request, move_line_id):
                     production_year = datetime.strptime(production_date, "%Y-%m-%d").year
                     if not (line_id and gestionaire_id):
                         return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
-                    existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
-                    if existing_move_line.exists() and do_check == 0:
-                        return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+                    # existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
+                    # if existing_move_line.exists() and do_check == 0:
+                        # return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
                     if shift_id:
                         move.shift_id = shift_id
                     else:
@@ -827,3 +827,98 @@ def handleDetails(request, move_line):
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                         n_lot=n_lot, qte=int(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
                 
+
+def create_warehouses_and_emplacements():
+    """Creates warehouses and emplacements with specific counts for site with ID 2."""
+
+    try:
+        site = Site.objects.get(id=2)
+    except Site.DoesNotExist:
+        print("Site with ID 2 not found.")
+        return
+
+    warehouse_data = {
+        "Magasin A": 40,
+        "Magasin B": 38,
+        "Magasin C": 40,
+        "Magasin D": 44,
+        "Magasin E": 40,
+        "Magasin F": 40,
+    }
+
+    for warehouse_name, emplacement_count in warehouse_data.items():
+        warehouse = Warehouse.objects.create(designation=warehouse_name, site=site)
+        for i in range(1, emplacement_count + 1):
+            emplacement_designation = f"{warehouse_name[8]}{i}"
+            Emplacement.objects.create(
+                designation=emplacement_designation,
+                type='Surface Libre',
+                capacity=100,
+                quarantine=False,
+                temp=False,
+                warehouse=warehouse
+            )
+
+    print("Warehouses and emplacements created successfully.")
+
+def create_rayons():
+    """Creates 'Rayon' type emplacements for site with ID 2."""
+
+    try:
+        site = Site.objects.get(id=2)
+    except Site.DoesNotExist:
+        print("Site with ID 2 not found.")
+        return
+    
+    try:  # Check if warehouse already exists to avoid duplicates
+        warehouse = Warehouse.objects.get(designation="Accessoire et Moule", site=site)
+        print("Warehouse 'Accessoire et Moule' already exists. Skipping creation.")
+    except Warehouse.DoesNotExist:
+        warehouse = Warehouse.objects.create(designation="Accessoire et Moule", site=site)
+        print("Warehouse 'Accessoire et Moule' created.")
+
+    rayon_data = {
+        "Rayon A": 6,
+        "Rayon B": 6,
+        "Rayon C": 6,
+        "Rayon D": 6,
+        "Rayon E": 6,
+        "Rayon F": 6,
+    }
+
+    for rayon_name, emplacement_count in rayon_data.items():
+        for i in range(1, emplacement_count + 1):
+            emplacement_designation = f"{rayon_name[-1]}{i}"  # A1, A2, etc.
+            Emplacement.objects.create(
+                designation=emplacement_designation,
+                type='Rayon', 
+                capacity=100,
+                quarantine=False,
+                temp=False,
+                warehouse=warehouse, # Associate with Accessoire et Moule
+            )
+
+    print("Accessoire et Moule emplacements created successfully.")
+
+
+def create_emplacements_for_warehouse_9():
+    """Creates emplacements E6-E28 for warehouse with ID 9."""
+    try:
+        warehouse = Warehouse.objects.get(id=9)
+    except Warehouse.DoesNotExist:
+        print("Warehouse with ID 9 not found.")
+        return
+
+    for i in range(6, 29):  # E6 to E28 inclusive
+        emplacement_designation = f"E{i}"
+        Emplacement.objects.create(
+            designation=emplacement_designation,
+            type='Surface Libre',  # Or set the appropriate type
+            capacity=100,
+            quarantine=False,
+            temp=False,
+            warehouse=warehouse
+        )
+
+    print(f"Emplacements E6-E28 created for warehouse {warehouse.designation} (ID 9).")
+
