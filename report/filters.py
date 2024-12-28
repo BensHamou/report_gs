@@ -54,7 +54,7 @@ class MoveFilter(django_filters.FilterSet):
     ]
     
     type = django_filters.ChoiceFilter(method='filter_by_type', choices=TYPE_CHOICES, empty_label=None, initial='all', widget=forms.Select(attrs=getAttrs('select')))
-    site = django_filters.CharFilter(field_name="move__site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
+    site = django_filters.CharFilter(field_name="site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
     warehouse = django_filters.CharFilter(method='filter_by_warehouse', widget=forms.TextInput(attrs=getAttrs('search2', 'Entrepôt')))
     emplacement = django_filters.CharFilter(method='filter_by_emplacement', widget=forms.TextInput(attrs=getAttrs('search2', 'Emplacement')))
     lot_number = django_filters.CharFilter(field_name="move_lines__lot_number", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Lot')))
@@ -92,34 +92,3 @@ class MoveFilter(django_filters.FilterSet):
     class Meta:
         model = MoveLine
         fields = ['type', 'site', 'warehouse', 'emplacement', 'lot_number', 'start_date', 'end_date', 'product', 'state']
-
-class LineDetailFilter(django_filters.FilterSet):
-
-    STATE_REPORT = [
-        ('Tous', 'Tous'),
-        ('Brouillon', 'Brouillon'),
-        ('Confirmé', 'Confirmé'),
-        ('Annulé', 'Annulé')
-    ]
-    
-    search = django_filters.CharFilter(method='filter_search', widget=forms.TextInput(attrs=getAttrs('search', 'Rechercher..', other={'style': 'width: 80%; margin-right: 10px;'})))
-    state = django_filters.ChoiceFilter(method='filter_by_state', choices=STATE_REPORT, empty_label=None, initial='Tous', widget=forms.Select(attrs=getAttrs('select')))
-
-    def filter_search(self, queryset, name, value):
-        return queryset.filter(Q(move_line__product__designation__icontains=value)
-                               |Q(move_line__lot_number__icontains=value)
-                               |Q(move_line__move__date__icontains=value)
-                               |Q(move_line__move__gestionaire__fullname__icontains=value)
-                               |Q(warehouse__designation__icontains=value)
-                               |Q(emplacement__designation__icontains=value)
-                               ).distinct()
-    
-    def filter_by_state(self, queryset, name, value):
-        if value == 'Tous':
-            return queryset.filter(move_line__move__state__in=['Brouillon', 'Confirmé', 'Annulé'])
-        else:
-            return queryset.filter(move_line__move__state=value)
-
-    class Meta:
-        model = LineDetail
-        fields = ['search', 'state']
