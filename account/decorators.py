@@ -65,7 +65,7 @@ def getRedirectionURL(request, url_path):
 
 def admin_or_gs_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and (request.user.role == 'Admin' or request.user.role == 'Gestionaire'):
+        if request.user.is_authenticated and (request.user.role == 'Admin' or request.user.role == 'Gestionaire' or request.user.role == 'Validateur'):
             return view_func(request, *args, **kwargs)
         else:
             return render(request, '403.html', status=403)
