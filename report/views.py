@@ -642,6 +642,7 @@ def move_detail(request, move_id):
         can_cancel = move.state == 'Brouillon'
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:
+        can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
 
     context = {'move': move, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_validate': can_validate, 'can_print': can_print}
