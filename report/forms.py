@@ -23,7 +23,7 @@ class FamilyForm(BaseModelForm):
 class ProductForm(BaseModelForm):
     
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
-    image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input', 'accept': 'image/*'}))
+    image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input', 'accept': 'image/*'}), required=False)
     delais_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Délais d\'expiration')))
     qte_per_cond = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par unité')))
     qte_per_pal = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
