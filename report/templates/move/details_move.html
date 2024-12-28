@@ -63,12 +63,19 @@
                     <label for="gestionaire" class="form-label">Gestionaire</label>
                     <p class="custom-text-box">{{ move.gestionaire }}</p>
                 </div>
-                {% if move.type == 'Sortie' %}
+                {% if move.type == 'Sortie' and not move.is_transfer %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
-                        <label for="bl_str" class="form-label">N BL</label>
+                        <label for="bl_str" class="form-label">N° BL</label>
                         <p class="custom-text-box">{{ move.bl_str }}</p>
                     </div>
                 {% endif %}
+                {% if move.is_transfer %}
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <label for="bl_str" class="form-label">N° BTR</label>
+                        <p class="custom-text-box">{{ move.bl_str }}</p>
+                    </div>
+                {% endif %}
+
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="date" class="form-label">Date de movement</label>
                     <p class="custom-text-box">{{ move.date|default:'/' }}</p>
@@ -79,7 +86,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="palette" class="form-label">Nombre Palettes</label>
-                    <p class="custom-text-box">{{ move.palette|default:"Produit non géré par palette" }}</p>
+                    <p class="custom-text-box">{{ move.palette|default:"0" }}</p>
                 </div>
                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                     <label for="date_created" class="form-label">Créer le</label>
@@ -125,7 +132,7 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="custom-text-box">{{ line.palette|default:"Produit non géré par palette" }}</p>
+                                <p class="custom-text-box">{{ line.palette|default:"0" }}</p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
@@ -133,8 +140,8 @@
                                     <p class="custom-text-box">{{ line.transfered_qte }}</p>
                                 </div>
                                 <div class="col-lg-6 col-12 mb-2">
-                                    <label for="lost_qte" class="form-label">Quantité Perdue</label>
-                                    <p class="custom-text-box">{{ line.lost_qte }}</p>
+                                    <label for="diff_qte" class="form-label">Quantité différentielle</label>
+                                    <p class="custom-text-box">{{ line.diff_qte }}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -149,19 +156,15 @@
                                     <p class="custom-text-box">{{ detail.n_lot }}</p>
                                 </div>
                             {% endif %}
-                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
                                 <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                                 <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if line.is_out %}2{% else %}3{% endif %} col-md-{% if line.is_out %}2{% else %}3{% endif %} col-sm-12">
+                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
                                 <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
                             </div>
-                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
-                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Palette</label>
-                                <p class="custom-text-box">{{ detail.palette }}</p>
-                            </div>
-                            <div class="col-lg-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-md-{% if can_print or line.is_out %}2{% else %}3{% endif %} col-sm-12">
+                            <div class="col-lg-{% if can_print or line.is_out %}3{% else %}4{% endif %} col-md-{% if can_print or line.is_out %}3{% else %}4{% endif %} col-sm-12">
                                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ detail.qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
@@ -173,7 +176,7 @@
                                                 data-line-detail-id="{{ detail.id }}" 
                                                 data-product-name="{{ detail.move_line.product.designation }}"
                                                 data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.move_line.expiry_date|default:'/' }}"
+                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
                                                 data-production-date="{{ detail.move_line.move.date|default:'/' }}"
                                                 data-magasin="{{ detail.warehouse.designation }}"
                                                 data-emplacement="{{ detail.emplacement.designation }}"
@@ -216,7 +219,7 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="custom-text-box">{{ line.palette|default:"Produit non géré par palette" }}</p>
+                                <p class="custom-text-box">{{ line.palette|default:"0" }}</p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
@@ -224,8 +227,8 @@
                                     <p class="custom-text-box">{{ line.transfered_qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                 </div>
                                 <div class="col-lg-6 col-12 mb-2">
-                                    <label for="lost_qte" class="form-label">Quantité Perdue</label>
-                                    <p class="custom-text-box">{{ line.lost_qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                    <label for="diff_qte" class="form-label">Quantité différentielle</label>
+                                    <p class="custom-text-box">{{ line.diff_qte }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -268,7 +271,7 @@
                                                 data-line-detail-id="{{ detail.id }}" 
                                                 data-product-name="{{ detail.move_line.product.designation }}"
                                                 data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.move_line.expiry_date|default:'/' }}"
+                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
                                                 data-production-date="{{ detail.move_line.move.date|default:'/' }}"
                                                 data-magasin="{{ detail.warehouse.designation }}"
                                                 data-emplacement="{{ detail.emplacement.designation }}"

@@ -65,12 +65,12 @@
                     </div>
                     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                         <div class="col-lg-6 col-12 mb-2">
-                            <label for="transfered_qte" class="form-label">Quantity Transféré</label>
+                            <label for="transfered_qte" class="form-label">Quantité Transféré</label>
                             <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte }}" style="background-color: #ffffff; padding-left: 30px;">
                         </div>
                         <div class="col-lg-6 col-12 mb-2">
-                            <label for="lost_qte" class="form-label">Quantity Perdue*</label>
-                            <input type="number" name="lost_qte" id="lost_qte" class="form-control" value="{{ move_line.lost_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <label for="diff_qte" class="form-label">Quantité différentielle</label>
+                            <input type="number" name="diff_qte" id="diff_qte" class="form-control" readonly value="{{ move_line.diff_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         </div>
                     {% endif %}
                     <div class="col-lg-12 col-12 mb-2">
@@ -84,7 +84,7 @@
             {% for detail in line_details %}
             <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
                 <input type="hidden" name="detail_id_{{ forloop.counter0 }}" value="{{ detail.id }}">
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
                     <select name="warehouse_{{ forloop.counter0 }}" class="form-control warehouse custom-select" id="warehouse_{{ forloop.counter0 }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
@@ -93,7 +93,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
                     <select name="emplacement_{{ forloop.counter0 }}" class="form-control emplacement custom-select" id="emplacement_{{ forloop.counter0 }}" required>
                         <option value="">-- Emplacement --</option>
@@ -102,15 +102,12 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="palette_{{ forloop.counter0 }}" class="form-label">Palette</label>
-                    <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palette" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantity</label>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                     <div class="d-flex flex-column">
                         <div class="d-flex">
-                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantity" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palette" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required hidden>
                             {% if forloop.first %}
                             <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                 <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -127,26 +124,23 @@
             </div>
             {% empty %}
             <div class="row mb-3 form-row" data-row-id="0">
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_0" class="form-label">Magasin</label>
                     <select name="warehouse_0" class="form-control warehouse custom-select" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="emplacement_0" class="form-label">Emplacement</label>
                     <select name="emplacement_0" class="form-control emplacement custom-select" id="emplacement_0" required>
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="palette_0" class="form-label">Palette</label>
-                    <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="qte_0" class="form-label">Quantity</label>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="palette_0" id="palette_0" class="form-control palette" value="1" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required hidden>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>

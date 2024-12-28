@@ -1,0 +1,88 @@
+{% extends "main.html" %}
+
+{% block title %} Stock {% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'dispos' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Paramètre</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">{% if form.instance.pk %} Modification de stock {% else %} Création {% endif %}</h4>
+    </div>
+
+    <div class="col-6">
+        <p style="font-size: 18px; color: #133356;">{% if form.instance.pk %} Modification de stock {{ form.instance.designation }} {% else %} Créez {% endif %}</p>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="submit" form="packing-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            {% if form.instance.pk %} Sauvegarder {% else %} Nouveau {% endif %}
+        </button>
+    </div>
+</div>
+
+<form method="POST" id="packing-form">
+    {% csrf_token %}
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="row mb-4">
+            <div class="col-lg-12 col-md-12">
+                <label for="n_lot" class="form-label" style="color: #5d5d5d;">N° Lot</label>
+                {{ form.n_lot }}
+                {% if form.n_lot.errors %}
+                    <small class="text-danger">{{ form.n_lot.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="emplacement" class="form-label" style="color: #5d5d5d;">Emplacement</label>
+                {{ form.emplacement }}
+                {% if form.emplacement.errors %}
+                    <small class="text-danger">{{ form.emplacement.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="product" class="form-label" style="color: #5d5d5d;">Produit</label>
+                {{ form.product }}
+                {% if form.product.errors %}
+                    <small class="text-danger">{{ form.product.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="qte" class="form-label" style="color: #5d5d5d;">Quantité</label>
+                {{ form.qte }}
+                {% if form.qte.errors %}
+                    <small class="text-danger">{{ form.qte.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="palette" class="form-label" style="color: #5d5d5d;">Palette</label>
+                {{ form.palette }}
+                {% if form.palette.errors %}
+                    <small class="text-danger">{{ form.palette.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="production_date" class="form-label" style="color: #5d5d5d;">Date de Production</label>
+                {{ form.production_date }}
+                {% if form.production_date.errors %}
+                    <small class="text-danger">{{ form.production_date.errors }}</small>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 col-md-12">
+                <label for="expiry_date" class="form-label" style="color: #5d5d5d;">Date d'expiration</label>
+                {{ form.expiry_date }}
+                {% if form.expiry_date.errors %}
+                    <small class="text-danger">{{ form.expiry_date.errors }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

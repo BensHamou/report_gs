@@ -71,26 +71,23 @@
         </div>
         <div class="row mt-4" id="details-container">
             <div class="row mb-3 form-row" data-row-id="0">
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="warehouse_0" class="form-label">Magasin</label>
                     <select name="warehouse_0" class="form-control warehouse custom-select" id="warehouse_0" style="background-color: #ffffff; padding-left: 30px;" required>
                         <option value="">-- Magasin --</option>
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-4 col-md-6 col-sm-12">
                     <label for="emplacement_0" class="form-label">Emplacement</label>
                     <select name="emplacement_0" class="form-control emplacement custom-select" id="emplacement_0" required>
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="palette_0" class="form-label">Palette</label>
-                    <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
-                    <label for="qte_0" class="form-label">Quantity</label>
+                <div class="col-lg-4 col-md-6 col-sm-12">
+                    <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantity" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="palette_0" id="palette_0" class="form-control palette" value="1" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required hidden>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>

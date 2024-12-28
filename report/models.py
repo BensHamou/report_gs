@@ -181,9 +181,10 @@ class Move(BaseModel):
                 else:
                     if not ds:
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
+                    print(f"DS: {ds.qte} - {ds.nqte} - {ds.palette}, {pal}")
                     ds.qte -= detail.qte
                     ds.nqte += detail.qte
-                    ds.palette -= math.floor(ds.nqte / pal)
+                    ds.palette = math.floor(ds.nqte / pal)
                 if ds.qte > 0:
                     ds.save()
                 else:
@@ -210,17 +211,17 @@ class Move(BaseModel):
     def create_mirror(self):
         if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer:
             try:
-                mirror = Move.objects.create(site=self.transfer_to, gestionaire=self.gestionaire, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
+                mirror = Move.objects.create(site=self.transfer_to, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=ml.expiry_date, mirror=ml, 
-                                                              move=mirror, transfered_qte=d.qte, lost_qte=0)
-                        # move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=ml, 
-                        #                                       move=mirror, transfered_qte=d.qte, lost_qte=0)
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=ml, 
+                                                              move=mirror, transfered_qte=d.qte, create_uid=ml.create_uid, write_uid=ml.create_uid)
                         ml.mirror = move_mirror
                         ml.save()
+                for bl in self.bls.all():
+                    MoveBL.objects.create(move=mirror, numero=bl.numero)
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
 
@@ -230,9 +231,6 @@ class Move(BaseModel):
         for ml in self.move_lines.all():
             if not ml.details.all():
                 raise ValueError(f'Aucun détail de ligne de movement - N LOT {ml.n_lot}.')
-            if self.is_transfer and self.type == 'Entré' and not (ml.transfered_qte - ml.lost_qte - ml.qte) == 0:
-                raise ValueError('Quantité transférée non égale à la quantité reçue')
-            
         return True
     
     @property
@@ -267,7 +265,7 @@ class MoveLine(BaseModel):
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
-    lost_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
+    diff_qte = models.IntegerField(default=0, null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
     @property
@@ -307,7 +305,7 @@ class LineDetail(BaseModel):
     emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
     qte = models.PositiveIntegerField()
     palette = models.PositiveIntegerField(default=0)
-    # expiry_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
     code = models.CharField(max_length=255, null=True, blank=True)
     n_lot = models.CharField(max_length=255, null=True, blank=True)
 
@@ -374,7 +372,6 @@ class Disponibility(BaseModel):
     palette = models.PositiveIntegerField(default=0)
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
-
 
 class TemporaryEmplacementAlert(BaseModel):
     dispo = models.OneToOneField(Disponibility, on_delete=models.CASCADE)

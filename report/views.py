@@ -467,7 +467,7 @@ def create_move_pf(request):
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, 
-                                                    expiry_date=expiry_date, write_uid=request.user, lost_qte=0)
+                                                    expiry_date=expiry_date, write_uid=request.user)
                 handleDetails(request, move_line)
 
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
@@ -489,7 +489,7 @@ def update_move_pf(request, move_line_id):
                 lot_number = request.POST.get('lot_number', None)
                 production_date = request.POST.get('production_date', False) or None
                 expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
-                lost_qte = request.POST.get('lost_qte', 0)
+                diff_qte = request.POST.get('diff_qte', 0)
                 do_check = request.POST.get('do_check')
                 move_line = MoveLine.objects.get(id=move_line_id)
                 if do_check == 0:
@@ -514,7 +514,7 @@ def update_move_pf(request, move_line_id):
                 move.write_uid = request.user
                 move.save()
                 move_line.write_uid = request.user
-                move_line.lost_qte = lost_qte
+                move_line.diff_qte = diff_qte
                 move_line.expiry_date = expiry_date
                 move_line.save()
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
@@ -567,7 +567,7 @@ def create_move_mp(request):
                 cu = request.user
                 move = Move.objects.create(site_id=site_id, gestionaire=cu, state='Brouillon', type='Entré', create_uid=cu, write_uid=cu, date=production_date)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, observation=observation, move_id=move.id, 
-                                                    expiry_date=expiry_date, create_uid=cu, write_uid=cu, lost_qte=0)
+                                                    expiry_date=expiry_date, create_uid=cu, write_uid=cu)
                 handleDetails(request, move_line)
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
 
@@ -587,7 +587,7 @@ def update_move_mp(request, move_line_id):
                 observation = request.POST.get('observation', '/')
                 production_date = request.POST.get('production_date', False) or None
                 expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
-                lost_qte = request.POST.get('lost_qte', 0)
+                diff_qte = request.POST.get('diff_qte', 0)
                 if not site_id or not lot_number or not product:
                     return JsonResponse({'success': False, 'message': 'Les champs Site, N° Lot et Produit sont obligatoires.'}, status=200)
 
@@ -606,7 +606,7 @@ def update_move_mp(request, move_line_id):
                     move_line.lot_number = lot_number
                     move_line.observation = observation
                     move_line.write_uid = cu
-                    move_line.lost_qte = lost_qte
+                    move_line.diff_qte = diff_qte
                     move_line.expiry_date = expiry_date
                     move_line.save()
                 except Exception as e:

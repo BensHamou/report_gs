@@ -43,14 +43,14 @@
                     <input type="number" name="do_check" id="do_check" value="{% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}1{% else %}0{% endif %}" hidden required>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="lot_number" class="form-label">N Lot</label>
-                        <input type="text" name="lot_number" id="lot_number" class="form-control" value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="text" name="lot_number" id="lot_number" class="form-control" {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}readonly{% endif %} value="{{ move_line.lot_number }}" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="production_date" class="form-label">Date de production</label>
-                        <input type="date" name="production_date" id="production_date" class="form-control" value="{{ move_line.move.date|date:'Y-m-d' }}" style="background-color: #ffffff; padding-left: 30px;" required {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}disabled{% endif %}>
+                        <input type="date" name="production_date" id="production_date" class="form-control" {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}readonly{% endif %} value="{{ move_line.move.date|date:'Y-m-d' }}" style="background-color: #ffffff; padding-left: 30px;" required {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}disabled{% endif %}>
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
-                        <label for="global_qte" class="form-label">Quantity Globale</label>
+                        <label for="global_qte" class="form-label">Quantité Globale</label>
                         <input type="number" name="global_qte" id="global_qte" class="form-control" readonly value="{{ move_line.global_qte }}" style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
@@ -59,12 +59,12 @@
                     </div>
                     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                         <div class="col-lg-6 col-12 mb-2">
-                            <label for="transfered_qte" class="form-label">Quantity Transféré</label>
+                            <label for="transfered_qte" class="form-label">Quantité Transféré</label>
                             <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte }}" style="background-color: #ffffff; padding-left: 30px;">
                         </div>
                         <div class="col-lg-6 col-12 mb-2">
-                            <label for="lost_qte" class="form-label">Quantity Perdue</label>
-                            <input type="number" name="lost_qte" id="lost_qte" class="form-control" value="{{ move_line.lost_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <label for="diff_qte" class="form-label">Quantité Différentielle</label>
+                            <input type="number" name="diff_qte" id="diff_qte" class="form-control diff_qte" readonly value="{{ move_line.diff_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         </div>
                     {% endif %}
                     {% if show_line_field %}
@@ -175,13 +175,8 @@
                             </select>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-12">
-                            <label for="palette_0" class="form-label">Palette</label>
-                            <div class="d-flex">
-                                <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
-                                <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
-                                    <i class="fas fa-plus" style="color: #0082cd"></i>
-                                </button>
-                            </div>
+                        <label for="palette_0" class="form-label">Palette</label>
+                        <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
                     <div class="col-lg-3 col-md-6 col-sm-12">
                             <label for="qte_0" class="form-label">Quantité</label>
@@ -374,7 +369,8 @@
             totalQte += parseFloat(qteInput.value) || 0;
         });
         globalQteField.value = totalQte;
-    };    
+    };
+    
     
     const calculatePaletteTotal = () => {
         let totalPalettes = 0;
@@ -405,6 +401,21 @@
             calculateQuantity();
         }
     });
+
+    {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
+        const calculateTransferedQte = () => {
+            const totalQteField = document.getElementById('global_qte');
+            const transferredQteField = document.getElementById('transfered_qte');
+            const diffQteField = document.getElementById('diff_qte');
+            const diff = totalQteField.value - transferredQteField.value;
+            diffQteField.value = diff;
+        };
+        detailsContainer.addEventListener("input", (e) => {
+            if (e.target.matches(".palette")) {
+                calculateTransferedQte();
+            }
+        });
+    {% endif %}
 
 
     document.querySelectorAll('.form-row').forEach(function(row) {
@@ -444,33 +455,38 @@
         document.querySelectorAll('.expire').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
-        if (do_check == 0) {
-            requiredFields.forEach(function(field) {
-                if (!field.value.trim()) {
-                    formIsValid = false;
-                    field.classList.add('is-invalid');
-                    
-                    let existingError = field.parentNode.querySelector('.invalid-feedback');
-                    if (!existingError) {
-                        let errorMessage = document.createElement('div');
-                        errorMessage.classList.add('invalid-feedback');
-                        errorMessage.textContent = 'Ce champ est requis.';
-                        if(!field.classList.contains('qte')) {
-                            field.parentNode.appendChild(errorMessage);
-                        }
-                    }
-                } else {
-                    field.classList.remove('is-invalid');
-                    let existingError = field.parentNode.querySelector('.invalid-feedback');
-                    if (existingError) {
-                        existingError.remove();
+        document.querySelectorAll('.lot_number').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
+        document.querySelectorAll('.production_date').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
+        document.querySelectorAll('.diff_qte').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
+
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                formIsValid = false;
+                field.classList.add('is-invalid');
+                
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('invalid-feedback');
+                    errorMessage.textContent = 'Ce champ est requis.';
+                    if(!field.classList.contains('qte')) {
+                        field.parentNode.appendChild(errorMessage);
                     }
                 }
-            });
-        }
-        else{
-            formIsValid = true;
-        }
+            } else {
+                field.classList.remove('is-invalid');
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
 
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
@@ -480,6 +496,16 @@
             document.querySelectorAll('.expire').forEach((expire) => {
                 expire.addAttribute('readonly');
             });
+            document.querySelectorAll('.lot_number').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
+            document.querySelectorAll('.production_date').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
+            document.querySelectorAll('.diff_qte').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
+    
         } else {
             swal({
                 title: "Confirmer la modification",
