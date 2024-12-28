@@ -57,11 +57,11 @@
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="production_date" class="form-label">Date de production*</label>
-                        <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="date" name="production_date" id="production_date" value="{{ move_line.move.date|date:'Y-m-d' }}" {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}readonly{% endif %} class="form-control" style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="expiry_date" class="form-label">Date d'expiration*</label>
-                        <input type="date" name="expiry_date" id="expiry_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="date" name="expiry_date" id="expiry_date" class="form-control" value="{{ move_line.expiry_date|date:'Y-m-d' }}"  {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}readonly{% endif %}  style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                         <div class="col-lg-6 col-12 mb-2">
@@ -107,7 +107,7 @@
                     <div class="d-flex flex-column">
                         <div class="d-flex">
                             <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
-                            <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palette" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required hidden>
+                            <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palette" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" hidden required >
                             {% if forloop.first %}
                             <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                 <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -201,6 +201,8 @@
             btn.innerHTML = '<i class="fas fa-trash-alt" style="color: #0082cd;"></i>';
             btn.setAttribute('data-delete-row', '');
 
+            newRow.querySelector('.palette').value = 1;
+
             container.appendChild(newRow);
             rowId++;
         }
@@ -271,6 +273,26 @@
         }
     });
 
+
+    {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
+        const detailsContainer = document.getElementById("details-container");
+        const calculateTransferedQte = (totalQte) => {
+            const transferredQteField = document.getElementById('transfered_qte');
+            const diffQteField = document.getElementById('diff_qte');
+            const diff = totalQte - transferredQteField.value;
+            diffQteField.value = diff;
+        };
+        detailsContainer.addEventListener("input", (e) => {
+            if (e.target.matches(".qte")) {
+                let totalQte = 0;
+                detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
+                    totalQte += parseFloat(qteInput.value) || 0;
+                });
+                calculateTransferedQte(totalQte);
+            }
+        });
+    {% endif %}
+
     document.querySelectorAll('.form-row').forEach(function(row) {
         const warehouseId = row.dataset.warehouseId;
         const emplacementSelect = row.querySelector('.emplacement');
@@ -300,35 +322,36 @@
         let formIsValid = true;
     
         const do_check = document.getElementById("do_check").value;
-        if (do_check == 0) {
-            requiredFields.forEach(function(field) {
-                if (!field.value.trim()) {
-                    formIsValid = false;
-                    field.classList.add('is-invalid');
-                    
-                    let existingError = field.parentNode.querySelector('.invalid-feedback');
-                    if (!existingError) {
-                        let errorMessage = document.createElement('div');
-                        errorMessage.classList.add('invalid-feedback');
-                        errorMessage.textContent = 'Ce champ est requis.';
-                        if(!field.classList.contains('qte')) {
-                            field.parentNode.appendChild(errorMessage);
-                        }
-                    }
-                } else {
-                    field.classList.remove('is-invalid');
-                    let existingError = field.parentNode.querySelector('.invalid-feedback');
-                    if (existingError) {
-                        existingError.remove();
+        requiredFields.forEach(function(field) {
+            document.querySelectorAll('.lot_number').forEach((expire) => {
+                expire.removeAttribute('readonly');
+            });
+            if (!field.value.trim()) {
+                formIsValid = false;
+                field.classList.add('is-invalid');
+                
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (!existingError) {
+                    let errorMessage = document.createElement('div');
+                    errorMessage.classList.add('invalid-feedback');
+                    errorMessage.textContent = 'Ce champ est requis.';
+                    if(!field.classList.contains('qte')) {
+                        field.parentNode.appendChild(errorMessage);
                     }
                 }
-            });
-        }
-        else{
-            formIsValid = true;
-        }
+            } else {
+                field.classList.remove('is-invalid');
+                let existingError = field.parentNode.querySelector('.invalid-feedback');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+        });
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
+            document.querySelectorAll('.lot_number').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
         } else {
             swal({
                 title: "Confirmer la modification",

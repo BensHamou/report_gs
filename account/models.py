@@ -68,18 +68,19 @@ class Emplacement(BaseModel):
     warehouse = models.ForeignKey(Warehouse, related_name='emplacements', on_delete=models.CASCADE)
 
     @property
-    def available_palettes(self):
-        return sum([d.palette for d in self.disponibilities.all()])
+    def available_qte(self):
+        return sum([d.qte for d in self.disponibilities.all()])
 
-    @property
-    def available_capacity(self):
-        return self.capacity - self.available_palettes
+    # @property
+    # def available_capacity(self):
+    #     return self.capacity - self.available_qte
 
-    def can_stock(self, palette):
-        return self.available_palettes + palette <= self.capacity
+    # def can_stock(self, palette):
+    #     return True
+        # return self.available_palettes + palette <= self.capacity
     
-    def can_destock(self, palette):
-        return self.available_palettes - palette >= 0
+    def can_destock(self, qte):
+        return self.available_qte - qte >= 0
 
     def __str__(self):
         return f'{self.designation} - {self.warehouse}'

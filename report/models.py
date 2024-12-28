@@ -3,7 +3,6 @@ from django.template.defaultfilters import slugify
 from django.db.models import Sum, Q
 from PIL import Image as PILImage
 from django.utils import timezone
-from datetime import timedelta, datetime
 from django.db import models
 import math
 import os
@@ -139,10 +138,10 @@ class Move(BaseModel):
         
     def can_validate(self):
         def check_emplacement(detail, operation):
-            if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
-                return True, None
+            # if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
+            #     return True, None
                 # return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
-            elif operation == 'destock' and not detail.emplacement.can_destock(detail.palette):
+            if operation == 'destock' and not detail.emplacement.can_destock(detail.qte):
                 return False, f"Ajustement entraînerait un stock négatif pour l'emplacement {detail.emplacement}."
             return True, None
 
@@ -181,10 +180,9 @@ class Move(BaseModel):
                 else:
                     if not ds:
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
-                    print(f"DS: {ds.qte} - {ds.nqte} - {ds.palette}, {pal}")
                     ds.qte -= detail.qte
                     ds.nqte += detail.qte
-                    ds.palette = math.floor(ds.nqte / pal)
+                    ds.palette = max(math.floor(ds.nqte / pal), 1)
                 if ds.qte > 0:
                     ds.save()
                 else:
