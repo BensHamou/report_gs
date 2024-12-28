@@ -3,7 +3,7 @@ version: "3"
 services:
   db:
     image: postgres
-    container_name: DB_STOCK
+    container_name: DB_STOCK_PROD
     restart: unless-stopped
     environment:
       - POSTGRES_DB=PumaGS
@@ -12,23 +12,23 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5176:5432"
+      - "5112:5432"
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: stock_app:dev
+    image: stock_app:prod
     restart: unless-stopped
-    container_name: APP_STOCK
+    container_name: APP_STOCK_PROD
     ports:
-      - "8176:8176"
+      - "8112:8112"
     volumes:
       - ./report_gs:/report_gs
       - ./media:/app/media
     command: >
       sh -c " python manage.py makemigrations &&
               python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8176"
+              python manage.py runserver 0.0.0.0:8112"
     depends_on:
       - db
     environment:
@@ -42,8 +42,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    image: stock_cron:dev
-    container_name: CRON_STOCK
+    image: stock_cron:prod
+    container_name: CRON_STOCK_PROD
     depends_on:
       - db
     volumes:
@@ -67,4 +67,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.16.88.0/24
+        - subnet: 172.16.89.0/24
