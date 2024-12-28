@@ -407,7 +407,7 @@ def create_move_in_view(request, product_id):
     default_line = user_lines.first() if user_lines.count() == 1 else None
     show_line_field = user_lines.count() > 1
     if is_admin:
-        gestionaires = None if user.lines.count() > 1 else user.lines.first().users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+        gestionaires = None if user.lines.count() > 1 else user.lines.first().users.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur'), ~Q(id=1))
     else:
         gestionaires = None
 
@@ -732,7 +732,7 @@ def get_shifts_and_users_for_line(request):
     line = get_object_or_404(Line, id=line_id)
     
     shifts = line.shifts.all()
-    users = line.users.filter(Q(role='Gestionaire') | Q(role='Admin'))
+    users = line.users.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur'), ~Q(id=1))
     
     shift_data = [{'id': shift.id, 'name': shift.designation} for shift in shifts]
     user_data = [{'id': user.id, 'name': user.fullname} for user in users]
