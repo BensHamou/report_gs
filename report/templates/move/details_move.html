@@ -235,7 +235,7 @@
                     </div>
                     <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">
                         <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ line.product.designation }}</p>
-                        <img src="{{ line.product.image.url }}" alt="{{ line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                        <img src="{% if not line.product.image %}{% static 'img/pf.png' %}{% else %}{{ line.product.image.url }}{% endif %}" alt="{{ line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
                     </div>
                 </div>
                 <div class="row" id="details-container">

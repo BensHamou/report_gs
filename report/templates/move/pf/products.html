@@ -50,7 +50,7 @@
         <div class="col-md-3 col-sm-6 col-12 mb-4 d-flex justify-content-center">
             <a href="{% url 'move_in_pf' product.id %}" class="text-decoration-none">
                 <div class="text-center" style="cursor: pointer;">
-                    <img src="{{ product.image.url }}" 
+                    <img src="{% if not product.image %}{% static 'img/pf.png' %}{% else %}{{ product.image.url }}{% endif %}" 
                          alt="{{ product.name }}" 
                          class="img-fluid" 
                          style="height: 120px; width: 120px; object-fit: cover; border-radius: 8px;">

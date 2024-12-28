@@ -112,7 +112,7 @@
             </div>
             <div class="col-lg-4 col-md-6 col-sm-12 d-flex align-items-center flex-column">
                 <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ product.designation }}</p>
-                <img src="{{ product.image.url }}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                <img src="{% if not product.image %}{% static 'img/pf.png' %}{% else %}{{ product.image.url }}{% endif %}" alt="{{ product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
             </div>
         </div>
         <div class="row mt-4" id="details-container">
