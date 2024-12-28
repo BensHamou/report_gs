@@ -309,13 +309,15 @@ def syncMProducts(request):
             for mp in getMProducts():
                 designation = f'[{mp[2]}] {mp[1]}'
                 odoo_id = mp[0]
+                unit_dict = {'3': 1, '11': 2, '8': 3, '22': 4, '32': 5, '1': 6}
                 product, created = Product.objects.update_or_create(
                     odoo_id=odoo_id,
                     defaults={'designation': designation, 'type': 'Matière Première', 
-                              'create_uid': request.user, 'write_uid': request.user})
+                              'create_uid': request.user, 'write_uid': request.user, 'packing_id': unit_dict.get(str(mp[3]))})
                 if created:
                     product.qte_per_pal = 0
                     product.qte_per_cond = 0
+                    product.alert_stock = 0
                     product.alert_stock = 0
                     product.save()
             return JsonResponse({'success': True, 'message': 'Matière Première synchronisés avec succès.'})

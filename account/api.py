@@ -287,7 +287,6 @@ class SendWarningEmail(APIView):
             addresses = user.default_site.address.split('&')
             if not addresses:
                 addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-            addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
             email.attach_alternative(html_message, "text/html") 
             email.send()   

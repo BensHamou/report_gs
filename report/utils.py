@@ -20,7 +20,7 @@ def execute_query(query, params=None):
 
 
 def getMProducts():
-    query = """SELECT pp.id, pp.name_template, pp.default_code 
+    query = """SELECT pp.id, pp.name_template, pp.default_code, pt.uom_id 
                 FROM product_product pp
                 LEFT JOIN product_template pt on pt.id = pp.product_tmpl_id
                 LEFT JOIN product_template_company_allowed_rel ptc on pt.id = ptc.template_id
