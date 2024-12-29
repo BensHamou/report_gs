@@ -652,6 +652,7 @@ def move_detail(request, move_id):
         can_cancel = move.state == 'Brouillon' and (move.type == 'Sotrie' or not move.is_transfer)
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:
+        can_edit = move.state == 'Brouillon' and move.type == 'Entré'
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
         can_cancel = move.state == 'Brouillon'
