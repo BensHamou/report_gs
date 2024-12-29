@@ -70,3 +70,11 @@ def admin_or_gs_required(view_func):
         else:
             return render(request, '403.html', status=403)
     return wrapper
+
+def can_view_move_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.role in ['Admin', 'Gestionaire', 'Validateur', 'Observateur']):
+            return view_func(request, *args, **kwargs)
+        else:
+            return render(request, '403.html', status=403)
+    return wrapper

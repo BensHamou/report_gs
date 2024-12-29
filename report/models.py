@@ -182,7 +182,7 @@ class Move(BaseModel):
                         raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
                     ds.qte -= detail.qte
                     ds.nqte += detail.qte
-                    ds.palette = max(math.floor(ds.nqte / pal), 1)
+                    ds.palette = max(math.ceil(ds.qte / pal), 1)
                 if ds.qte > 0:
                     ds.save()
                 else:
@@ -214,14 +214,35 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=ml, 
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=d, 
                                                               move=mirror, transfered_qte=d.qte, create_uid=ml.create_uid, write_uid=ml.create_uid)
-                        ml.mirror = move_mirror
+                        ml.mirror = d
                         ml.save()
                 for bl in self.bls.all():
                     MoveBL.objects.create(move=mirror, numero=bl.numero)
             except Exception as e:
                 raise RuntimeError(f"Error during mirror creation: {e}")
+            
+    def cancel_transfer(self):
+        try:
+            if self.is_transfer and self.state == 'Annulé' and self.mirror and self.type == 'Entré':
+                for ml in self.move_lines.all():
+                    pal = ml.product.qte_per_pal
+                    if pal == 0:
+                        pal = 99999999
+                    ds = Disponibility.objects.filter(product=ml.product, emplacement=ml.mirror.emplacement, n_lot=ml.mirror.n_lot).first()
+                    if not ds:
+                        Disponibility(product=ml.product, emplacement=ml.mirror.emplacement, qte=ml.mirror.qte, palette=ml.mirror.palette, 
+                                n_lot=ml.mirror.n_lot, production_date=ml.move.date, expiry_date=ml.mirror.expiry_date).save()
+                    else:
+                        ds.qte += ml.mirror.qte
+                        ds.nqte -= ml.mirror.qte
+                        ds.palette = max(math.ceil(ds.qte / pal), 1)
+                    ds.save()
+                self.mirror.save()
+                return True, 'Transfer annulé avec succès.'
+        except Exception as e:
+            raise RuntimeError(f'Erreur lors de l\'annulation du transfer: {e}')
 
     def check_can_confirm(self):
         if not self.move_lines.all():
@@ -260,7 +281,7 @@ class MoveLine(BaseModel):
     lot_number = models.CharField(max_length=255)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
-    mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
+    mirror = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
     transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
     diff_qte = models.IntegerField(default=0, null=True, blank=True)

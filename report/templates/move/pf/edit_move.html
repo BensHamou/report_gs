@@ -145,7 +145,7 @@
                         <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                         <div class="d-flex flex-column">
                             <div class="d-flex">
-                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" readonly class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" readonly placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
                                 {% if forloop.first %}
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -181,7 +181,7 @@
                     <div class="col-lg-3 col-md-6 col-sm-12">
                             <label for="qte_0" class="form-label">Quantité</label>
                             <div class="d-flex">
-                                <input type="number" name="qte_0" id="qte_0" class="form-control qte" readonly placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" readonly style="background-color: #ffffff; padding-left: 30px;" required>
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
                                 </button>
@@ -348,11 +348,7 @@
     
     const productionDateField = document.getElementById("production_date");
     const expireDateField = document.getElementById("expiry_date");
-    const globalQteField = document.getElementById("global_qte");
-    const paletteTotalField = document.getElementById("palette_total");
-    const detailsContainer = document.getElementById("details-container");
     const productDelaisExpiration = {{ product.delais_expiration|default:0 }};
-    const qtePerPalette = {{ product.qte_per_pal|default:0 }};
 
     const calculateExpireDate = () => {
         const productionDate = new Date(productionDateField.value);
@@ -362,7 +358,19 @@
             expireDateField.value = expireDate.toISOString().split("T")[0];
         }
     };
+    
+    productionDateField.addEventListener("change", () => {
+        calculateExpireDate();
+    });
+    calculateExpireDate();
 
+    const globalQteField = document.getElementById("global_qte");
+    const paletteTotalField = document.getElementById("palette_total");
+    const detailsContainer = document.getElementById("details-container");
+    const qtePerPalette = {{ product.qte_per_pal|default:0 }};
+    
+    let isUpdating = false;
+    
     const calculateGlobalQte = () => {
         let totalQte = 0;
         detailsContainer.querySelectorAll(".form-row .qte").forEach((qteInput) => {
@@ -371,7 +379,6 @@
         globalQteField.value = totalQte;
     };
     
-    
     const calculatePaletteTotal = () => {
         let totalPalettes = 0;
         detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
@@ -379,28 +386,48 @@
         });
         paletteTotalField.value = totalPalettes;
     };
-
-    const calculateQuantity = () => {
-        detailsContainer.querySelectorAll(".form-row .palette").forEach((paletteInput) => {
-            const qteInput = paletteInput.closest('.form-row').querySelector('.qte');
-            const palette = parseFloat(paletteInput.value) || 0;
-            const qtePerPalette = {{ product.qte_per_pal|default:0 }};
-            const neighboringQte = palette * qtePerPalette;
-            qteInput.value = neighboringQte;
-        });
+    
+    const recalculateNeighborQuantity = (paletteInput) => {
+        const row = paletteInput.closest(".form-row");
+        const qteInput = row.querySelector(".qte");
+    
+        if (!isUpdating) {
+            isUpdating = true;
+            const palettes = parseFloat(paletteInput.value) || 0;
+            qteInput.value = palettes * qtePerPalette;
+            isUpdating = false;
+        }
         calculateGlobalQte();
     };
     
-    productionDateField.addEventListener("change", () => {
-        calculateExpireDate();
-    });
-
+    const recalculateNeighborPalette = (qteInput) => {
+        const row = qteInput.closest(".form-row");
+        const paletteInput = row.querySelector(".palette");
+    
+        if (!isUpdating) {
+            isUpdating = true;
+            const qte = parseFloat(qteInput.value) || 0;
+            paletteInput.value = Math.ceil(qte / qtePerPalette);
+            isUpdating = false;
+        }
+    
+        calculatePaletteTotal();
+    };
+    
     detailsContainer.addEventListener("input", (e) => {
+        if (isUpdating) return;
         if (e.target.matches(".palette")) {
+            recalculateNeighborQuantity(e.target);
             calculatePaletteTotal();
-            calculateQuantity();
+        }
+        if (e.target.matches(".qte")) {
+            recalculateNeighborPalette(e.target);
+            calculateGlobalQte();
         }
     });
+    
+    calculateGlobalQte();
+    calculatePaletteTotal();
 
     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
         const calculateTransferedQte = () => {
@@ -440,19 +467,15 @@
                 .catch(error => console.error('Error fetching emplacements:', error));
         }
     });
-    
-    calculateExpireDate();
-    calculateGlobalQte();
-    calculatePaletteTotal();
 
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
         let formIsValid = true;
         const do_check = document.getElementById("do_check").value;
-        document.querySelectorAll('.qte').forEach((qte) => {
-            qte.removeAttribute('readonly');
-        });
         document.querySelectorAll('.expire').forEach((expire) => {
+            expire.removeAttribute('readonly');
+        });
+        document.querySelectorAll('.qte').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
         document.querySelectorAll('.lot_number').forEach((expire) => {
@@ -490,19 +513,21 @@
 
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
-            document.querySelectorAll('.qte').forEach((qte) => {
-                qte.addAttribute('readonly');
+            document.querySelectorAll('.qte').forEach((expire) => {
+                expire.addAttribute('readonly');
             });
+            {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
+                document.querySelectorAll('.lot_number').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+                document.querySelectorAll('.production_date').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+                document.querySelectorAll('.diff_qte').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+            {% endif %}
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
-            });
-            document.querySelectorAll('.lot_number').forEach((expire) => {
-                expire.addAttribute('readonly');
-            });
-            document.querySelectorAll('.production_date').forEach((expire) => {
-                expire.addAttribute('readonly');
-            });
-            document.querySelectorAll('.diff_qte').forEach((expire) => {
                 expire.addAttribute('readonly');
             });
     

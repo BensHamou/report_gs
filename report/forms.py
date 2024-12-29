@@ -53,9 +53,34 @@ class DisponibilityForm(BaseModelForm):
     n_lot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'N° Lot')))
     qte = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité')))
     palette = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Palette')))
-    production_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('control', 'Date de Production')))
-    expiry_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('control', 'Date d\'expiration')))
+    production_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
+    expiry_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
 
     class Meta:
         model = Disponibility
         fields = ['emplacement', 'product', 'n_lot', 'qte', 'palette', 'production_date', 'expiry_date']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        emplacement = cleaned_data.get('emplacement')
+        product = cleaned_data.get('product')
+        n_lot = cleaned_data.get('n_lot')
+        production_date = cleaned_data.get('production_date')
+
+        if emplacement and product and n_lot:
+            existing_dispo = Disponibility.objects.filter(emplacement=emplacement, product=product, n_lot=n_lot)
+            
+            if self.instance and self.instance.pk:
+                existing_dispo = existing_dispo.exclude(pk=self.instance.pk)
+
+            if production_date:
+                production_year = production_date.year
+                existing_dispo = existing_dispo.filter(production_date__year=production_year)
+
+            if existing_dispo.exists():
+                error_message = "Une autre entrée avec le même emplacement, produit et N° Lot existe pour l'année de production spécifiée."
+                self.add_error('n_lot', error_message)
+                self.add_error('emplacement', error_message)
+                self.add_error('product', error_message)
+
+        return cleaned_data

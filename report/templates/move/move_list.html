@@ -126,7 +126,9 @@
                     <th class="table-header">Palettes</th>
                     <th class="table-header">N° Bl</th>
                     <th class="table-header">État</th>
-                    <th class="table-header" style="text-align: center;">Actions</th>
+                    {% if user.role in 'Admin,Gestionaire,Validateur' %}
+                        <th class="table-header" style="text-align: center;">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -143,12 +145,17 @@
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.palette }} Palettes</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.bl_str|default:"/" }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.state }}</td>
-                        <td class="text-center p-0 m-0">
-                            <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}')"
-                                class="btn" style="color: #5d5d5d;">
-                                <i class="far fa-trash-can"></i>
-                            </a>
-                        </td>
+                        {% if user.role in 'Admin,Gestionaire,Validateur' %}
+                            <td class="text-center p-0 m-0">
+                                <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}')"
+                                    class="btn
+                                    {% if user.role != 'Admin' and move.state != 'Brouillon' %}disabled 
+                                    {% elif user.role == 'Gestionaire' and move.create_uid != user %}disabled{% endif %}
+                                    " style="color: #5d5d5d;">
+                                    <i class="far fa-trash-can"></i>
+                                </a>
+                            </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 {% else %}
@@ -170,6 +177,10 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+    }
+    a.disabled {
+        pointer-events: none;
+        cursor: default;
     }
     .stat-widget {
         height: 212px;

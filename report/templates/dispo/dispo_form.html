@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-left mb-3">
-    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'dispos' %}')" 
+    <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'stocks' %}')" 
         class="text-decoration-none d-flex align-items-center" 
         style="letter-spacing: 1.2px;">
         <button class="btn btn-outshift-dark me-2" style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
@@ -23,13 +23,13 @@
         <p style="font-size: 18px; color: #133356;">{% if form.instance.pk %} Modification de stock {{ form.instance.designation }} {% else %} Créez {% endif %}</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
-        <button type="submit" form="packing-form" class="btn btn-primary" style="background-color: #1d71b8;">
+        <button type="submit" form="dispo-form" class="btn btn-primary" style="background-color: #1d71b8;">
             {% if form.instance.pk %} Sauvegarder {% else %} Nouveau {% endif %}
         </button>
     </div>
 </div>
 
-<form method="POST" id="packing-form">
+<form method="POST" id="dispo-form">
     {% csrf_token %}
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <div class="row mb-4">

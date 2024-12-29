@@ -1,7 +1,13 @@
 {% load static %}
 <nav class="col-lg-2 col-md-3 p-3 d-flex flex-column side_menu">
     <div class="text-center my-4 user-info">
-        <img src="{% static 'img/admin_profile.png' %}" class="rounded-circle img-fluid user-img" alt="User Image">
+        <img src="{% if user.role == 'Admin' %}
+            {% static 'img/admin_profile.png' %}
+        {% elif user.role in 'Gestionaire,Validateur' %}
+            {% static 'img/gs_profile.png' %}
+        {% elif user.role in 'Nouveau,Observateur' %}
+            {% static 'img/obs_profile.png' %}
+        {% endif %}" class="rounded-circle img-fluid user-img" alt="User Image">
         <p class="mt-2 bonjour-text d-none d-md-block">Bonjour,</p>
         <p class="username-text d-none d-md-block">{{ request.user.fullname }}</p>
     </div>
@@ -15,12 +21,15 @@
             </a>
         </li>
         {% endif %}
+        
+        {% if user.role in 'Admin,Gestionaire,Validateur' %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_f,select_p,move_in_pf,move_in_mp,edit_move_line_pf,edit_move_line_mp,move_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
                     <i class="margiin fas fa-plus"></i> 
                     <span class="menu-text">Entré</span>
                 </a>
             </li>
+        {% endif %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name == 'moves' %} activeP {% endif %}" href="{% url 'moves' %}">
                     <i class="margiin fas fa-chart-bar"></i> 
@@ -28,6 +37,12 @@
                 </a>
             </li>
         {% if user.role == 'Admin' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name == 'stocks' %} activeP {% endif %}" href="{% url 'stocks' %}">
+                    <i class="margiin fas fa-cubes"></i> 
+                    <span class="menu-text">Stock</span>
+                </a>
+            </li>
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 
@@ -97,17 +112,25 @@
                 </a>
             </li>
         {% endif %}
-        <li class="nav-item mb-2">
-            <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_pf,move_in_form,edit_move_line_pf,move_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
-                <i class="margiin fas fa-plus"></i> 
-            </a>
-        </li>
+        
+        {% if user.role in 'Admin,Gestionaire,Validateur' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name in 'select_c,select_p,move_in_pf,move_in_form,edit_move_line_pf,move_detail' %} activeP {% endif %}" href="{% url 'select_c' %}">
+                    <i class="margiin fas fa-plus"></i> 
+                </a>
+            </li>
+        {% endif %}
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name == 'moves' %} activeP {% endif %}" href="{% url 'moves' %}">
                 <i class="margiin fas fa-chart-bar"></i> 
             </a>
         </li>
         {% if user.role == 'Admin' %}
+            <li class="nav-item mb-2">
+                <a class="nav-link {% if request.resolver_match.url_name == 'stocks' %} activeP {% endif %}" href="{% url 'stocks' %}">
+                    <i class="margiin fas fa-cubes"></i> 
+                </a>
+            </li>
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 

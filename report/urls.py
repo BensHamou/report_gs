@@ -50,5 +50,11 @@ urlpatterns = [
     
     path('generate-qr-code/<int:detail_id>/', generateQRCode, name='generate_qr_code'),
 
+    path('stock/all/', listStockView, name='stocks'),
+    path('stock/create/', createStockView, name='create_stock'),
+    path('stock/edit/<int:id>/', editStockView, name='edit_stock'),
+    path('stock/delete/<int:id>/', deleteStockView, name='delete_stock'),
+    path('stock/extract/', extractStockView, name='extract_stock'),
+
 ]
 

@@ -1,4 +1,4 @@
-from account.decorators import admin_required, getRedirectionURL, admin_or_gs_required
+from account.decorators import admin_required, getRedirectionURL, admin_or_gs_required, can_view_move_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
@@ -15,7 +15,10 @@ import qrcode
 from datetime import date, datetime
 from .utils import getMProducts
 from django.utils.timezone import now, timedelta
-from .cron import check_temp_emplacements
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment, Font, PatternFill
 
 # PACKING
 
@@ -335,9 +338,13 @@ def categories_view(request):
 # MOVE IN
 
 @login_required(login_url='login')
-@admin_or_gs_required
+@can_view_move_required
 def list_move(request):
-    moves = Move.objects.filter(Q(gestionaire=request.user) | Q(line__in=request.user.lines.all().values('id'))).order_by('-date_modified')    
+    moves = Move.objects.filter(
+        Q(gestionaire=request.user) |
+        Q(line__in=request.user.lines.all().values('id')) |
+        Q(line__isnull=True, site=request.user.default_site)
+    ).order_by('-date_modified')
     filteredData = MoveFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
@@ -349,7 +356,7 @@ def list_move(request):
     move_out_today = Move.objects.filter(state='Validé', type='Sortie', date=today)
     palettes_today = sum(m.palette for m in move_out_today)
 
-    move_lines = MoveLine.objects.filter(move__state='Validé', move__type='Sortie').select_related('product')
+    move_lines = MoveLine.objects.filter(move__state='Validé', move__type='Sortie', move__line__in=request.user.lines.all().values('id')).select_related('product')
     
     product_totals = {}
     for move_line in move_lines:
@@ -362,7 +369,7 @@ def list_move(request):
             }
         product_totals[product_id]['total_qte'] += move_line.qte
     top_product = max(product_totals.values(), key=lambda p: p['total_qte'], default=None)
-    active_users_count = User.objects.filter(last_login__gte=now() - timedelta(hours=24)).count()
+    active_users_count = User.objects.filter(last_login__gte=now() - timedelta(hours=24), lines__in=request.user.lines.all()).count()
 
 
     context = {'page': page, 'filteredData': filteredData, 'palettes_today': palettes_today, 'top_product': top_product, 'active_users_count': active_users_count}
@@ -512,6 +519,7 @@ def update_move_pf(request, move_line_id):
                     move.gestionaire_id = gestionaire_id
                     move.date = production_date
                     move_line.lot_number = lot_number
+                
                 handleDetails(request, move_line)
                 move.write_uid = request.user
                 move.save()
@@ -605,7 +613,9 @@ def update_move_mp(request, move_line_id):
                     move.date = production_date
                     move.save()
 
-                    move_line.lot_number = lot_number
+                    if move.type == 'Entré':
+                        move_line.lot_number = lot_number
+
                     move_line.observation = observation
                     move_line.write_uid = cu
                     move_line.diff_qte = diff_qte
@@ -628,7 +638,7 @@ def update_move_mp(request, move_line_id):
 # VIEWS 
 
 @login_required(login_url='login')
-@admin_or_gs_required        
+@can_view_move_required        
 def move_detail(request, move_id):
     move = get_object_or_404(Move, id=move_id)
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
@@ -639,11 +649,12 @@ def move_detail(request, move_id):
         can_validate = move.state == 'Confirmé'
     elif request.user.role == 'Gestionaire' and move.gestionaire == request.user:
         can_edit = move.state == 'Brouillon' and move.type == 'Entré'
-        can_cancel = move.state == 'Brouillon'
+        can_cancel = move.state == 'Brouillon' and (move.type == 'Sotrie' or not move.is_transfer)
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
+        can_cancel = move.state == 'Brouillon'
 
     context = {'move': move, 'can_edit': can_edit, 'can_cancel': can_cancel, 'can_confirm': can_confirm, 'can_validate': can_validate, 'can_print': can_print}
     return render(request, 'details_move.html', context)
@@ -717,6 +728,12 @@ def cancelMove(request, move_id):
 
         success = move.changeState(request.user.id, 'Annulé')
         if success:
+            if move.is_transfer and move.type == 'Entré':
+                try:
+                    move.cancel_transfer()
+                    move.mirror.changeState(request.user.id, 'Annulé')
+                except RuntimeError as e:
+                    return JsonResponse({'success': False, 'message': str(e)})
             return JsonResponse({'success': True, 'message': 'Movement annulé avec succès.', 'move_id': move_id})
         else:
             return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation du movement.'})
@@ -922,4 +939,142 @@ def create_emplacements_for_warehouse_9():
         )
 
     print(f"Emplacements E6-E28 created for warehouse {warehouse.designation} (ID 9).")
+
+# STOCK
+
+@login_required(login_url='login')
+@admin_required
+def listStockView(request):
+    stocks = Disponibility.objects.all().order_by('-date_modified')
+    filteredData = DisponibilityFilter(request.GET, queryset=stocks)
+    stocks = filteredData.qs
+    
+    total_qte = stocks.aggregate(Sum('qte'))['qte__sum'] or 0
+    total_palettes = stocks.aggregate(Sum('palette'))['palette__sum'] or 0
+
+    paginator = Paginator(stocks, request.GET.get('page_size', 12))
+    page_number = request.GET.get('page')
+    page = paginator.get_page(page_number)
+
+    context = {'page': page, 'filteredData': filteredData, 'total_qte': total_qte, 'total_palettes': total_palettes}
+    return render(request, 'list_dispo.html', context)
+
+@login_required(login_url='login')
+@admin_required
+def deleteStockView(request, id):
+    stock = get_object_or_404(Disponibility, id=id)
+    try:
+        stock.delete()
+        url_path = reverse('stocks')
+        return redirect(getRedirectionURL(request, url_path))
+    except Exception as e:
+        messages.error(request, f"Erreur lors de la suppression de stock : {e}")
+        return redirect(getRedirectionURL(request, reverse('stocks')))
+
+@login_required(login_url='login')
+@admin_required
+def createStockView(request):
+    form = DisponibilityForm()
+    if request.method == 'POST':
+        form = DisponibilityForm(request.POST)
+        if form.is_valid():
+            form.save()
+            url_path = reverse('stocks')
+            return redirect(getRedirectionURL(request, url_path))
+        else:
+            messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    
+    context = {'form': form}
+    return render(request, 'dispo_form.html', context)
+
+@login_required(login_url='login')
+@admin_required
+def editStockView(request, id):
+    stock = get_object_or_404(Disponibility, id=id)
+    form = DisponibilityForm(instance=stock)
+    
+    if request.method == 'POST':
+        form = DisponibilityForm(request.POST, instance=stock)
+        if form.is_valid():
+            form.save()
+            url_path = reverse('stocks')
+            return redirect(getRedirectionURL(request, url_path))
+        else:
+            messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
+    
+    context = {'form': form, 'stock': stock}
+    return render(request, 'dispo_form.html', context)
+
+def extractStockView(request):
+    site = request.GET.get('site')
+    warehouse = request.GET.get('warehouse')
+    emplacement = request.GET.get('emplacement')
+    n_lot = request.GET.get('n_lot')
+    product = request.GET.get('product')
+
+    queryset = Disponibility.objects.all()
+    if site:
+        queryset = queryset.filter(emplacement__warehouse__site__designation__icontains=site)
+    if warehouse:
+        queryset = queryset.filter(emplacement__warehouse__designation__icontains=warehouse)
+    if emplacement:
+        queryset = queryset.filter(emplacement__designation__icontains=emplacement)
+    if n_lot:
+        queryset = queryset.filter(n_lot__icontains=n_lot)
+    if product:
+        queryset = queryset.filter(product__designation__icontains=product)
+
+    wb = Workbook()
+    ws = wb.active
+    filename = f"État Stock {timezone.now().strftime('%Y-%m-%d')}"
+    ws.title = "Stock"
+
+    header_text = f"Extraction du Stock {timezone.now().strftime('%Y-%m-%d')} - GrupoPuma"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
+    ws["A1"] = header_text
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws["A1"].font = Font(bold=True, color="FFFFFF", size=42)
+    ws["A1"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+
+    ws.row_dimensions[2].height = 10
+
+    headers = ["Site", "Magasin", "Zone", "Produit", "N° Lot", "Quantité", "Palette", "Date Production", "Date Expiration"]
+    for col_num, header in enumerate(headers, 1):
+        col_letter = get_column_letter(col_num)
+        ws[f"{col_letter}3"] = header
+        ws[f"{col_letter}3"].font = Font(bold=True, color="FFFFFF")
+        ws[f"{col_letter}3"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+        ws[f"{col_letter}3"].alignment = Alignment(horizontal="center", vertical="center")
+        ws.column_dimensions[col_letter].auto_size = True
+
+    for row_num, dispo in enumerate(queryset, 4):
+        ws[f"A{row_num}"] = dispo.emplacement.warehouse.site.designation
+        ws[f"B{row_num}"] = dispo.emplacement.warehouse.designation
+        ws[f"C{row_num}"] = dispo.emplacement.designation
+        ws[f"D{row_num}"] = dispo.product.designation
+        ws[f"E{row_num}"] = dispo.n_lot or '/'
+        ws[f"F{row_num}"] = dispo.qte or '1'
+        ws[f"G{row_num}"] = dispo.palette or '1'
+        ws[f"H{row_num}"] = dispo.production_date.strftime('%Y-%m-%d') if dispo.production_date else "/"
+        ws[f"I{row_num}"] = dispo.expiry_date.strftime('%Y-%m-%d') if dispo.expiry_date else "/"
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+    ws.auto_filter.ref = f"A3:I{len(queryset) + 2}"
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}.xlsx"'
+    wb.save(response)
+    return response
 

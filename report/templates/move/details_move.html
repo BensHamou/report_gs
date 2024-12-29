@@ -293,6 +293,8 @@
 <div class="d-flex justify-content-center" style="padding: 15px;">
     {% if can_confirm %}
         <button class="btn-validate mr-2" onclick="confirmMoveLine('{{ move.id }}')">Confirmer</button>
+    {% endif %}
+    {% if can_cancel %}
         <button class="btn-cancel" onclick="cancelMoveLine('{{ move.id }}')">Annuler</button>
     {% endif %}
     {% if can_validate %}

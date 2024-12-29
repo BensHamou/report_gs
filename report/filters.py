@@ -90,5 +90,17 @@ class MoveFilter(django_filters.FilterSet):
         return queryset.filter(move_lines__details__emplacement__designation__icontains=value).distinct()
 
     class Meta:
-        model = MoveLine
+        model = Move
         fields = ['type', 'site', 'warehouse', 'emplacement', 'lot_number', 'start_date', 'end_date', 'product', 'state']
+
+class DisponibilityFilter(django_filters.FilterSet):
+
+    n_lot = django_filters.CharFilter(field_name="n_lot", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'N° Lot')))
+    site = django_filters.CharFilter(field_name="emplacement__warehouse__site__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Site')))
+    warehouse = django_filters.CharFilter(field_name="emplacement__warehouse__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Magasin')))
+    emplacement = django_filters.CharFilter(field_name="emplacement__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Emplacement')))
+    product = django_filters.CharFilter(field_name="product__designation", lookup_expr='icontains', widget=forms.TextInput(attrs=getAttrs('search2', 'Produit')))
+    
+    class Meta:
+        model = Disponibility
+        fields = ['n_lot', 'site', 'warehouse', 'emplacement', 'product']

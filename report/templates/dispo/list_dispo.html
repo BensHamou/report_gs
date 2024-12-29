@@ -1,0 +1,146 @@
+{% extends "main.html" %}
+
+{% block title %}
+    Paramètre Stock
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="w-100">
+        <p class="page-title">Stock <i class="fas fa-cubes" style='font-size: 24px'></i></p>
+    </div>
+    <div class="row align-items-center mb-3">
+        <div class="col-6">
+            <h4 style="color: #5d5d5d;">Vision Global</h4>
+        </div>
+    </div>
+    <div id="filter-section" class="mb-3">
+        <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;" id="filter-form">
+            <div class="row mb-3">
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                    <label for="site" class="form-label">Site</label>
+                    {{ filteredData.form.site }}
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                    <label for="warehouse" class="form-label">Entrepôt</label>
+                    {{ filteredData.form.warehouse }}
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                    <label for="emplacement" class="form-label">Emplacement</label>
+                    {{ filteredData.form.emplacement }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                    <label for="lot_number" class="form-label">Lot</label>
+                    {{ filteredData.form.n_lot }}
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-2">
+                    <label for="lot_number" class="form-label">Produit</label>
+                    {{ filteredData.form.product }}
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
+                    <label for="page_size" class="form-label">Ligne</label>
+                    <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control">
+                </div>
+                <div class="col-lg-2 col-md-12 col-sm-12 d-flex justify-content-end align-items-center">
+                    <button type="submit" class="btn btn-primary me-2 mt-3" style="background-color: #1d71b8;">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <button type="button" class="btn btn-primary me-2 mt-3 extract-btn" style="background-color: #1d71b8;">
+                        <i class="fas fa-file-csv"></i>
+                    </button>
+                    <a href="{% url 'create_stock' %}" class="btn btn-primary mt-3" style="background-color: #1d71b8;">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <table class="table table-borderless">
+            <thead>
+                <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
+                    <th class="table-header">Site</th>
+                    <th class="table-header">Magasin</th>
+                    <th class="table-header">Zone</th>
+                    <th class="table-header">N° Lot</th>
+                    <th class="table-header">Produit</th>
+                    <th class="table-header">Quantité</th>
+                    <th class="table-header">Palette</th>
+                    <th class="table-header">Produit le</th>
+                    <th class="table-header">Expire le</th>
+                    <th class="table-header" style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if page %}
+                    {% for dispo in page %}
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                        <td class="table-text">{{ dispo.emplacement.warehouse.site }}</td>
+                        <td class="table-text">{{ dispo.emplacement.warehouse.designation }}</td>
+                        <td class="table-text">{{ dispo.emplacement.designation }}</td>
+                        <td class="table-text">{{ dispo.n_lot|default:'/' }}</td>
+                        <td class="table-text">{{ dispo.product }}</td>
+                        <td class="table-text">{{ dispo.qte|default:'1' }}</td>
+                        <td class="table-text">{{ dispo.palette|default:'1' }}</td>
+                        <td class="table-text">{{ dispo.production_date|default:'/' }}</td>
+                        <td class="table-text">{{ dispo.expiry_date|default:'31 décembre 2099' }}</td>
+                        <td class="text-center p-0 m-0">
+                            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_stock' dispo.id %}')" 
+                                class="btn" style="color: #5d5d5d;">
+                                <i class="far fa-pen-to-square"></i>
+                            </a>
+                            <a href="javascript:void(0);" onclick="confirmDispoDel('{{ dispo.id }}')"
+                                class="btn" style="color: #5d5d5d;">
+                                <i class="far fa-trash-can"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="color: #5d5d5d; font-weight: bold; border-top: 2px solid #ccc;">
+                        <td colspan="5" class="table-text">Totaux:</td>
+                        <td class="table-text">{{ total_qte }}</td>
+                        <td class="table-text">{{ total_palettes }}</td>
+                        <td colspan="3"></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center" style="color: #5d5d5d;">Aucun enregistrement trouvé</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if page.has_other_pages %}
+        {% include 'pagination.html' %}
+    {% endif %}
+</div>
+
+<script>
+    function confirmDispoDel(dispoId) {
+        swal({
+            title: "Confirmation de la suppression.",
+            text: `Etes-vous sûr que vous voulez supprimer ID ${dispoId}?`,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                window.location.href = "{% url 'delete_stock' 0 %}".replace('0', dispoId);
+            }
+        });
+    }
+    document.querySelector('.extract-btn').addEventListener('click', function () {
+        const form = document.getElementById('filter-form');
+        const url = "{% url 'extract_stock' %}";
+        const formData = new FormData(form);
+        const queryParams = new URLSearchParams(formData).toString();
+        window.location.href = `${url}?${queryParams}`;
+    });
+</script>
+{% endblock %}
