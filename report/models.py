@@ -309,7 +309,7 @@ class MoveLine(BaseModel):
             return self.lot_number
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':
-                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(5)}/{str(self.move.date.year)[-2:]}' or '/'
+                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(4)}/{str(self.move.date.year)[-2:]}' or '/'
             else:
                 return self.lot_number
         else:
@@ -358,11 +358,11 @@ class MoveBL(BaseModel):
     @property
     def num(self):
         if self.move.is_transfer:
-            return f'{self.move.site.prefix_btr}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
+            return f'{self.move.site.prefix_btr}{str(self.numero).zfill(4)}/{str(self.move.date.year)[-2:]}'
         elif self.is_annexe:
-            return f'{self.move.site.prefix_bl_a}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
+            return f'{self.move.site.prefix_bl_a}{str(self.numero).zfill(4)}/{str(self.move.date.year)[-2:]}'
         else:
-            return f'{self.move.site.prefix_bl}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
+            return f'{self.move.site.prefix_bl}{str(self.numero).zfill(4)}/{str(self.move.date.year)[-2:]}'
     
     def __str__(self):
         return f"{self.move} - {self.numero}"
