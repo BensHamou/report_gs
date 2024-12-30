@@ -87,7 +87,7 @@
                     <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
                         <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
-                        <input type="number" name="palette_0" id="palette_0" class="form-control palette" value="1" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required hidden>
+                        <input type="number" name="palette_0" id="palette_0" class="form-control palette" value="1" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" hidden required>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>
@@ -133,6 +133,9 @@
                 input.id = newId;
                 input.name = input.name.replace(/_\d+$/, `_${rowId}`);
                 input.value = '';
+                if(input.classList.contains('palette')) {
+                    input.value = 1;
+                }
             });
 
             const btn = newRow.querySelector('#add-row');
