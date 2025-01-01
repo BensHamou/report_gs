@@ -643,7 +643,7 @@ def move_detail(request, move_id):
     move = get_object_or_404(Move, id=move_id)
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
-        can_edit = True
+        can_edit = move.type == 'Entré'
         can_cancel = move.state == 'Brouillon'
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
