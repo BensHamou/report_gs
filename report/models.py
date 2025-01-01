@@ -105,11 +105,12 @@ class Move(BaseModel):
     site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='moves')
     line = models.ForeignKey(Line, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
-    gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Admin'))
+    gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Validateur') | Q(role='Admin'))
 
     date = models.DateField(default=timezone.now, null=True, blank=True)
     is_transfer = models.BooleanField(default=False)
-    stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True)
+    stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
+
 
     state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
