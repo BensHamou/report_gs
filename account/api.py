@@ -115,8 +115,9 @@ class CreateMoveOut(APIView):
         move_type = request.data.get('move_type', 'normal')
         if move_type not in ['consumption', 'normal', 'isolation', 'transfer']:
             return Response({"detail": "Type de mouvement invalide."}, status=400)
-        is_transfer = move_type  == 'transfer'
-        is_isolation = move_type == 'isolation'
+
+        is_transfer, is_isolation = move_type in ['transfer', 'isolation'], move_type in ['isolation', 'consumption']
+
         transfer_to = request.data.get('transfer_to', None)
         transferred_products = request.data.get('transferred_products', [])
         n_bls = request.data.get('n_bls', [])
@@ -125,11 +126,10 @@ class CreateMoveOut(APIView):
             return Response({"detail": "User ID manquant"}, status=400)
         if not transferred_products:
             return Response({"detail": "Produits manquants"}, status=400)
-        
-        if is_transfer and not transfer_to:
+        if move_type == 'transfer' and not transfer_to:
             return Response({"detail": "Site de transfert manquant"}, status=400)
-        
-
+        elif not move_type == 'transfer':
+            transfer_to = None
 
         try:
             user = User.objects.get(id=user_id)

@@ -201,11 +201,11 @@ class Move(BaseModel):
         if not self.integrate_in_stock():
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
         
-        if self.is_transfer:
+        if self.is_transfer and not self.is_isolation and self.type == 'Sortie':
             self.create_mirror()
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
-        if self.is_isolation and self.type == 'Sortie':
+        if self.is_transfer and self.is_isolation and self.type == 'Sortie':
             self.create_isolation()
             return True, 'Stock ajusté créé avec succès.'
         
@@ -220,9 +220,10 @@ class Move(BaseModel):
         return True, 'Stock ajusté et codes QR générés avec succès.'
     
     def create_mirror(self):
-        if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer:
+        if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer and not self.is_isolation:
             try:
-                mirror = Move.objects.create(site=self.transfer_to, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', is_transfer=True, state='Brouillon', mirror=self)
+                mirror = Move.objects.create(site=self.transfer_to, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', 
+                                             is_transfer=self.is_transfer, is_isolation=self.is_isolation, state='Brouillon', mirror=self)
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
@@ -237,11 +238,11 @@ class Move(BaseModel):
                 raise RuntimeError(f"Erreur lors de la création du miroir: {e}")
     
     def create_isolation(self):
-        if self.type == 'Sortie' and self.state == 'Validé' and self.is_isolation:
+        if self.type == 'Sortie' and self.state == 'Validé' and self.is_transfer and self.is_isolation:
             try:
                 emp = self.site.get_quarantine()
-                mirror = Move.objects.create(site=self.site, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', is_isolation=True, 
-                                             state='Brouillon', mirror=self)
+                mirror = Move.objects.create(site=self.site, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', 
+                                             is_isolation=self.is_isolation, is_transfer=self.is_isolation, state='Brouillon', mirror=self)
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
@@ -258,7 +259,7 @@ class Move(BaseModel):
             
     def cancel_transfer(self):
         try:
-            if self.is_transfer and self.state == 'Annulé' and self.mirror and self.type == 'Entré':
+            if self.is_transfer and not self.is_isolation and self.state == 'Annulé' and self.mirror and self.type == 'Entré':
                 for ml in self.move_lines.all():
                     pal = ml.product.qte_per_pal
                     if pal == 0:
@@ -287,19 +288,14 @@ class Move(BaseModel):
     
     @property
     def display_type(self):
-
-        if self.type == 'Entré' and not self.is_transfer and not self.is_isolation:
-            return 'Entré'
-        elif self.type == 'Entré' and self.is_isolation:
-            return 'Isolation Entrant'
-        elif self.type == 'Entré' and self.is_transfer:
-            return 'Transfer Entrant'
-        elif self.type == 'Sortie' and self.is_transfer:
-            return 'Transfer Sortant'
-        elif self.type == 'Sortie' and self.is_isolation:
-            return 'Isolation Sortant'
+        if self.is_isolation and self.is_transfer:
+            return 'Isolation Entrant' if self.type == 'Entré' else 'Isolation Sortant'
+        elif self.is_transfer:
+            return 'Transfer Entrant' if self.type == 'Entré' else 'Transfer Sortant'
+        elif self.is_isolation and self.type == 'Sortie':
+            return 'Consomation'
         else:
-            return 'Sortie'
+            return self.type
     
     def is_in_mp(self):
         return all([ml.product.type == 'Matière Première' for ml in self.move_lines.all()]) and not self.is_transfer and self.type == 'Entré'
