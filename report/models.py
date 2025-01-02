@@ -3,6 +3,7 @@ from django.template.defaultfilters import slugify
 from django.db.models import Sum, Q
 from PIL import Image as PILImage
 from django.utils import timezone
+import datetime
 from django.db import models
 import math
 import os
@@ -112,7 +113,7 @@ class Move(BaseModel):
     shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Validateur') | Q(role='Admin'))
 
-    date = models.DateField(default=timezone.now, null=True, blank=True)
+    date = models.DateField(default=datetime.date.today, null=True, blank=True)
     is_transfer = models.BooleanField(default=False)
     is_isolation = models.BooleanField(default=False)
     stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
@@ -204,7 +205,7 @@ class Move(BaseModel):
             self.create_mirror()
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
-        if self.is_isolation:
+        if self.is_isolation and self.type == 'Sortie':
             self.create_isolation()
             return True, 'Stock ajusté créé avec succès.'
         
@@ -244,9 +245,9 @@ class Move(BaseModel):
                 self.mirror = mirror
                 self.save()
                 for ml in self.move_lines.all():
-                    move_mirror = MoveLine.objects.create(lot_number=ml.n_lot, product=ml.product, move=mirror, expiry_date=ml.expiry_date, 
-                                                          create_uid=ml.create_uid, write_uid=ml.write_uid)
                     for d in ml.details.all():
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=d.expiry_date, 
+                                                          create_uid=ml.create_uid, write_uid=ml.write_uid)
                         LineDetail.objects.create(move_line=move_mirror, warehouse=emp.warehouse, emplacement=emp, 
                                                   qte=d.qte, palette=d.palette, expiry_date=d.expiry_date, code=d.code, n_lot=d.n_lot)
                 for bl in self.bls.all():

@@ -130,7 +130,7 @@ class CreateMoveOut(APIView):
         try:
             user = User.objects.get(id=user_id)
             move = Move.objects.create(site=user.default_site, transfer_to_id=transfer_to, gestionaire=user, type='Sortie', is_transfer=is_transfer, 
-                                       is_isolation=is_isolation, state='Brouillon', date=timezone.now(), create_uid=user, write_uid=user)
+                                       is_isolation=is_isolation, state='Brouillon', date=datetime.today(), create_uid=user, write_uid=user)
 
             for product_data in transferred_products:
                 product_id = product_data.get('product_id')
@@ -155,7 +155,7 @@ class CreateMoveOut(APIView):
                 if not numero:
                     raise ValueError("Numéro BL manquant")
                 MoveBL.objects.create(move=move, numero=numero, is_annexe=is_annexe)
-            return Response({"detail": "Mouvement créé avec succès", "move_id": move.id, "move": MoveSerializer(move)}, status=201)
+            return Response({"detail": "Mouvement créé avec succès", "move_id": move.id, "move": MoveSerializer(move).data}, status=201)
        
         except User.DoesNotExist:
             return Response({"detail": "Utilisateur introuvable"}, status=404)
@@ -166,7 +166,6 @@ class CreateMoveOut(APIView):
             move.delete()
             return Response({"detail": f"Emplacement introuvable (ID: {emplacement_id})"}, status=400)
         except Exception as e:
-            move.delete()
             return Response({"detail": f"Erreur lors de la création de mouvement - {e}"}, status=400)
         except ValueError as e:
             move.delete()
@@ -192,7 +191,7 @@ class ConfirmMoveOut(APIView):
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
                 return Response({"detail": "Erreur lors de la confirmation du mouvement."}, status=400)
-            return Response({"detail": "Mouvement confirmée avec succès.", "move": MoveSerializer(move)}, status=200)
+            return Response({"detail": "Mouvement confirmée avec succès.", "move": MoveSerializer(move).data}, status=200)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         except Move.DoesNotExist:
@@ -216,7 +215,7 @@ class CancelMoveOut(APIView):
             success = move.changeState(request.user.id, 'Annulé')
             if not success:
                 return Response({"detail": "Erreur lors de l'annulation du mouvement."}, status=400)
-            return Response({"detail": "Mouvement annulé avec succès.", "move": MoveSerializer(move)}, status=200)
+            return Response({"detail": "Mouvement annulé avec succès.", "move": MoveSerializer(move).data}, status=200)
         except Move.DoesNotExist:
             return Response({"detail": "Mouvement introuvable."}, status=404)
         
@@ -264,9 +263,10 @@ class ValidateMoveOut(APIView):
                 move.mirror.changeState(request.user.id, 'Confirmé')
                 move.mirror.can_validate()
                 move.mirror.changeState(request.user.id, 'Validé')
+                move.do_after_validation(user=request.user)
                 return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 
-            return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move)}, status=200)
+            return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move).data}, status=200)
         except Move.DoesNotExist:
             return Response({"detail": "Mouvement introuvable."}, status=404)
         except ValueError as e:
