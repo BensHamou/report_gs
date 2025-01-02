@@ -40,7 +40,6 @@ class MoveFilter(django_filters.FilterSet):
     TYPE_CHOICES = [
         ('all', 'Tous'),
         ('entree', 'Entré'),
-        ('entree_transfer', 'Entrée & Transfer'),
         ('transfer', 'Transfers'),
         ('sortie', 'Sortie'),
     ]
@@ -75,8 +74,8 @@ class MoveFilter(django_filters.FilterSet):
             return queryset.filter(type__in=['Entré', 'Sortie'])
         elif value == 'entree':
             return queryset.filter(type='Entré', is_transfer=False)
-        elif value == 'entree_transfer':
-            return queryset.filter(Q(type='Entré') | Q(is_transfer=True))
+        elif value == 'isolation':
+            return queryset.filter(Q(is_isolation=True))
         elif value == 'transfer':
             return queryset.filter(is_transfer=True)
         elif value == 'sortie':

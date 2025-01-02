@@ -137,7 +137,7 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.id }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.n_lots|default:'/' }}</td>
-                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')" style="cursor: pointer; color: {% if 'Transfer' in move.display_type %}blue{% elif move.display_type == 'Sortie' %}red{% else %}green{% endif %}">{{ move.display_type }}</td>
+                        <td class="table-text" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')" style="cursor: pointer; color: {% if 'Transfer' in move.display_type %}blue{% elif move.display_type == 'Sortie' %}red{% elif 'Isolation' in move.display_type %}orange{% else %}green{% endif %}">{{ move.display_type }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.date_created }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.gestionaire }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.site }}</td>

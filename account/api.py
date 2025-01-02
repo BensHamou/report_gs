@@ -113,6 +113,8 @@ class CreateMoveOut(APIView):
     def post(self, request, *args, **kwargs):
         user_id = request.data.get('user_id')
         move_type = request.data.get('move_type', 'normal')
+        if move_type not in ['consumption', 'normal', 'isolation', 'transfer']:
+            return Response({"detail": "Type de mouvement invalide."}, status=400)
         is_transfer = move_type  == 'transfer'
         is_isolation = move_type == 'isolation'
         transfer_to = request.data.get('transfer_to', None)
@@ -146,6 +148,8 @@ class CreateMoveOut(APIView):
                     n_lot = from_data.get('n_lot')
                     expiry_date = from_data.get('expiry_date')
                     emplacement = Emplacement.objects.get(id=emplacement_id)
+                    if move_type == 'consumption' and not emplacement.quarantine:
+                        raise ValueError("Vous ne pouvez pas consommer de produits en dehors de la zone de quarantaine.")
                     LineDetail.objects.create(move_line=move_line, warehouse=emplacement.warehouse, expiry_date=expiry_date,
                                               emplacement=emplacement, qte=qte, palette=palette, n_lot=n_lot, create_uid=user, write_uid=user)
 
@@ -165,13 +169,11 @@ class CreateMoveOut(APIView):
         except Emplacement.DoesNotExist:
             move.delete()
             return Response({"detail": f"Emplacement introuvable (ID: {emplacement_id})"}, status=400)
-        except Exception as e:
-            return Response({"detail": f"Erreur lors de la création de mouvement - {e}"}, status=400)
         except ValueError as e:
-            move.delete()
+            if move:
+                move.delete()
             return Response({"detail": str(e)}, status=400)
         except Exception as e:
-            move.delete()
             return Response({"detail": f"Erreur interne du serveur - {e}"}, status=500)
 
 class ConfirmMoveOut(APIView):

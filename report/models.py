@@ -247,7 +247,7 @@ class Move(BaseModel):
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
                         move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=d.expiry_date, 
-                                                          create_uid=ml.create_uid, write_uid=ml.write_uid)
+                                                          create_uid=ml.create_uid, write_uid=ml.write_uid, mirror=d)
                         LineDetail.objects.create(move_line=move_mirror, warehouse=emp.warehouse, emplacement=emp, 
                                                   qte=d.qte, palette=d.palette, expiry_date=d.expiry_date, code=d.code, n_lot=d.n_lot)
                 for bl in self.bls.all():
@@ -287,12 +287,17 @@ class Move(BaseModel):
     
     @property
     def display_type(self):
-        if self.type == 'Entré' and not self.is_transfer and len(self.move_lines.all()) == 1:
+
+        if self.type == 'Entré' and not self.is_transfer and not self.is_isolation:
             return 'Entré'
+        elif self.type == 'Entré' and self.is_isolation:
+            return 'Isolation Entrant'
         elif self.type == 'Entré' and self.is_transfer:
             return 'Transfer Entrant'
         elif self.type == 'Sortie' and self.is_transfer:
             return 'Transfer Sortant'
+        elif self.type == 'Sortie' and self.is_isolation:
+            return 'Isolation Sortant'
         else:
             return 'Sortie'
     

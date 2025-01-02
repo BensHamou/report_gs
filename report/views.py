@@ -713,7 +713,7 @@ def validateMove(request, move_id):
                     move.mirror.changeState(request.user.id, 'Confirmé')
                     move.mirror.can_validate()
                     move.mirror.changeState(request.user.id, 'Validé')
-                    move.do_after_validation(request.user)
+                    move.mirror.do_after_validation(request.user)
                     return JsonResponse({'success': True, 'message': "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine.", 'move_id': move_id})
                 
                 return JsonResponse({'success': True, 'message': message, 'move_id': move_id})
