@@ -45,6 +45,9 @@ class Site(BaseModel):
     prefix_bl_a = models.CharField(max_length=50)
     prefix_btr = models.CharField(max_length=50)
 
+    def get_quarantine(self):
+        return Emplacement.objects.filter(warehouse__site=self, quarantine=True).first()
+
     def __str__(self):
         return self.designation
 

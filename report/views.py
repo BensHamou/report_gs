@@ -381,9 +381,9 @@ def delete_move(request, move_id):
     move = get_object_or_404(Move, id=move_id)
     try:
         move.delete()
-        messages.success(request, "Movement supprimée avec succès.")
+        messages.success(request, "Mouvement supprimée avec succès.")
     except Exception as e:
-        messages.error(request, f"Erreur lors de la suppression du Movement : {e}")
+        messages.error(request, f"Erreur lors de la suppression du Mouvement : {e}")
     return redirect(getRedirectionURL(request, reverse('moves')))
 
 # MOVE IN - Produit Fini
@@ -667,11 +667,11 @@ def confirmMove(request, move_id):
         try:
             move = Move.objects.get(id=move_id)
         except Move.DoesNotExist:
-            messages.success(request, 'Movement introuvable')
-            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+            messages.success(request, 'Mouvement introuvable')
+            return JsonResponse({'success': False, 'message': 'Mouvement introuvable.'})
         
         if move.state != 'Brouillon':
-            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Brouillon pour être confirmé.'})
+            return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon pour être confirmé.'})
         
         try:
             move.check_can_confirm()
@@ -680,9 +680,9 @@ def confirmMove(request, move_id):
             
         success = move.changeState(request.user.id, 'Confirmé')
         if success:
-            return JsonResponse({'success': True, 'message': 'Movement confirmé avec succès.', 'move_id': move_id})
+            return JsonResponse({'success': True, 'message': 'Mouvement confirmé avec succès.', 'move_id': move_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de la confirmation du movement.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la confirmation du mouvement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
@@ -692,11 +692,11 @@ def validateMove(request, move_id):
         try:
             move = Move.objects.get(id=move_id)
         except Move.DoesNotExist:
-            messages.success(request, 'Movement introuvable')
-            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+            messages.success(request, 'Mouvement introuvable')
+            return JsonResponse({'success': False, 'message': 'Mouvement introuvable.'})
         
         if move.state != 'Confirmé':
-            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Confirmé pour être validé.'})
+            return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Confirmé pour être validé.'})
         
         try:
             move.can_validate()
@@ -707,11 +707,19 @@ def validateMove(request, move_id):
         if success:
             try:
                 success, message = move.do_after_validation(request.user)
+
+                if move.is_isolation:
+                    move.mirror.check_can_confirm()
+                    move.mirror.changeState(request.user.id, 'Confirmé')
+                    move.mirror.can_validate()
+                    move.mirror.changeState(request.user.id, 'Validé')
+                    return JsonResponse({'success': True, 'message': "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine.", 'move_id': move_id})
+                
                 return JsonResponse({'success': True, 'message': message, 'move_id': move_id})
             except ValueError as e:
                 return JsonResponse({'success': False, 'message': str(e)})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de la validation du movement.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de la validation du mouvement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 @login_required(login_url='login')
@@ -721,11 +729,11 @@ def cancelMove(request, move_id):
         try:
             move = Move.objects.get(id=move_id)
         except Move.DoesNotExist:
-            messages.success(request, 'Movement introuvable')
-            return JsonResponse({'success': False, 'message': 'Movement introuvable.'})
+            messages.success(request, 'Mouvement introuvable')
+            return JsonResponse({'success': False, 'message': 'Mouvement introuvable.'})
         
         if move.state != 'Brouillon':
-            return JsonResponse({'success': False, 'message': 'Le movement doit être à l\'état Brouillon pour être annulé.'})
+            return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon pour être annulé.'})
 
         success = move.changeState(request.user.id, 'Annulé')
         if success:
@@ -735,9 +743,9 @@ def cancelMove(request, move_id):
                     move.mirror.changeState(request.user.id, 'Annulé')
                 except RuntimeError as e:
                     return JsonResponse({'success': False, 'message': str(e)})
-            return JsonResponse({'success': True, 'message': 'Movement annulé avec succès.', 'move_id': move_id})
+            return JsonResponse({'success': True, 'message': 'Mouvement annulé avec succès.', 'move_id': move_id})
         else:
-            return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation du movement.'})
+            return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation du mouvement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 

@@ -69,8 +69,13 @@ class Product(BaseModel):
     def unit_qte(self, site_id):
         return self.disponibilities.filter(emplacement__warehouse__site_id=site_id).aggregate(total=Sum('qte'))['total'] or 0
 
-    def state_in_site(self, site_id):
-        return self.disponibilities.filter(emplacement__warehouse__site_id=site_id)
+    def state_in_site(self, site_id, move_type='normal'):
+        queryset = self.disponibilities.filter(emplacement__warehouse__site_id=site_id)
+        if move_type == 'normal':
+            queryset = queryset.order_by('expiry_date')
+        elif move_type == 'consumption':
+            queryset = queryset.filter(emplacement__quarantine=True)
+        return queryset
 
     def tn_qte(self, site_id):
         return round(self.unit_qte(site_id) / 1000, 2)
@@ -109,6 +114,7 @@ class Move(BaseModel):
 
     date = models.DateField(default=timezone.now, null=True, blank=True)
     is_transfer = models.BooleanField(default=False)
+    is_isolation = models.BooleanField(default=False)
     stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
 
 
@@ -197,6 +203,11 @@ class Move(BaseModel):
         if self.is_transfer:
             self.create_mirror()
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
+        
+        if self.is_isolation:
+            self.create_isolation()
+            return True, 'Stock ajusté créé avec succès.'
+        
         else:
             for ml in self.move_lines.all():
                 for detail in ml.details.all():
@@ -222,7 +233,27 @@ class Move(BaseModel):
                 for bl in self.bls.all():
                     MoveBL.objects.create(move=mirror, numero=bl.numero)
             except Exception as e:
-                raise RuntimeError(f"Error during mirror creation: {e}")
+                raise RuntimeError(f"Erreur lors de la création du miroir: {e}")
+    
+    def create_isolation(self):
+        if self.type == 'Sortie' and self.state == 'Validé' and self.is_isolation:
+            try:
+                emp = self.site.get_quarantine()
+                mirror = Move.objects.create(site=self.site, gestionaire=self.gestionaire, shift=self.shift, date=self.date, type='Entré', is_isolation=True, 
+                                             state='Brouillon', mirror=self)
+                self.mirror = mirror
+                self.save()
+                for ml in self.move_lines.all():
+                    move_mirror = MoveLine.objects.create(lot_number=ml.n_lot, product=ml.product, move=mirror, expiry_date=ml.expiry_date, 
+                                                          create_uid=ml.create_uid, write_uid=ml.write_uid)
+                    for d in ml.details.all():
+                        LineDetail.objects.create(move_line=move_mirror, warehouse=emp.warehouse, emplacement=emp, 
+                                                  qte=d.qte, palette=d.palette, expiry_date=d.expiry_date, code=d.code, n_lot=d.n_lot)
+                for bl in self.bls.all():
+                    MoveBL.objects.create(move=mirror, numero=bl.numero)
+                
+            except Exception as e:
+                raise RuntimeError(f"Erreur lors de la création de l'isolation: {e}")
             
     def cancel_transfer(self):
         try:
@@ -250,7 +281,7 @@ class Move(BaseModel):
             raise ValueError('Aucune ligne de mouvement.')
         for ml in self.move_lines.all():
             if not ml.details.all():
-                raise ValueError(f'Aucun détail de ligne de movement - N LOT {ml.n_lot}.')
+                raise ValueError(f'Aucun détail de ligne de mouvement - N LOT {ml.n_lot}.')
         return True
     
     @property
@@ -307,6 +338,8 @@ class MoveLine(BaseModel):
     @property
     def n_lot(self):
         if self.move.is_transfer:
+            return self.lot_number
+        if self.move.is_isolation:
             return self.lot_number
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':

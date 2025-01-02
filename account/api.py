@@ -92,7 +92,7 @@ class ProductAvalibilityView(APIView):
     def post(self, request, *args, **kwargs):
         site_id = request.data.get('site_id')
         product_ids = request.data.get('product_ids')
-        is_transfer = request.data.get('is_transfer', False)
+        move_type = request.data.get('move_type', 'normal')
         if not site_id or not product_ids:
             return Response({"detail": "Site_id ou product_ids manquant"}, status=400)
         
@@ -100,11 +100,8 @@ class ProductAvalibilityView(APIView):
         product_data = []
 
         for product in products:
-            stock_details = DisponibilitySerializer(product.state_in_site(site_id), many=True).data
-            if not is_transfer:
-                stock_details = sorted(stock_details, key=lambda x: datetime.strptime(x['expiry_date'], '%Y-%m-%d'))
+            stock_details = DisponibilitySerializer(product.state_in_site(site_id, move_type), many=True).data
             unit_qte = product.unit_qte(site_id)
-            
             product_data.append({'product': ProductSerializer(product).data, 'stock_details': stock_details, 'global_qte': unit_qte})
         return Response(product_data)
 
@@ -115,7 +112,9 @@ class CreateMoveOut(APIView):
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         user_id = request.data.get('user_id')
-        is_transfer = request.data.get('is_transfer', False)
+        move_type = request.data.get('move_type', 'normal')
+        is_transfer = move_type  == 'transfer'
+        is_isolation = move_type == 'isolation'
         transfer_to = request.data.get('transfer_to', None)
         transferred_products = request.data.get('transferred_products', [])
         n_bls = request.data.get('n_bls', [])
@@ -130,8 +129,8 @@ class CreateMoveOut(APIView):
 
         try:
             user = User.objects.get(id=user_id)
-            move = Move.objects.create(site=user.default_site, transfer_to_id=transfer_to, gestionaire=user, type='Sortie', 
-                                       is_transfer=is_transfer, state='Brouillon', date=timezone.now(), create_uid=user, write_uid=user)
+            move = Move.objects.create(site=user.default_site, transfer_to_id=transfer_to, gestionaire=user, type='Sortie', is_transfer=is_transfer, 
+                                       is_isolation=is_isolation, state='Brouillon', date=timezone.now(), create_uid=user, write_uid=user)
 
             for product_data in transferred_products:
                 product_id = product_data.get('product_id')
@@ -182,7 +181,7 @@ class ConfirmMoveOut(APIView):
     def post(self, request, *args, **kwargs):
         move_id = request.data.get('move_id')
         if not move_id:
-            return Response({"detail": "Movement ID manquant."}, status=400)
+            return Response({"detail": "Mouvement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
 
@@ -192,12 +191,12 @@ class ConfirmMoveOut(APIView):
             move.check_can_confirm()
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
-                return Response({"detail": "Erreur lors de la confirmation du movement."}, status=400)
-            return Response({"detail": "Movement confirmée avec succès."}, status=200)
+                return Response({"detail": "Erreur lors de la confirmation du mouvement."}, status=400)
+            return Response({"detail": "Mouvement confirmée avec succès."}, status=200)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         except Move.DoesNotExist:
-            return Response({"detail": "Movement introuvable."}, status=404)
+            return Response({"detail": "Mouvement introuvable."}, status=404)
 
 class CancelMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
@@ -206,7 +205,7 @@ class CancelMoveOut(APIView):
         move_id = request.data.get('move_id')
 
         if not move_id:
-            return Response({"detail": "Movement ID manquant."}, status=400)
+            return Response({"detail": "Mouvement ID manquant."}, status=400)
 
         try:
             move = Move.objects.get(id=move_id)
@@ -216,10 +215,10 @@ class CancelMoveOut(APIView):
             
             success = move.changeState(request.user.id, 'Annulé')
             if not success:
-                return Response({"detail": "Erreur lors de l'annulation du movement."}, status=400)
-            return Response({"detail": "Movement annulé avec succès."}, status=200)
+                return Response({"detail": "Erreur lors de l'annulation du mouvement."}, status=400)
+            return Response({"detail": "Mouvement annulé avec succès."}, status=200)
         except Move.DoesNotExist:
-            return Response({"detail": "Movement introuvable."}, status=404)
+            return Response({"detail": "Mouvement introuvable."}, status=404)
         
 class DeleteMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
@@ -228,17 +227,17 @@ class DeleteMoveOut(APIView):
         move_id = request.data.get('move_id')
 
         if not move_id:
-            return Response({"detail": "Movement ID manquant."}, status=400)
+            return Response({"detail": "Mouvement ID manquant."}, status=400)
 
         try:
             move = Move.objects.get(id=move_id)
             if move.state == 'Brouillon':
                 move.delete()
-                return Response({"detail": "Movement supprimé avec succès."}, status=200)
+                return Response({"detail": "Mouvement supprimé avec succès."}, status=200)
             else:
-                return Response({"detail": "Impossible de supprimer un movement confirmé."}, status=400)
+                return Response({"detail": "Impossible de supprimer un mouvement confirmé."}, status=400)
         except Move.DoesNotExist:
-            return Response({"detail": "Movement introuvable."}, status=404)
+            return Response({"detail": "Mouvement introuvable."}, status=404)
 
 class ValidateMoveOut(APIView):
     authentication_classes = [TokenAuthentication]
@@ -248,7 +247,7 @@ class ValidateMoveOut(APIView):
     def post(self, request, *args, **kwargs):
         move_id = request.data.get('move_id')
         if not move_id:
-            return Response({"detail": "Movement ID manquant."}, status=400)
+            return Response({"detail": "Mouvement ID manquant."}, status=400)
         try:
             move = Move.objects.get(id=move_id)
 
@@ -256,12 +255,20 @@ class ValidateMoveOut(APIView):
                 return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
             move.can_validate()
             move.do_after_validation(user=request.user)
+            
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
 
-            return Response({"detail": "Movement validée avec succès."}, status=200)
+            if move.is_isolation:
+                move.mirror.check_can_confirm()
+                move.mirror.changeState(request.user.id, 'Confirmé')
+                move.mirror.can_validate()
+                move.mirror.changeState(request.user.id, 'Validé')
+                return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
+
+            return Response({"detail": "Mouvement validée avec succès."}, status=200)
         except Move.DoesNotExist:
-            return Response({"detail": "Movement introuvable."}, status=404)
+            return Response({"detail": "Mouvement introuvable."}, status=404)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         except RuntimeError as e:
