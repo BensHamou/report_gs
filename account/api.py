@@ -155,7 +155,7 @@ class CreateMoveOut(APIView):
                 if not numero:
                     raise ValueError("Numéro BL manquant")
                 MoveBL.objects.create(move=move, numero=numero, is_annexe=is_annexe)
-            return Response({"detail": "Mouvement créé avec succès", "move_id": move.id}, status=201)
+            return Response({"detail": "Mouvement créé avec succès", "move_id": move.id, "move": MoveSerializer(move)}, status=201)
        
         except User.DoesNotExist:
             return Response({"detail": "Utilisateur introuvable"}, status=404)
@@ -192,7 +192,7 @@ class ConfirmMoveOut(APIView):
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
                 return Response({"detail": "Erreur lors de la confirmation du mouvement."}, status=400)
-            return Response({"detail": "Mouvement confirmée avec succès."}, status=200)
+            return Response({"detail": "Mouvement confirmée avec succès.", "move": MoveSerializer(move)}, status=200)
         except ValueError as e:
             return Response({"detail": str(e)}, status=400)
         except Move.DoesNotExist:
@@ -216,7 +216,7 @@ class CancelMoveOut(APIView):
             success = move.changeState(request.user.id, 'Annulé')
             if not success:
                 return Response({"detail": "Erreur lors de l'annulation du mouvement."}, status=400)
-            return Response({"detail": "Mouvement annulé avec succès."}, status=200)
+            return Response({"detail": "Mouvement annulé avec succès.", "move": MoveSerializer(move)}, status=200)
         except Move.DoesNotExist:
             return Response({"detail": "Mouvement introuvable."}, status=404)
         
@@ -266,7 +266,7 @@ class ValidateMoveOut(APIView):
                 move.mirror.changeState(request.user.id, 'Validé')
                 return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 
-            return Response({"detail": "Mouvement validée avec succès."}, status=200)
+            return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move)}, status=200)
         except Move.DoesNotExist:
             return Response({"detail": "Mouvement introuvable."}, status=404)
         except ValueError as e:
