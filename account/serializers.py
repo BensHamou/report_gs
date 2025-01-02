@@ -28,6 +28,7 @@ class MoveSerializer(serializers.ModelSerializer):
     bl_str = serializers.ReadOnlyField()
     move_lines = MoveLineSerializer(many=True, read_only=True)
     display_type = serializers.ReadOnlyField()
+    date = serializers.ReadOnlyField()
 
     class Meta:
         model = Move

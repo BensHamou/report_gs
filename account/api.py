@@ -128,9 +128,14 @@ class CreateMoveOut(APIView):
         
         if is_transfer and not transfer_to:
             return Response({"detail": "Site de transfert manquant"}, status=400)
+        
+
 
         try:
             user = User.objects.get(id=user_id)
+            if move_type == 'isolation' and not user.default_site.get_quarantine():
+                return Response({"detail": "Vous ne pouvez pas isoler des produits dans un site sans zone de quarantaine."}, status=400)
+
             move = Move.objects.create(site=user.default_site, transfer_to_id=transfer_to, gestionaire=user, type='Sortie', is_transfer=is_transfer, 
                                        is_isolation=is_isolation, state='Brouillon', date=datetime.today(), create_uid=user, write_uid=user)
 
