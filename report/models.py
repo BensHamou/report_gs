@@ -296,6 +296,15 @@ class Move(BaseModel):
             return 'Consomation'
         else:
             return self.type
+
+    @property
+    def product_display(self):
+        first_move_line = self.move_lines.first()
+        if not first_move_line:
+            return '/'
+        if len(self.move_lines.all()) > 1:
+            return f"{first_move_line.product}, ..."
+        return first_move_line.product
     
     def is_in_mp(self):
         return all([ml.product.type == 'Matière Première' for ml in self.move_lines.all()]) and not self.is_transfer and self.type == 'Entré'
