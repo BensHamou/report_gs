@@ -274,7 +274,7 @@ class Move(BaseModel):
                         ds.qte += ml.mirror.qte
                         ds.nqte -= ml.mirror.qte
                         ds.palette = max(math.ceil(ds.qte / pal), 1)
-                    ds.save()
+                        ds.save()
                 self.mirror.save()
                 return True, 'Transfer annulé avec succès.'
         except Exception as e:
