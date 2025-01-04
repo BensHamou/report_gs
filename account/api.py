@@ -193,8 +193,13 @@ class ConfirmMoveOut(APIView):
 
             if move.state != 'Brouillon':
                 return Response({"detail": "Impossible de confirmer un mouvement déjà confirmé."}, status=400)
+            
+            
+            try:
+                move.check_can_confirm()
+            except ValueError as e:
+                return Response({"detail": str(e)}, status=400)
 
-            move.check_can_confirm()
             success = move.changeState(request.user.id, 'Confirmé')
             if not success:
                 return Response({"detail": "Erreur lors de la confirmation du mouvement."}, status=400)
@@ -259,7 +264,11 @@ class ValidateMoveOut(APIView):
 
             if move.state != 'Confirmé':
                 return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
-            move.can_validate()
+
+            try:
+                move.can_validate()
+            except ValueError as e:
+                return Response({"detail": str(e)}, status=400)
 
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
@@ -267,10 +276,21 @@ class ValidateMoveOut(APIView):
             move.do_after_validation(user=request.user)
 
             if move.is_isolation:
-                move.mirror.check_can_confirm()
-                move.mirror.changeState(request.user.id, 'Confirmé')
-                move.mirror.can_validate()
-                move.mirror.changeState(request.user.id, 'Validé')
+                try:
+                    move.mirror.check_can_confirm()
+                except ValueError as e:
+                    return Response({"detail": str(e)}, status=400)
+                
+                if not move.mirror.changeState(request.user.id, 'Confirmé'):
+                    return Response({"detail": "Échec de la confirmation de l'état."}, status=400)
+                try:
+                    move.mirror.can_validate()
+                except ValueError as e:
+                    return Response({"detail": str(e)}, status=400)
+                
+                if not move.mirror.changeState(request.user.id, 'Validé'):
+                    return Response({"detail": "Échec de la validation de l'état."}, status=400)
+                
                 move.mirror.do_after_validation(user=request.user)
                 return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 

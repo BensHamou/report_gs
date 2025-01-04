@@ -33,7 +33,7 @@ class MoveSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Move
-        fields = ['id', 'date', 'move_lines', 'qte', 'palette', 'n_lots', 'state', 'product_display',
+        fields = ['id', 'date', 'move_lines', 'qte', 'palette', 'n_lots', 'state', 'product_display', 'transfer_to',
                   'gestionaire', 'bl_str', 'display_type', 'is_transfer', 'is_isolation', 'line', 'site', 'date_created', 'shift']
 
 class SiteSerializer(serializers.ModelSerializer):
