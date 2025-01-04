@@ -145,7 +145,7 @@
                         <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                         <div class="d-flex flex-column">
                             <div class="d-flex">
-                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" readonly placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
                                 {% if forloop.first %}
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -475,9 +475,6 @@
         document.querySelectorAll('.expire').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
-        document.querySelectorAll('.qte').forEach((expire) => {
-            expire.removeAttribute('readonly');
-        });
         document.querySelectorAll('.lot_number').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
@@ -513,9 +510,6 @@
 
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
-            document.querySelectorAll('.qte').forEach((expire) => {
-                expire.addAttribute('readonly');
-            });
             {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                 document.querySelectorAll('.lot_number').forEach((expire) => {
                     expire.addAttribute('readonly');

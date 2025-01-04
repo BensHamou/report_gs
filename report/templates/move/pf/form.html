@@ -121,7 +121,7 @@
                 <div class="col-lg-3 col-md-6 col-sm-12">
                     <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
-                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" readonly style="background-color: #ffffff; padding-left: 30px;" required>
+                        <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
                         <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                             <i class="fas fa-plus" style="color: #0082cd"></i>
                         </button>
@@ -360,10 +360,6 @@
         document.querySelectorAll('.expire').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
-
-        document.querySelectorAll('.qte').forEach((expire) => {
-            expire.removeAttribute('readonly');
-        });
     
         requiredFields.forEach(function(field) {
             if (!field.value.trim()) {
@@ -390,9 +386,6 @@
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
-            });
-            document.querySelectorAll('.qte').forEach((expire) => {
                 expire.addAttribute('readonly');
             });
         } else {
