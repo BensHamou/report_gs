@@ -207,14 +207,14 @@ class Move(BaseModel):
             self.create_mirror()
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
-        if self.is_transfer and self.is_isolation and self.type == 'Sortie':
+        elif self.is_transfer and self.is_isolation and self.type == 'Sortie':
             self.create_isolation()
             return True, 'Stock ajusté créé avec succès.'
         
-        else:
+        elif self.type == 'Entré':
             for ml in self.move_lines.all():
                 for detail in ml.details.all():
-                    if not detail.generateCode(user):
+                    if not detail.generateCode():
                         raise ValueError(f"{ml.n_lot} - Échec de la génération du code QR pour l'emplacement {detail.emplacement}.")
         
         if self.type == 'Sortie':
@@ -381,11 +381,10 @@ class LineDetail(BaseModel):
             return math.ceil(self.qte / self.move_line.product.qte_per_cond)
         return 0
         
-    def generateCode(self, user):
+    def generateCode(self):
         try:
             self.code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.move_line.n_lot}"
             self.save()
-
             return True
         except Exception as e:
             print(f'Error lors de génération de code : {e}')

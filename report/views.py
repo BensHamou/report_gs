@@ -708,13 +708,13 @@ def validateMove(request, move_id):
             try:
                 success, message = move.do_after_validation(request.user)
 
-                if move.is_isolation:
-                    move.mirror.check_can_confirm()
-                    move.mirror.changeState(request.user.id, 'Confirmé')
-                    move.mirror.can_validate()
-                    move.mirror.changeState(request.user.id, 'Validé')
-                    move.mirror.do_after_validation(request.user)
-                    return JsonResponse({'success': True, 'message': "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine.", 'move_id': move_id})
+                # if move.is_isolation:
+                #     move.mirror.check_can_confirm()
+                #     move.mirror.changeState(request.user.id, 'Confirmé')
+                #     move.mirror.can_validate()
+                #     move.mirror.changeState(request.user.id, 'Validé')
+                #     move.mirror.do_after_validation(request.user)
+                #     return JsonResponse({'success': True, 'message': "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine.", 'move_id': move_id})
                 
                 return JsonResponse({'success': True, 'message': message, 'move_id': move_id})
             except ValueError as e:

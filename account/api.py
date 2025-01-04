@@ -275,24 +275,24 @@ class ValidateMoveOut(APIView):
             
             move.do_after_validation(user=request.user)
 
-            if move.is_isolation:
-                try:
-                    move.mirror.check_can_confirm()
-                except ValueError as e:
-                    return Response({"detail": str(e)}, status=400)
+            # if move.is_isolation:
+            #     try:
+            #         move.mirror.check_can_confirm()
+            #     except ValueError as e:
+            #         return Response({"detail": str(e)}, status=400)
                 
-                if not move.mirror.changeState(request.user.id, 'Confirmé'):
-                    return Response({"detail": "Échec de la confirmation de l'état."}, status=400)
-                try:
-                    move.mirror.can_validate()
-                except ValueError as e:
-                    return Response({"detail": str(e)}, status=400)
+            #     if not move.mirror.changeState(request.user.id, 'Confirmé'):
+            #         return Response({"detail": "Échec de la confirmation de l'état."}, status=400)
+            #     try:
+            #         move.mirror.can_validate()
+            #     except ValueError as e:
+            #         return Response({"detail": str(e)}, status=400)
                 
-                if not move.mirror.changeState(request.user.id, 'Validé'):
-                    return Response({"detail": "Échec de la validation de l'état."}, status=400)
+            #     if not move.mirror.changeState(request.user.id, 'Validé'):
+            #         return Response({"detail": "Échec de la validation de l'état."}, status=400)
                 
-                move.mirror.do_after_validation(user=request.user)
-                return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
+            #     move.mirror.do_after_validation(user=request.user)
+            #     return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 
             return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move).data}, status=200)
         except Move.DoesNotExist:
