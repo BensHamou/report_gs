@@ -367,7 +367,8 @@
     const globalQteField = document.getElementById("global_qte");
     const paletteTotalField = document.getElementById("palette_total");
     const detailsContainer = document.getElementById("details-container");
-    const qtePerPalette = {{ product.qte_per_pal|default:0 }};
+    const rawInput = "{{ product.qte_per_pal|default:0|floatformat:2 }}";
+    const qtePerPalette = parseFloat(rawInput.replace(',', '.'));
     
     let isUpdating = false;
     
