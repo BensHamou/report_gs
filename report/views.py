@@ -360,7 +360,8 @@ def list_move(request):
     move_out_today = Move.objects.filter(state='Validé', type='Sortie', date=today)
     palettes_today = sum(m.palette for m in move_out_today)
 
-    move_lines = MoveLine.objects.filter(move__state='Validé', move__type='Sortie', move__line__in=request.user.lines.all().values('id')).select_related('product')
+    move_lines = MoveLine.objects.filter(Q(move__state='Validé') & Q(move__type='Sortie') & 
+                                         (Q(move__line__in=request.user.lines.all()) | Q(move__line__isnull=True, move__site__in=allowed_sites))).select_related('product')
     
     product_totals = {}
     for move_line in move_lines:
@@ -859,7 +860,6 @@ def handleDetails(request, move_line):
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                         n_lot=n_lot, qte=int(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
                 
-
 def create_warehouses_and_emplacements():
     """Creates warehouses and emplacements with specific counts for site with ID 2."""
 
