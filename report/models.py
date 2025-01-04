@@ -304,7 +304,7 @@ class Move(BaseModel):
             return '/'
         if len(self.move_lines.all()) > 1:
             return f"{first_move_line.product}, ..."
-        return first_move_line.product
+        return f'{first_move_line.product.designation}'
     
     def is_in_mp(self):
         return all([ml.product.type == 'Matière Première' for ml in self.move_lines.all()]) and not self.is_transfer and self.type == 'Entré'
