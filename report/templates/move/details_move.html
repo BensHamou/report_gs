@@ -69,10 +69,14 @@
                         <p class="custom-text-box">{{ move.bl_str }}</p>
                     </div>
                 {% endif %}
-                {% if move.is_transfer %}
+                {% if move.is_transfer and not move.is_isolation %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
                         <label for="bl_str" class="form-label">N° BTR</label>
                         <p class="custom-text-box">{{ move.bl_str }}</p>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                        <label for="bl_str" class="form-label">{% if move.type == 'Entré' %}Du{% else %}Au{% endif %}</label>
+                        <p class="custom-text-box">{% if move.type == 'Entré' %}{{ move.mirror.site }}{% else %}{{ move.transfer_to }}{% endif %}</p>
                     </div>
                 {% endif %}
 

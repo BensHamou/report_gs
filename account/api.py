@@ -52,8 +52,14 @@ class StandardResultsSetPagination(PageNumberPagination):
 @permission_classes([IsAuthenticated])
 def move_list_api(request):
     try:
-        user = request.user
-        moves = Move.objects.filter(Q(line__in=user.lines.all().values('id')) | Q(line__isnull=True, site=user.default_site)).order_by('-date_modified')
+        if request.user.role in ['Admin', 'Validateur']:
+            allowed_sites = Line.objects.filter(id__in=request.user.lines.all()).values_list('site_id', flat=True).distinct()
+        else:
+            allowed_sites = [request.user.default_site.id]
+
+        moves = Move.objects.filter(Q(gestionaire=request.user) | Q(line__in=request.user.lines.all()) |
+            Q(line__isnull=True, site__in=allowed_sites)).order_by('-date_modified')
+    
         paginator = StandardResultsSetPagination()
         paginated_moves = paginator.paginate_queryset(moves, request)
         serializer = MoveSerializer(paginated_moves, many=True)
@@ -111,7 +117,6 @@ class CreateMoveOut(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user_id = request.data.get('user_id')
         move_type = request.data.get('move_type', 'normal')
         if move_type not in ['consumption', 'normal', 'isolation', 'transfer']:
             return Response({"detail": "Type de mouvement invalide."}, status=400)
@@ -122,8 +127,6 @@ class CreateMoveOut(APIView):
         transferred_products = request.data.get('transferred_products', [])
         n_bls = request.data.get('n_bls', [])
 
-        if not user_id:
-            return Response({"detail": "User ID manquant"}, status=400)
         if not transferred_products:
             return Response({"detail": "Produits manquants"}, status=400)
         if move_type == 'transfer' and not transfer_to:
@@ -132,7 +135,7 @@ class CreateMoveOut(APIView):
             transfer_to = None
 
         try:
-            user = User.objects.get(id=user_id)
+            user = request.user
             if move_type == 'isolation' and not user.default_site.get_quarantine():
                 return Response({"detail": "Vous ne pouvez pas isoler des produits dans un site sans zone de quarantaine."}, status=400)
 
@@ -310,16 +313,12 @@ class SendWarningEmail(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        user_id = request.data.get('user_id')
 
-        if not user_id:
-            return Response({"detail": "User ID manquant."}, status=400)
         try:
-            user = User.objects.get(id=user_id)
             subject = f'Tente de scan incorrecte'
 
-            html_message = render_to_string('fragment/warning.html', {'user': user})
-            addresses = user.default_site.address.split('&')
+            html_message = render_to_string('fragment/warning.html', {'user': request.user})
+            addresses = request.user.default_site.address.split('&')
             if not addresses:
                 addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)

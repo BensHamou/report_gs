@@ -340,11 +340,15 @@ def categories_view(request):
 @login_required(login_url='login')
 @can_view_move_required
 def list_move(request):
-    moves = Move.objects.filter(
-        Q(gestionaire=request.user) |
-        Q(line__in=request.user.lines.all().values('id')) |
-        Q(line__isnull=True, site=request.user.default_site)
-    ).order_by('-date_modified')
+    if request.user.role in ['Admin', 'Validateur']:
+        allowed_sites = Line.objects.filter(id__in=request.user.lines.all()).values_list('site_id', flat=True).distinct()
+    else:
+        allowed_sites = [request.user.default_site.id]
+
+    moves = Move.objects.filter(Q(gestionaire=request.user) | Q(line__in=request.user.lines.all()) |
+        Q(line__isnull=True, site__in=allowed_sites)).order_by('-date_modified')
+
+
     filteredData = MoveFilter(request.GET, queryset=moves)
     moves = filteredData.qs
     page_size_param = request.GET.get('page_size')
