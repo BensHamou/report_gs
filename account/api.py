@@ -271,7 +271,7 @@ class ValidateMoveOut(APIView):
                 move.mirror.changeState(request.user.id, 'Confirmé')
                 move.mirror.can_validate()
                 move.mirror.changeState(request.user.id, 'Validé')
-                move.do_after_validation(user=request.user)
+                move.mirror.do_after_validation(user=request.user)
                 return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 
             return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move).data}, status=200)
