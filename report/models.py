@@ -74,6 +74,8 @@ class Product(BaseModel):
         queryset = self.disponibilities.filter(emplacement__warehouse__site_id=site_id)
         if move_type == 'normal':
             queryset = queryset.filter(emplacement__quarantine=False).order_by('expiry_date')
+        elif move_type == 'isolation':
+            queryset = queryset.filter(emplacement__quarantine=False)
         elif move_type == 'consumption':
             queryset = queryset.filter(emplacement__quarantine=True)
         return queryset
