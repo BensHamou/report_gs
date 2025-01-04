@@ -260,10 +260,11 @@ class ValidateMoveOut(APIView):
             if move.state != 'Confirmé':
                 return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
             move.can_validate()
-            move.do_after_validation(user=request.user)
-            
+
             if not move.changeState(request.user.id, 'Validé'):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
+            
+            move.do_after_validation(user=request.user)
 
             if move.is_isolation:
                 move.mirror.check_can_confirm()
