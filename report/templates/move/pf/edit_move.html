@@ -137,11 +137,15 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <label for="palette_{{ forloop.counter0 }}" class="form-label">Palette</label>
                         <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palettes" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
-                    <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
+                        <label for="sac_{{ forloop.counter0 }}" class="form-label">Sac</label>
+                        <input type="number" name="sac_{{ forloop.counter0 }}" id="sac_{{ forloop.counter0 }}" class="form-control sac" placeholder="Sac" value="{{ detail.package }}" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                         <div class="d-flex flex-column">
                             <div class="d-flex">
@@ -174,18 +178,22 @@
                                 <option value="">-- Emplacement --</option>
                             </select>
                     </div>
-                    <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="col-lg-2 col-md-6 col-sm-12">
                         <label for="palette_0" class="form-label">Palette</label>
                         <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
-                    <div class="col-lg-3 col-md-6 col-sm-12">
-                            <label for="qte_0" class="form-label">Quantité</label>
-                            <div class="d-flex">
-                                <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
-                                <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
-                                    <i class="fas fa-plus" style="color: #0082cd"></i>
-                                </button>
-                            </div>
+                    <div class="col-lg-2 col-md-6 col-sm-12">
+                        <label for="sac_0" class="form-label">Sac</label>
+                        <input type="number" name="sac_0" id="sac_0" class="form-control sac" placeholder="Sac" readonly style="background-color: #ffffff; padding-left: 30px;">
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-sm-12">
+                        <label for="qte_0" class="form-label">Quantité</label>
+                        <div class="d-flex">
+                            <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                                <i class="fas fa-plus" style="color: #0082cd"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
@@ -369,6 +377,8 @@
     const detailsContainer = document.getElementById("details-container");
     const rawInput = "{{ product.qte_per_pal|default:0|floatformat:2 }}";
     const qtePerPalette = parseFloat(rawInput.replace(',', '.'));
+    const rawInput2 = "{{ product.qte_per_cond|default:0|floatformat:2 }}";
+    const qtePerSac = parseFloat(rawInput2.replace(',', '.'));
     
     let isUpdating = false;
     
@@ -391,11 +401,13 @@
     const recalculateNeighborQuantity = (paletteInput) => {
         const row = paletteInput.closest(".form-row");
         const qteInput = row.querySelector(".qte");
+        const sacInput = row.querySelector(".sac");
     
         if (!isUpdating) {
             isUpdating = true;
             const palettes = parseFloat(paletteInput.value) || 0;
             qteInput.value = palettes * qtePerPalette;
+            sacInput.value = Math.ceil(qteInput.value / qtePerSac);
             isUpdating = false;
         }
         calculateGlobalQte();
@@ -404,11 +416,13 @@
     const recalculateNeighborPalette = (qteInput) => {
         const row = qteInput.closest(".form-row");
         const paletteInput = row.querySelector(".palette");
+        const sacInput = row.querySelector(".sac");
     
         if (!isUpdating) {
             isUpdating = true;
             const qte = parseFloat(qteInput.value) || 0;
             paletteInput.value = Math.ceil(qte / qtePerPalette);
+            sacInput.value = Math.ceil(qte / qtePerSac);
             isUpdating = false;
         }
     

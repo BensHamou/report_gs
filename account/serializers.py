@@ -3,11 +3,11 @@ from report.models import *
 from .models import *
 
 class LineDetailSerializer(serializers.ModelSerializer):
-    palette = serializers.ReadOnlyField()
+    package = serializers.ReadOnlyField()
 
     class Meta:
         model = LineDetail
-        fields = ['id', 'warehouse', 'emplacement', 'n_lot', 'qte', 'palette']
+        fields = ['id', 'warehouse', 'emplacement', 'n_lot', 'qte', 'palette', 'package']
 
 class MoveLineSerializer(serializers.ModelSerializer):
     n_lot = serializers.ReadOnlyField()

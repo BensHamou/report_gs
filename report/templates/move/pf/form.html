@@ -114,11 +114,15 @@
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-2 col-md-6 col-sm-12">
                     <label for="palette_0" class="form-label">Palette</label>
                     <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="col-lg-2 col-md-6 col-sm-12">
+                    <label for="sac_0" class="form-label">Sac</label>
+                    <input type="number" name="sac_0" id="sac_0" class="form-control sac" placeholder="Sac" style="background-color: #ffffff; padding-left: 30px;" readonly>
+                </div>
+                <div class="col-lg-2 col-md-6 col-sm-12">
                     <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
                         <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -292,6 +296,8 @@
     const detailsContainer = document.getElementById("details-container");
     const rawInput = "{{ product.qte_per_pal|default:0|floatformat:2 }}";
     const qtePerPalette = parseFloat(rawInput.replace(',', '.'));
+    const rawInput2 = "{{ product.qte_per_cond|default:0|floatformat:2 }}";
+    const qtePerSac = parseFloat(rawInput2.replace(',', '.'));
 
     let isUpdating = false;
     
@@ -314,11 +320,13 @@
     const recalculateNeighborQuantity = (paletteInput) => {
         const row = paletteInput.closest(".form-row");
         const qteInput = row.querySelector(".qte");
+        const sacInput = row.querySelector(".sac");
     
         if (!isUpdating) {
             isUpdating = true;
             const palettes = parseFloat(paletteInput.value) || 0;
             qteInput.value = palettes * qtePerPalette;
+            sacInput.value = Math.ceil(qteInput.value / qtePerSac);
             isUpdating = false;
         }
         calculateGlobalQte();
@@ -327,15 +335,29 @@
     const recalculateNeighborPalette = (qteInput) => {
         const row = qteInput.closest(".form-row");
         const paletteInput = row.querySelector(".palette");
+        const sacInput = row.querySelector(".sac");
     
         if (!isUpdating) {
             isUpdating = true;
             const qte = parseFloat(qteInput.value) || 0;
             paletteInput.value = Math.ceil(qte / qtePerPalette);
+            sacInput.value = Math.ceil(qte / qtePerSac);
             isUpdating = false;
         }
     
         calculatePaletteTotal();
+    };
+    
+    const recalculateNeighborSac = (qteInput) => {
+        const row = qteInput.closest(".form-row");
+        const sacInput = row.querySelector(".sac");
+    
+        if (!isUpdating) {
+            isUpdating = true;
+            const qte = parseFloat(qteInput.value) || 0;
+            sacInput.value = Math.ceil(qte / qtePerSac);
+            isUpdating = false;
+        }
     };
     
     detailsContainer.addEventListener("input", (e) => {

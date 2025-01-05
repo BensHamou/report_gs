@@ -1,5 +1,6 @@
 {% extends "main.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}
     Rapports
@@ -141,8 +142,8 @@
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.product_display }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.gestionaire }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.site }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.qte }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.palette }} Palettes</td>
+                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.qte|intcomma }}</td>
+                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.palette|intcomma }} Palettes</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.bl_str|default:"/" }}</td>
                         <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.state }}</td>
                         {% if user.role in 'Admin,Gestionaire,Validateur' %}
