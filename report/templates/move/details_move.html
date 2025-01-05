@@ -32,6 +32,12 @@
             <span class="d-none d-sm-inline p-3">Cycle</span>
             <i class="fas fa-arrows-spin d-inline d-sm-none p-3"></i>
         </button>
+        {% if move.mirror %}
+            <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-bs-toggle="modal" data-bs-target="#mirrorModal" style="background-color: #1d71b8;">
+                <span class="d-none d-sm-inline p-3">Miroir</span>
+                <i class="fas fa-window-restore d-inline d-sm-none p-3"></i>
+            </button>
+        {% endif %}
     </div>
 </div>
 
@@ -133,20 +139,20 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
-                                <p class="custom-text-box">{{ line.qte|default:'1' }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2">
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="custom-text-box">{{ line.palette|default:"1" }}</p>
+                                <p class="custom-text-box">{{ line.palette|default:"1"|intcomma }}</p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                                    <p class="custom-text-box">{{ line.transfered_qte|default:'0' }}</p>
+                                    <p class="custom-text-box">{{ line.transfered_qte|default:'0'|intcomma }}</p>
                                 </div>
                                 <div class="col-lg-6 col-12 mb-2">
                                     <label for="diff_qte" class="form-label">Quantité différentielle</label>
-                                    <p class="custom-text-box">{{ line.diff_qte|default:'0' }}</p>
+                                    <p class="custom-text-box">{{ line.diff_qte|default:'0'|intcomma }}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -312,6 +318,9 @@
 </div>
 {% include 'modal.html' %}
 {% include 'print_modal.html' %}
+{% if move.mirror %}
+    {% include 'mirror_modal.html' %}
+{% endif %}
 
 <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" ></script>

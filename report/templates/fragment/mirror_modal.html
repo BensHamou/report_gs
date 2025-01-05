@@ -1,0 +1,294 @@
+{% load static %}
+{% load humanize %}
+<div class="modal fade" id="mirrorModal" tabindex="-1" aria-labelledby="mirrorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content custom-content-style">
+            <div class="modal-header custom-header">
+                <h5 class="modal-title" id="mirrorModalLabel">Miroir</h5>
+                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h4 class="mb-4 section-title" style="color: #0082cd;">Information Générale</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
+                            <div class="row">
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="site" class="form-label">Site</label>
+                                    <p class="custom-text-box">{{ move.mirror.site|default:'/' }}</p>
+                                </div>
+                                {% if move.mirror.line %}
+                                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                        <label for="line" class="form-label">Ligne</label>
+                                        <p class="custom-text-box">{{ move.mirror.line|default:'/' }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if move.mirror.shift %}
+                                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                        <label for="shift" class="form-label">Shift</label>
+                                        <p class="custom-text-box">{{ move.mirror.shift|default:'/' }}</p>
+                                    </div>
+                                {% endif %}
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="gestionaire" class="form-label">Gestionaire</label>
+                                    <p class="custom-text-box">{{ move.mirror.gestionaire|default:'/' }}</p>
+                                </div>
+                                {% if move.mirror.type == 'Sortie' and not move.mirror.is_transfer %}
+                                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                        <label for="bl_str" class="form-label">N° BL</label>
+                                        <p class="custom-text-box">{{ move.mirror.bl_str|default:'/' }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if move.mirror.is_transfer and not move.mirror.is_isolation %}
+                                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                        <label for="bl_str" class="form-label">N° BTR</label>
+                                        <p class="custom-text-box">{{ move.mirror.bl_str|default:'/' }}</p>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                        <label for="bl_str" class="form-label">{% if move.mirror.type == 'Entré' %}Du{% else %}Au{% endif %}</label>
+                                        <p class="custom-text-box">{% if move.mirror.type == 'Entré' %}{{ move.site }}{% else %}{{ move.mirror.transfer_to }}{% endif %}</p>
+                                    </div>
+                                {% endif %}
+                
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="date" class="form-label">Date de mouvement</label>
+                                    <p class="custom-text-box">{{ move.mirror.date|default:'/' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="qte" class="form-label">Quantité Globale</label>
+                                    <p class="custom-text-box">{{ move.mirror.qte|default:"1"|intcomma }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="palette" class="form-label">Nombre Palettes</label>
+                                    <p class="custom-text-box">{{ move.mirror.palette|intcomma|default:"1" }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                                    <label for="date_created" class="form-label">Créer le</label>
+                                    <p class="custom-text-box">{{ move.mirror.date_created|default:"/" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-5" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+                    <div class="row">
+                        <div class="col-12">
+                            <h4 class="mb-2 section-title" style="color: #0082cd;">Lignes de Mouvement</h4>
+                        </div>
+                    </div>
+                    {% for line in move.mirror.move_lines.all %}
+                        {% if line.product.type == 'Matière Première' %}
+                            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 mb-2">
+                                        <div class="row">
+                                            {% if not line.is_out %}
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="n_lot" class="form-label">N Lot</label>
+                                                    <p class="custom-text-box">{{ line.n_lot|default:'/' }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <div class="col-lg-6 col-12 mb-2">
+                                                <label for="product" class="form-label">Produit</label>
+                                                <p class="custom-text-box">{{ line.product }}</p>
+                                            </div>
+                                            <div class="col-lg-6 col-12 mb-2">
+                                                <label for="qte" class="form-label">Quantité</label>
+                                                <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                            </div>
+                                            <div class="col-lg-6 col-12 mb-2">
+                                                <label for="palette" class="form-label">Nombre Palettes</label>
+                                                <p class="custom-text-box">{{ line.palette|default:"1"|intcomma }}</p>
+                                            </div>
+                                            {% if line.transfered_qte %}
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="transfered_qte" class="form-label">Quantité Transféré</label>
+                                                    <p class="custom-text-box">{{ line.transfered_qte|default:'0'|intcomma }}</p>
+                                                </div>
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="diff_qte" class="form-label">Quantité différentielle</label>
+                                                    <p class="custom-text-box">{{ line.diff_qte|default:'0'|intcomma }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" id="details-container">
+                                    {% for detail in line.details.all %}
+                                        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
+                                            {% if line.is_out %}
+                                                <div class="col-lg-3 col-md-3 col-sm-12">
+                                                    <label for="lot_{{ forloop.counter0 }}" class="form-label">N° Lot</label>
+                                                    <p class="custom-text-box">{{ detail.n_lot }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                                                <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                                                <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
+                                            </div>
+                                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                                                <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
+                                            </div>
+                                            <div class="col-lg-{% if line.is_out %}3{% else %}4{% endif %} col-md-{% if line.is_out %}3{% else %}4{% endif %} col-sm-12">
+                                                <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
+                                                <p class="custom-text-box">{{ detail.qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <div class="row">
+                                    <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
+                                        <div class="row">
+                                            {% if not line.is_out %}
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="n_lot" class="form-label">N Lot</label>
+                                                    <p class="custom-text-box">{{ line.n_lot|default:'/' }}</p>
+                                                </div>
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="expiry_date" class="form-label">Date d'expiration</label>
+                                                    <p class="custom-text-box">{{ line.expiry_date|date:'d M Y' }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <div class="col-lg-6 col-12 mb-2">
+                                                <label for="qte" class="form-label">Quantité</label>
+                                                <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                            </div>
+                                            <div class="col-lg-6 col-12 mb-2">
+                                                <label for="palette" class="form-label">Nombre Palettes</label>
+                                                <p class="custom-text-box">{{ line.palette|default:"1"|intcomma }}</p>
+                                            </div>
+                                            {% if line.transfered_qte %}
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="transfered_qte" class="form-label">Quantité Transféré</label>
+                                                    <p class="custom-text-box">{{ line.transfered_qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                                </div>
+                                                <div class="col-lg-6 col-12 mb-2">
+                                                    <label for="diff_qte" class="form-label">Quantité différentielle</label>
+                                                    <p class="custom-text-box">{{ line.diff_qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">
+                                        <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center;">{{ line.product.designation }}</p>
+                                        <img src="{% if not line.product.image %}{% static 'img/pf.png' %}{% else %}{{ line.product.image.url }}{% endif %}" alt="{{ line.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                                    </div>
+                                </div>
+                                <div class="row" id="details-container">
+                                    {% for detail in line.details.all %}
+                                        <div class="row mb-3 form-row" data-row-id="{{ forloop.counter0 }}" data-warehouse-id="{{ detail.warehouse_id }}" data-emplacement-id="{{ detail.emplacement_id }}">
+                                            {% if line.is_out %}
+                                                <div class="col-lg-2 col-md-2 col-sm-12">
+                                                    <label for="lot_{{ forloop.counter0 }}" class="form-label">N° Lot</label>
+                                                    <p class="custom-text-box">{{ detail.n_lot }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                                <label for="warehouse_{{ forloop.counter0 }}" class="form-label">Magasin</label>
+                                                <p class="custom-text-box">{{ detail.warehouse.designation }}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
+                                                <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Palette</label>
+                                                <p class="custom-text-box">{{ detail.palette|default:'1'|intcomma }}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                                <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Sac</label>
+                                                <p class="custom-text-box">{{ detail.package|default:'1'|intcomma }}</p>
+                                            </div>
+                                            <div class="col-lg-2 col-md-2 col-sm-12">
+                                                <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
+                                                <p class="custom-text-box">{{ detail.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer custom-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-content-style {
+        background: #f5f7fa; 
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .custom-header {
+        background-color: #f5f5f5;
+        color: #060747;
+        padding: 16px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .custom-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: rgba(236, 239, 242, 0.7);
+    }
+    .table th, .table td {
+        padding: 12px 16px;
+        vertical-align: middle;
+    }
+    .table th {
+        font-weight: 600;
+        color: #23305d;
+    }
+    .table td {
+        color: #333;
+    }
+
+    @media (max-width: 767px) {
+        .table, .table thead, .table tbody, .table tr, .table td, .table th {
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+        .table th {
+            display: none;
+        }
+        .table td {
+            border: none;
+            padding-left: 10%;
+            position: relative;
+            text-align: left;
+        }
+        .table td:before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            font-weight: bold;
+            color: #666;
+        }
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        $('#validation-cycle-btn').on('click', function () {
+            $('#mirrorModal').modal('show');
+        });
+        $('.btn-close, .btn-secondary').on('click', function () {
+            $('#mirrorModal').modal('hide');
+        });
+    });
+</script>
