@@ -20,9 +20,25 @@ def execute_query(query, params=None):
 
 
 def getMProducts():
-    query = """SELECT pp.id, pp.name_template, pp.default_code, pt.uom_id 
+    query = """SELECT 
+                    pp.id, 
+                    pp.default_code, 
+                    pt.uom_id, 
+                    pp.name_template || 
+                    CASE 
+                        WHEN STRING_AGG(pav.name, ', ' ORDER BY pav.id) IS NOT NULL THEN 
+                            ' (' || STRING_AGG(pav.name, ', ' ORDER BY pav.id) || ')'
+                        ELSE 
+                            ''
+                    END AS name_with_colors
                 FROM product_product pp
                 LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
                 LEFT JOIN product_template_company_allowed_rel ptc ON pt.id = ptc.template_id
-                WHERE ((pt.company_id = 8 AND pt.categ_id IN (17273, 17350)) OR (ptc.company_id = 8));"""
+                LEFT JOIN product_attribute_value_product_product_rel pav_rel ON pp.id = pav_rel.prod_id
+                LEFT JOIN product_attribute_value pav ON pav.id = pav_rel.att_id
+                WHERE (
+                    (pt.company_id = 8 AND pt.categ_id IN (17273, 17350)) OR 
+                    (ptc.company_id = 8)
+                )
+                GROUP BY pp.id, pp.name_template, pp.default_code, pt.uom_id;"""
     return execute_query(query)
