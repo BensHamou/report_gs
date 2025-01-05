@@ -22,7 +22,7 @@ def execute_query(query, params=None):
 def getMProducts():
     query = """SELECT pp.id, pp.name_template, pp.default_code, pt.uom_id 
                 FROM product_product pp
-                LEFT JOIN product_template pt on pt.id = pp.product_tmpl_id
-                LEFT JOIN product_template_company_allowed_rel ptc on pt.id = ptc.template_id
-                WHERE (pt.company_id = 8 OR ptc.company_id = 8) and pt.categ_id in (17273, 17350);"""
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN product_template_company_allowed_rel ptc ON pt.id = ptc.template_id
+                WHERE ((pt.company_id = 8 AND pt.categ_id IN (17273, 17350)) OR (ptc.company_id = 8));"""
     return execute_query(query)

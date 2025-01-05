@@ -99,6 +99,8 @@ class Product(BaseModel):
     
     def __str__(self):
         return self.designation
+    
+    
 
 class Move(BaseModel):
 
