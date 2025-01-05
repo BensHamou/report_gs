@@ -295,8 +295,12 @@ class ValidateMoveOut(APIView):
                 if not mirror_move.changeState(request.user.id, 'Validé'):
                     return Response({"detail": "Échec de la validation de l'état."}, status=400)
                 
-                mirror_move.do_after_validation(user=request.user)
-                return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
+                try:
+                    mirror_move.do_after_validation(user=request.user)
+                except ValueError as e:
+                    return Response({"detail": str(e)}, status=400)
+                
+                return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine.", "move": MoveSerializer(move).data}, status=200)
 
             return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move).data}, status=200)
         except Move.DoesNotExist:
