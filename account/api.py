@@ -277,25 +277,26 @@ class ValidateMoveOut(APIView):
                 return Response({"detail": "Échec de la validation de l'état."}, status=400)
             
             move.do_after_validation(user=request.user)
-
-            # if move.is_isolation:
-            #     try:
-            #         move.mirror.check_can_confirm()
-            #     except ValueError as e:
-            #         return Response({"detail": str(e)}, status=400)
+            
+            if move.is_transfer and move.is_isolation and move.type == 'Sortie':
+                mirror_move = Move.objects.get(id=move.mirror.id)
+                try:
+                    mirror_move.check_can_confirm()
+                except ValueError as e:
+                    return Response({"detail": str(e)}, status=400)
                 
-            #     if not move.mirror.changeState(request.user.id, 'Confirmé'):
-            #         return Response({"detail": "Échec de la confirmation de l'état."}, status=400)
-            #     try:
-            #         move.mirror.can_validate()
-            #     except ValueError as e:
-            #         return Response({"detail": str(e)}, status=400)
+                if not mirror_move.changeState(request.user.id, 'Confirmé'):
+                    return Response({"detail": "Échec de la confirmation de l'état."}, status=400)
+                try:
+                    mirror_move.can_validate()
+                except ValueError as e:
+                    return Response({"detail": str(e)}, status=400)
                 
-            #     if not move.mirror.changeState(request.user.id, 'Validé'):
-            #         return Response({"detail": "Échec de la validation de l'état."}, status=400)
+                if not mirror_move.changeState(request.user.id, 'Validé'):
+                    return Response({"detail": "Échec de la validation de l'état."}, status=400)
                 
-            #     move.mirror.do_after_validation(user=request.user)
-            #     return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
+                mirror_move.do_after_validation(user=request.user)
+                return Response({"detail": "Mouvement validée avec succès, idem pour l'entré dans la zone quarataine."}, status=200)
 
             return Response({"detail": "Mouvement validée avec succès.", "move": MoveSerializer(move).data}, status=200)
         except Move.DoesNotExist:
