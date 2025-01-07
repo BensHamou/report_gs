@@ -197,7 +197,6 @@ class ConfirmMoveOut(APIView):
             if move.state != 'Brouillon':
                 return Response({"detail": "Impossible de confirmer un mouvement déjà confirmé."}, status=400)
             
-            
             try:
                 move.check_can_confirm()
             except ValueError as e:

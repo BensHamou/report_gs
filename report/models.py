@@ -73,7 +73,7 @@ class Product(BaseModel):
     def state_in_site(self, site_id, move_type='normal'):
         queryset = self.disponibilities.filter(emplacement__warehouse__site_id=site_id)
         if move_type == 'normal':
-            queryset = queryset.filter(emplacement__quarantine=False).order_by('expiry_date')
+            queryset = queryset.filter(emplacement__quarantine=False).order_by('expiry_date', 'n_lot')
         elif move_type == 'isolation':
             queryset = queryset.filter(emplacement__quarantine=False)
         elif move_type == 'consumption':
