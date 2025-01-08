@@ -172,11 +172,11 @@ def listProductView(request):
                 'designation': product.designation,
                 'tn_qte': product.tn_qte(selected_site.id),
                 'state_stock': product.state_stock(selected_site.id),
-                'last_entry_date': product.last_entry_date(selected_site.id),
+                'family': product.family.designation or '/',
                 'type': product.type,
             })
     else:
-        products_with_stock = [{'id': product.id, 'designation': product.designation, 'tn_qte': None, 'state_stock': 'Site non sélectionné', 'last_entry_date': None} for product in page]
+        products_with_stock = [{'id': product.id, 'designation': product.designation, 'tn_qte': None, 'state_stock': 'Site non sélectionné', 'family': None} for product in page]
 
     context = {
         'page': page,

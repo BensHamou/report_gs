@@ -46,7 +46,12 @@
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
                     <th class="table-header">Désignation</th>
-                    <th class="table-header">Date entrée</th>
+                    
+                    {% if not is_pf %}
+                        <th class="table-header">Date entrée</th>
+                    {% else %}
+                        <th class="table-header">Famille</th>
+                    {% endif %}
                     <th class="table-header">Quantité Stock</th>
                     <th class="table-header">État Stock</th>
                     <th class="table-header" style="text-align: center;">Actions</th>
@@ -58,7 +63,11 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
                         <td class="table-text">{{ product.id }}</td>
                         <td class="table-text">{{ product.designation }}</td>
-                        <td class="table-text">{{ product.last_entry_date|default:'Jamais' }}</td>
+                        {% if not is_pf %}
+                            <td class="table-text">{{ product.last_entry_date|default:'Jamais' }}</td>
+                        {% else %}
+                            <td class="table-text">{{ product.family|default:'/' }}</td>
+                        {% endif %}
                         <td class="table-text">{{ product.tn_qte }} Tn</td>
                         <td class="table-text" style="color: {% if product.state_stock == 'En stock' %}green{% elif product.state_stock == 'Stock bas' %}orange{% else %}red{% endif %}"><b>{{ product.state_stock }}</b></td>
                         <td class="text-center p-0 m-0">
