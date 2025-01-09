@@ -60,11 +60,11 @@
                                 </div>
                                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                                     <label for="qte" class="form-label">Quantité Globale</label>
-                                    <p class="custom-text-box">{{ move.mirror.qte|default:"1"|intcomma }}</p>
+                                    <p class="custom-text-box">{{ move.mirror.qte|intcomma }}</p>
                                 </div>
                                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                                     <label for="palette" class="form-label">Nombre Palettes</label>
-                                    <p class="custom-text-box">{{ move.mirror.palette|intcomma|default:"1" }}</p>
+                                    <p class="custom-text-box">{{ move.mirror.palette|intcomma }}</p>
                                 </div>
                                 <div class="col-lg-3 col-md-6 col-12 mb-2">
                                     <label for="date_created" class="form-label">Créer le</label>
@@ -103,7 +103,7 @@
                                             </div>
                                             <div class="col-lg-6 col-12 mb-2">
                                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                                <p class="custom-text-box">{{ line.palette|default:"1"|intcomma }}</p>
+                                                <p class="custom-text-box">{{ line.palette|intcomma }}</p>
                                             </div>
                                             {% if line.transfered_qte %}
                                                 <div class="col-lg-6 col-12 mb-2">
@@ -160,20 +160,20 @@
                                             {% endif %}
                                             <div class="col-lg-6 col-12 mb-2">
                                                 <label for="qte" class="form-label">Quantité</label>
-                                                <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                                <p class="custom-text-box">{{ line.qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                             </div>
                                             <div class="col-lg-6 col-12 mb-2">
                                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                                <p class="custom-text-box">{{ line.palette|default:"1"|intcomma }}</p>
+                                                <p class="custom-text-box">{{ line.palette|intcomma }}</p>
                                             </div>
                                             {% if line.transfered_qte %}
                                                 <div class="col-lg-6 col-12 mb-2">
                                                     <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                                                    <p class="custom-text-box">{{ line.transfered_qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                                    <p class="custom-text-box">{{ line.transfered_qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                                 </div>
                                                 <div class="col-lg-6 col-12 mb-2">
                                                     <label for="diff_qte" class="form-label">Quantité différentielle</label>
-                                                    <p class="custom-text-box">{{ line.diff_qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                                    <p class="custom-text-box">{{ line.diff_qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                                 </div>
                                             {% endif %}
                                         </div>
