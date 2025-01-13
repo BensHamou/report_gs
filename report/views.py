@@ -838,7 +838,7 @@ def handleDetails(request, move_line):
             palette = request.POST.get(f'palette_{row_id}')
             qte = request.POST.get(f'qte_{row_id}')
             if warehouse_id and emplacement_id and qte and palette:
-                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=int(qte),
+                LineDetail.objects.filter(id=detail_id).update(warehouse_id=warehouse_id, emplacement_id=emplacement_id, qte=float(qte),
                                                                palette=int(palette), write_uid=request.user, n_lot=n_lot)
 
         for row_id in to_add_rows:
@@ -849,7 +849,7 @@ def handleDetails(request, move_line):
 
             if warehouse_id and emplacement_id and qte and palette:
                 LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, n_lot=n_lot, 
-                                          qte=int(qte), palette=int(palette), write_uid=request.user, create_uid=move_line.create_uid)
+                                          qte=float(qte), palette=int(palette), write_uid=request.user, create_uid=move_line.create_uid)
     else:
         row_ids = [key.split('_')[1] for key in request.POST.keys() if key.startswith('warehouse_')]
         for row_id in row_ids:
@@ -860,7 +860,7 @@ def handleDetails(request, move_line):
 
             if warehouse_id and emplacement_id and qte and palette:
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
-                                                        n_lot=n_lot, qte=int(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
+                                                        n_lot=n_lot, qte=float(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
                 
 def create_warehouses_and_emplacements():
     """Creates warehouses and emplacements with specific counts for site with ID 2."""

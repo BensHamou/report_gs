@@ -66,11 +66,11 @@
                     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                         <div class="col-lg-6 col-12 mb-2">
                             <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                            <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte }}" style="background-color: #ffffff; padding-left: 30px;">
+                            <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;">
                         </div>
                         <div class="col-lg-6 col-12 mb-2">
                             <label for="diff_qte" class="form-label">Quantité différentielle</label>
-                            <input type="number" name="diff_qte" id="diff_qte" class="form-control" readonly value="{{ move_line.diff_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <input type="number" name="diff_qte" id="diff_qte" class="form-control" readonly value="{{ move_line.diff_qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         </div>
                     {% endif %}
                     <div class="col-lg-12 col-12 mb-2">
@@ -106,7 +106,7 @@
                     <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                     <div class="d-flex flex-column">
                         <div class="d-flex">
-                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;" required>
                             <input type="number" name="palette_{{ forloop.counter0 }}" id="palette_{{ forloop.counter0 }}" class="form-control palette" placeholder="Palette" value="{{ detail.palette }}" style="background-color: #ffffff; padding-left: 30px;" hidden required >
                             {% if forloop.first %}
                             <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">

@@ -330,8 +330,8 @@ class MoveLine(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     mirror = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
-    transfered_qte = models.PositiveIntegerField(default=0, null=True, blank=True)
-    diff_qte = models.IntegerField(default=0, null=True, blank=True)
+    transfered_qte = models.FloatField(default=0, null=True, blank=True)
+    diff_qte = models.FloatField(default=0, null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
     @property
@@ -371,7 +371,7 @@ class LineDetail(BaseModel):
     move_line = models.ForeignKey(MoveLine, on_delete=models.CASCADE, related_name='details')
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='details')
     emplacement = models.ForeignKey(Emplacement, on_delete=models.CASCADE, related_name='details')
-    qte = models.PositiveIntegerField()
+    qte = models.FloatField()
     palette = models.PositiveIntegerField(default=0)
     expiry_date = models.DateField(null=True, blank=True)
     code = models.CharField(max_length=255, null=True, blank=True)

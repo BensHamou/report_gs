@@ -51,7 +51,7 @@
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="global_qte" class="form-label">Quantité Globale</label>
-                        <input type="number" name="global_qte" id="global_qte" class="form-control" readonly value="{{ move_line.global_qte }}" style="background-color: #ffffff; padding-left: 30px;">
+                        <input type="number" name="global_qte" id="global_qte" class="form-control" readonly value="{{ move_line.global_qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;">
                     </div>
                     <div class="col-lg-6 col-12 mb-2">
                         <label for="palette_total" class="form-label">Nombre Palettes</label>
@@ -60,11 +60,11 @@
                     {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                         <div class="col-lg-6 col-12 mb-2">
                             <label for="transfered_qte" class="form-label">Quantité Transféré</label>
-                            <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte }}" style="background-color: #ffffff; padding-left: 30px;">
+                            <input type="number" name="transfered_qte" id="transfered_qte" class="form-control" readonly value="{{ move_line.transfered_qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;">
                         </div>
                         <div class="col-lg-6 col-12 mb-2">
                             <label for="diff_qte" class="form-label">Quantité Différentielle</label>
-                            <input type="number" name="diff_qte" id="diff_qte" class="form-control diff_qte" readonly value="{{ move_line.diff_qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                            <input type="number" name="diff_qte" id="diff_qte" class="form-control diff_qte" readonly value="{{ move_line.diff_qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;" required>
                         </div>
                     {% endif %}
                     {% if show_line_field %}
@@ -149,7 +149,7 @@
                         <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                         <div class="d-flex flex-column">
                             <div class="d-flex">
-                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte }}" style="background-color: #ffffff; padding-left: 30px;" required>
+                                <input type="number" name="qte_{{ forloop.counter0 }}" id="qte_{{ forloop.counter0 }}" class="form-control qte" placeholder="Quantité" value="{{ detail.qte|stringformat:'.2f' }}" style="background-color: #ffffff; padding-left: 30px;" required>
                                 {% if forloop.first %}
                                 <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
                                     <i class="fas fa-plus" style="color: #0082cd"></i>
@@ -449,7 +449,7 @@
             const totalQteField = document.getElementById('global_qte');
             const transferredQteField = document.getElementById('transfered_qte');
             const diffQteField = document.getElementById('diff_qte');
-            const diff = totalQteField.value - transferredQteField.value;
+            const diff = (totalQteField.value - transferredQteField.value).toFixed(2);
             diffQteField.value = diff;
         };
         detailsContainer.addEventListener("input", (e) => {
