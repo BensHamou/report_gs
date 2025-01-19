@@ -1,4 +1,4 @@
-from account.decorators import admin_required, getRedirectionURL, admin_or_gs_required, can_view_move_required
+from account.decorators import admin_only_required, getRedirectionURL, admin_or_gs_required, can_view_move_required, admin_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
@@ -23,7 +23,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 # PACKING
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listPackingView(request):
     packings = Packing.objects.all().order_by('-date_modified')
     filteredData = PackingFilter(request.GET, queryset=packings)
@@ -36,7 +36,7 @@ def listPackingView(request):
     return render(request, 'list_packings.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deletePackingView(request, id):
     packing = get_object_or_404(Packing, id=id)
     try:
@@ -48,7 +48,7 @@ def deletePackingView(request, id):
         return redirect(getRedirectionURL(request, reverse('packings')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createPackingView(request):
     form = PackingForm()
     if request.method == 'POST':
@@ -64,7 +64,7 @@ def createPackingView(request):
     return render(request, 'packing_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editPackingView(request, id):
     packing = get_object_or_404(Packing, id=id)
     form = PackingForm(instance=packing)
@@ -84,7 +84,7 @@ def editPackingView(request, id):
 # FAMILY
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listFamilyView(request):
     families = Family.objects.all().order_by('-date_modified')
     filteredData = FamilyFilter(request.GET, queryset=families)
@@ -98,7 +98,7 @@ def listFamilyView(request):
     return render(request, 'list_families.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteFamilyView(request, id):
     family = get_object_or_404(Family, id=id)
     try:
@@ -109,7 +109,7 @@ def deleteFamilyView(request, id):
     return redirect(getRedirectionURL(request, reverse('families')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createFamilyView(request):
     form = FamilyForm()
     if request.method == 'POST':
@@ -124,7 +124,7 @@ def createFamilyView(request):
     return render(request, 'family_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editFamilyView(request, id):
     family = get_object_or_404(Family, id=id)
     form = FamilyForm(instance=family)
@@ -142,7 +142,7 @@ def editFamilyView(request, id):
 # PRODUCT
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listProductView(request):
     products = Product.objects.filter(type='Produit Fini').order_by('-date_modified')
     sites = Line.objects.filter(id__in=request.user.lines.all()).values('site_id', 'site__designation').distinct()
@@ -190,7 +190,7 @@ def listProductView(request):
     return render(request, 'list_products.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteProductView(request, id):
     product = get_object_or_404(Product, id=id)
     try:
@@ -201,7 +201,7 @@ def deleteProductView(request, id):
     return redirect(getRedirectionURL(request, reverse('products')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createProductView(request):
     form = ProductForm()
     if request.method == 'POST':
@@ -217,7 +217,7 @@ def createProductView(request):
     return render(request, 'product_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editProductView(request, id):
     product = get_object_or_404(Product, id=id)
     form = ProductForm(instance=product)
@@ -238,7 +238,7 @@ def editProductView(request, id):
 # MP
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listMProductView(request):
     products = Product.objects.filter(type='Matière Première').order_by('-date_modified')
     sites = Line.objects.filter(id__in=request.user.lines.all()).values('site_id', 'site__designation').distinct()
@@ -287,7 +287,7 @@ def listMProductView(request):
     return render(request, 'list_products.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editMProductView(request, id):
     product = get_object_or_404(Product, id=id)
     form = MProductForm(instance=product)
@@ -305,7 +305,7 @@ def editMProductView(request, id):
     return render(request, 'product_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def syncMProducts(request):
     if request.method == 'POST':
         try:
@@ -976,7 +976,7 @@ def listStockView(request):
     return render(request, 'list_dispo.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteStockView(request, id):
     stock = get_object_or_404(Disponibility, id=id)
     try:
@@ -988,7 +988,7 @@ def deleteStockView(request, id):
         return redirect(getRedirectionURL(request, reverse('stocks')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createStockView(request):
     form = DisponibilityForm()
     if request.method == 'POST':
@@ -1004,7 +1004,7 @@ def createStockView(request):
     return render(request, 'dispo_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editStockView(request, id):
     stock = get_object_or_404(Disponibility, id=id)
     form = DisponibilityForm(instance=stock)

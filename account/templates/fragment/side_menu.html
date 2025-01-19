@@ -36,13 +36,15 @@
                     <span class="menu-text">Rapports</span>
                 </a>
             </li>
-        {% if user.role == 'Admin' %}
+        {% if user.role == 'Admin' or user.is_admin %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name == 'stocks' %} activeP {% endif %}" href="{% url 'stocks' %}">
                     <i class="margiin fas fa-cubes"></i> 
                     <span class="menu-text">Stock</span>
                 </a>
             </li>
+        {% endif %}
+        {% if user.role == 'Admin' %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 
@@ -125,12 +127,14 @@
                 <i class="margiin fas fa-chart-bar"></i> 
             </a>
         </li>
-        {% if user.role == 'Admin' %}
+        {% if user.role == 'Admin' or user.is_admin %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name == 'stocks' %} activeP {% endif %}" href="{% url 'stocks' %}">
                     <i class="margiin fas fa-cubes"></i> 
                 </a>
             </li>
+        {% endif %}
+        {% if user.role == 'Admin' %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'lines,sites,warehouses,emplacements,products,mproducts,shifts' %} activeP {% endif %}" href="#parametersSubmenu" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="parametersSubmenu">
                     <i class="margiin fas fa-gear"></i> 

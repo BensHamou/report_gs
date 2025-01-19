@@ -108,7 +108,7 @@ def logoutView(request):
 # SITES
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listSiteView(request):
     sites = Site.objects.all().order_by('-date_modified')
     filteredData = SiteFilter(request.GET, queryset=sites)
@@ -120,7 +120,7 @@ def listSiteView(request):
     return render(request, 'list_sites.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteSiteView(request, id):
     site = get_object_or_404(Site, id=id)
     try:
@@ -132,7 +132,7 @@ def deleteSiteView(request, id):
         return redirect(getRedirectionURL(request, reverse('sites')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createSiteView(request):
     form = SiteForm()
     if request.method == 'POST':
@@ -147,7 +147,7 @@ def createSiteView(request):
     return render(request, 'site_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editSiteView(request, id):
     site = get_object_or_404(Site, id=id)
     form = SiteForm(instance=site)
@@ -165,7 +165,7 @@ def editSiteView(request, id):
 # LINES
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listLineView(request):
     lines = Line.objects.all().order_by('-date_modified')
     filteredData = LineFilter(request.GET, queryset=lines)
@@ -178,7 +178,7 @@ def listLineView(request):
     return render(request, 'list_lines.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteLineView(request, id):
     line = get_object_or_404(Line, id=id)
     try:
@@ -190,7 +190,7 @@ def deleteLineView(request, id):
         return redirect(getRedirectionURL(request, reverse('lines')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createLineView(request):
     form = LineForm()
     if request.method == 'POST':
@@ -207,7 +207,7 @@ def createLineView(request):
     return render(request, 'line_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editLineView(request, id):
     line = get_object_or_404(Line, id=id)
     form = LineForm(instance=line)
@@ -228,7 +228,7 @@ def editLineView(request, id):
 # EMPLACEMENT
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listEmplacementView(request):
     emplacements = Emplacement.objects.all().order_by('-date_modified')
     filteredData = EmplacementFilter(request.GET, queryset=emplacements)
@@ -241,7 +241,7 @@ def listEmplacementView(request):
     return render(request, 'list_emplacements.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteEmplacementView(request, id):
     emplacement = get_object_or_404(Emplacement, id=id)
     try:
@@ -253,7 +253,7 @@ def deleteEmplacementView(request, id):
         return redirect(getRedirectionURL(request, reverse('emplacements')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createEmplacementView(request):
     form = EmplacementForm()
     
@@ -270,7 +270,7 @@ def createEmplacementView(request):
     return render(request, 'emplacement_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editEmplacementView(request, id):
     emplacement = get_object_or_404(Emplacement, id=id)
     form = EmplacementForm(instance=emplacement)
@@ -290,7 +290,7 @@ def editEmplacementView(request, id):
 # SHIFT
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listShiftView(request):
     shifts = Shift.objects.all().order_by('-date_modified')
     filteredData = ShiftFilter(request.GET, queryset=shifts)
@@ -303,7 +303,7 @@ def listShiftView(request):
     return render(request, 'list_shifts.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteShiftView(request, id):
     shift = get_object_or_404(Shift, id=id)
     try:
@@ -315,7 +315,7 @@ def deleteShiftView(request, id):
         return redirect(getRedirectionURL(request, reverse('shifts')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createShiftView(request):
     form = ShiftForm()
     
@@ -332,7 +332,7 @@ def createShiftView(request):
     return render(request, 'shift_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editShiftView(request, id):
     shift = get_object_or_404(Shift, id=id)
     form = ShiftForm(instance=shift)
@@ -352,7 +352,7 @@ def editShiftView(request, id):
 # WAREHOUSE
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def listWarehouseView(request):
     warehouses = Warehouse.objects.all().order_by('-date_modified')
     filteredData = WarehouseFilter(request.GET, queryset=warehouses)
@@ -365,7 +365,7 @@ def listWarehouseView(request):
     return render(request, 'list_warehouses.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def deleteWarehouseView(request, id):
     warehouse = get_object_or_404(Warehouse, id=id)
     try:
@@ -377,7 +377,7 @@ def deleteWarehouseView(request, id):
         return redirect(getRedirectionURL(request, reverse('warehouses')))
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def createWarehouseView(request):
     form = WarehouseForm()
     
@@ -394,7 +394,7 @@ def createWarehouseView(request):
     return render(request, 'warehouse_form.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_only_required
 def editWarehouseView(request, id):
     warehouse = get_object_or_404(Warehouse, id=id)
     form = WarehouseForm(instance=warehouse)

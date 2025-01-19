@@ -20,11 +20,14 @@ def loginerror(value, word):
     return str(value)[len(word):]
 
 def login_success(request):
-    return redirect("home")
+    user = request.user
+    if user.role == 'Admin':
+        return redirect("home")
+    return redirect("moves")
 
 def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'Admin' or request.user.is_admin:
+        if request.user.role == 'Admin' or request.user.is_admin:
             return view_func(request, *args, **kwargs)
         else:
             return render(request, '403.html', status=403)
