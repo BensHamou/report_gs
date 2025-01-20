@@ -381,7 +381,7 @@ class LineDetail(BaseModel):
     def package(self):
         if self.move_line.product.qte_per_cond and self.qte:
             return math.ceil(self.qte / self.move_line.product.qte_per_cond)
-        return 0
+        return 0.0
         
     def generateCode(self):
         try:
