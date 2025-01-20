@@ -340,7 +340,7 @@ class MoveLine(BaseModel):
 
     @property
     def package(self):
-        return sum(detail.package for detail in self.details.all()) or 0.0
+        return sum(detail.package for detail in self.details.all()) or 0
 
     @property
     def palette(self):
@@ -381,7 +381,7 @@ class LineDetail(BaseModel):
     def package(self):
         if self.move_line.product.qte_per_cond and self.qte:
             return math.ceil(self.qte / self.move_line.product.qte_per_cond)
-        return 0.0
+        return 0
         
     def generateCode(self):
         try:
