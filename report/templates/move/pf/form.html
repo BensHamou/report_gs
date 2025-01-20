@@ -48,11 +48,11 @@
                         <label for="production_date" class="form-label">Date de production</label>
                         <input type="date" name="production_date" id="production_date" class="form-control" style="background-color: #ffffff; padding-left: 30px;" required>
                     </div>
-                    <div class="col-lg-6 col-12 mb-2">
+                    <div class="col-lg-{% if product.qte_per_pal == 1 %}12{% else %}6{% endif %} col-12 mb-2">
                         <label for="global_qte" class="form-label">Quantité Globale</label>
                         <input type="number" name="global_qte" id="global_qte" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
                     </div>
-                    <div class="col-lg-6 col-12 mb-2">
+                    <div class="col-lg-6 col-12 mb-2" {% if product.qte_per_pal == 1 %} hidden {% endif %}>
                         <label for="palette_total" class="form-label">Nombre Palettes</label>
                         <input type="number" name="palette_total" id="palette_total" class="form-control" readonly style="background-color: #ffffff; padding-left: 30px;">
                     </div>
@@ -114,15 +114,16 @@
                         <option value="">-- Emplacement --</option>
                     </select>
                 </div>
-                <div class="col-lg-2 col-md-6 col-sm-12">
+                
+                <div class="col-lg-2 col-md-6 col-sm-12" {% if product.qte_per_pal == 1 %} hidden {% endif %}>
                     <label for="palette_0" class="form-label">Palette</label>
                     <input type="number" name="palette_0" id="palette_0" class="form-control palette" placeholder="Palette" style="background-color: #ffffff; padding-left: 30px;" required>
                 </div>
-                <div class="col-lg-2 col-md-6 col-sm-12">
+                <div class="col-lg-2 col-md-6 col-sm-12" {% if product.qte_per_cond == 1 %} hidden {% endif %}>
                     <label for="sac_0" class="form-label">Sac</label>
                     <input type="number" name="sac_0" id="sac_0" class="form-control sac" placeholder="Sac" style="background-color: #ffffff; padding-left: 30px;" readonly>
                 </div>
-                <div class="col-lg-2 col-md-6 col-sm-12">
+                <div class="col-lg-{% if product.qte_per_pal == 1 and product.qte_per_cond == 1 %}6{% elif product.qte_per_pal == 1 or product.qte_per_cond == 1 %}4{% else %}2{% endif %} col-md-6 col-sm-12">
                     <label for="qte_0" class="form-label">Quantité</label>
                     <div class="d-flex">
                         <input type="number" name="qte_0" id="qte_0" class="form-control qte" placeholder="Quantité" style="background-color: #ffffff; padding-left: 30px;" required>

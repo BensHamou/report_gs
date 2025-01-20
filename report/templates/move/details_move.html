@@ -91,11 +91,11 @@
                     <label for="date" class="form-label">Date de mouvement</label>
                     <p class="custom-text-box">{{ move.date|default:'/' }}</p>
                 </div>
-                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                <div class="col-lg-{% if move.qte == move.palette %}6{% else %}3{% endif %} col-md-6 col-12 mb-2">
                     <label for="qte" class="form-label">Quantité Globale</label>
                     <p class="custom-text-box">{{ move.qte|intcomma }}</p>
                 </div>
-                <div class="col-lg-3 col-md-6 col-12 mb-2">
+                <div class="col-lg-3 col-md-6 col-12 mb-2" {% if move.qte == move.palette %}hidden{% endif %}>
                     <label for="palette" class="form-label">Nombre Palettes</label>
                     <p class="custom-text-box">{{ move.palette|intcomma }}</p>
                 </div>
@@ -137,11 +137,11 @@
                                 <label for="product" class="form-label">Produit</label>
                                 <p class="custom-text-box">{{ line.product }}</p>
                             </div>
-                            <div class="col-lg-6 col-12 mb-2">
+                            <div class="col-lg-{% if line.product.qte_per_pal == 1 %}12{% else %}6{% endif %} col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
-                            <div class="col-lg-6 col-12 mb-2">
+                            <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
                                 <p class="custom-text-box">{{ line.palette|intcomma }}</p>
                             </div>
@@ -224,11 +224,11 @@
                                     <p class="custom-text-box">{{ line.expiry_date|date:'d M Y' }}</p>
                                 </div>
                             {% endif %}
-                            <div class="col-lg-6 col-12 mb-2">
+                            <div class="col-lg-{% if line.product.qte_per_pal == 1 %}12{% else %}6{% endif %} col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ line.qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
-                            <div class="col-lg-6 col-12 mb-2">
+                            <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
                                 <p class="custom-text-box">{{ line.palette|intcomma }}</p>
                             </div>
@@ -266,15 +266,15 @@
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Emplacement</label>
                                 <p class="custom-text-box">{{ detail.emplacement.designation }}</p>
                             </div>
-                            <div class="col-lg-2 col-md-2 col-sm-12">
+                            <div class="col-lg-2 col-md-2 col-sm-12" {% if detail.move_line.product.qte_per_pal == 1 %}hidden{% endif %}>
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Palette</label>
                                 <p class="custom-text-box">{{ detail.palette|default:'1'|intcomma }}</p>
                             </div>
-                            <div class="col-lg-2 col-md-2 col-sm-12">
+                            <div class="col-lg-2 col-md-2 col-sm-12" {% if detail.move_line.product.qte_per_cond == 1 %}hidden{% endif %}>
                                 <label for="emplacement_{{ forloop.counter0 }}" class="form-label">Sac</label>
                                 <p class="custom-text-box">{{ detail.package|default:'1'|intcomma }}</p>
                             </div>
-                            <div class="col-lg-2 col-md-2 col-sm-12">
+                            <div class="col-lg-{% if detail.move_line.product.qte_per_pal == 1 and detail.move_line.product.qte_per_cond == 1 %}4{% elif detail.move_line.product.qte_per_pal == 1 or detail.move_line.product.qte_per_cond == 1 %}3{% else %}2{% endif %}  col-md-2 col-sm-12">
                                 <label for="qte_{{ forloop.counter0 }}" class="form-label">Quantité</label>
                                 <p class="custom-text-box">{{ detail.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                             </div>
