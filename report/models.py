@@ -130,7 +130,7 @@ class Move(BaseModel):
 
     @property
     def palette(self):
-        return sum(ml.palette for ml in self.move_lines.all()) or 0.0
+        return sum(ml.palette for ml in self.move_lines.all()) or 0
     
     @property
     def qte(self):
@@ -344,7 +344,7 @@ class MoveLine(BaseModel):
 
     @property
     def palette(self):
-        return sum(detail.palette for detail in self.details.all()) or 0.0
+        return sum(detail.palette for detail in self.details.all()) or 0
 
     @property
     def is_out(self):
