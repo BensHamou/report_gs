@@ -386,6 +386,7 @@ class LineDetail(BaseModel):
     def generateCode(self):
         try:
             self.code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.move_line.n_lot}"
+            self.expiry_date = self.move_line.expiry_date
             self.save()
             return True
         except Exception as e:
