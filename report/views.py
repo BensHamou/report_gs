@@ -476,9 +476,14 @@ def create_move_pf(request):
                 production_year = datetime.strptime(production_date, "%Y-%m-%d").year
                 if not (site_id and line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
-                # existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, move__line_id=line_id, product__type='Produit Fini')
-                # if existing_move_line.exists():
-                    # return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+                
+                palette_total = int(request.POST.get('palette_total', 0))
+                existing_move_lines = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, 
+                                                              move__line_id=line_id, move__type='Entré', product__type='Produit Fini')
+                existing_total = sum(line.palette for line in existing_move_lines)
+                if (existing_total + palette_total) > 180:
+                    return JsonResponse({'success': False, 'message': 'Le nombre de palettes pour ce lot est limité à 180.'}, status=200)
+                
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, 
@@ -505,20 +510,27 @@ def update_move_pf(request, move_line_id):
                 production_date = request.POST.get('production_date', False) or None
                 expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 diff_qte = request.POST.get('diff_qte', 0)
-                do_check = request.POST.get('do_check')
+                do_check = int(request.POST.get('do_check', 0))
                 move_line = MoveLine.objects.get(id=move_line_id)
+                move = Move.objects.get(id=move_line.move.id)
+    
                 if do_check == 0:
                     production_year = datetime.strptime(production_date, "%Y-%m-%d").year
                     if not (line_id and gestionaire_id):
                         return JsonResponse({'success': False, 'message': 'Les champs Ligne, Date et Gestionaire sont obligatoire.'}, status=200)
-                    # existing_move_line = MoveLine.objects.filter(lot_number=lot_number, move__line=move_line.move.line, move__date__year=production_year).exclude(id=move_line_id)
-                    # if existing_move_line.exists() and do_check == 0:
-                        # return JsonResponse({'success': False, 'message': f'N° Lot {lot_number} existe déjà.'}, status=200)
+                
+                    palette_total = int(request.POST.get('palette_total', 0))
+                    existing_move_lines = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, 
+                                                                move__line_id=line_id, move__type='Entré', product__type='Produit Fini').exclude(id=move_line_id)
+                    existing_total = sum(line.palette for line in existing_move_lines)
+                    if (existing_total + palette_total) > 180:
+                        return JsonResponse({'success': False, 'message': 'Le nombre de palettes pour ce lot est limité à 180.'}, status=200)
+                
                     if shift_id:
                         move.shift_id = shift_id
                     else:
                         return JsonResponse({'success': False, 'message': 'Le champs Shift est obligatoire.'}, status=200)
-                move = Move.objects.get(id=move_line.move.id)
+                    
                 if not move.is_transfer:
                     move.site_id = site_id
                     move.line_id = line_id
@@ -703,6 +715,9 @@ def validateMove(request, move_id):
         
         if move.state != 'Confirmé':
             return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Confirmé pour être validé.'})
+        
+        if not move.is_transfer and not move.is_isolation and hasDraftMoves(move):
+            return JsonResponse({'success': False, 'message': 'Il existe des mouvements en brouillon pour ce site.'})
         
         try:
             move.can_validate()
@@ -934,7 +949,6 @@ def create_rayons():
 
     print("Accessoire et Moule emplacements created successfully.")
 
-
 def create_emplacements_for_warehouse_9():
     """Creates emplacements E6-E28 for warehouse with ID 9."""
     try:
@@ -1094,3 +1108,10 @@ def extractStockView(request):
     wb.save(response)
     return response
 
+def hasDraftMoves(move):
+    if not move.move_lines.filter(product__type='Produit Fini').exists():
+        return False
+
+    draft_moves = Move.objects.filter(Q(state='Brouillon') | Q(state='Confirmé'), site=move.site, is_transfer=False, is_isolation=False)
+    draft_moves_with_finished_products = draft_moves.filter(move_lines__product__type='Produit Fini').distinct()
+    return draft_moves_with_finished_products.exists()

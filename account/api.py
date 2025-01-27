@@ -16,6 +16,7 @@ from django.db import transaction
 from datetime import datetime
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from report.views import hasDraftMoves
 
 
 @csrf_exempt
@@ -266,6 +267,9 @@ class ValidateMoveOut(APIView):
 
             if move.state != 'Confirmé':
                 return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
+        
+            if not move.is_transfer and not move.is_isolation and hasDraftMoves(move):
+                return Response({"detail": "Il existe des mouvements en brouillon pour ce site."}, status=400)
 
             try:
                 move.can_validate()
