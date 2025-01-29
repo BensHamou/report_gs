@@ -93,7 +93,7 @@
                     {% else %}
                         <input type="hidden" name="gestionaire" id='gestionaire' value="{{ move_line.move.gestionaire.id }}">
                     {% endif %}
-                    {% if show_line_field %}
+                    {% if move_line.move.type == 'Entré' and not move_line.move.is_transfer %}
                         <div class="col-lg-6 col-12 mb-2">
                             <label for="shift" class="form-label">Shift</label>
                             <select name="shift" id="shift" class="form-control custom-select" style="background-color: #ffffff; padding-left: 30px;" required>
@@ -221,23 +221,25 @@
 </style>
 
 <script>
-    const today = new Date();
+    {% if user.role != 'Admin' %}
+        const today = new Date();
 
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate() - 3);
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() - 3);
 
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + 3);
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 3);
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
 
-    const productionDateInput = document.getElementById('production_date');
-    productionDateInput.min = formatDate(minDate);
-    productionDateInput.max = formatDate(maxDate);
+        const productionDateInput = document.getElementById('production_date');
+        productionDateInput.min = formatDate(minDate);
+        productionDateInput.max = formatDate(maxDate);
+    {% endif %}
 
     let rowId = {{ line_details|length }};
 
@@ -507,6 +509,7 @@
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
         let formIsValid = true;
+        let dateIsValid = true;
         const do_check = document.getElementById("do_check").value;
         document.querySelectorAll('.expire').forEach((expire) => {
             expire.removeAttribute('readonly');
@@ -520,6 +523,21 @@
         document.querySelectorAll('.diff_qte').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
+
+        {% if user.role != 'Admin' %}
+            const productionDateInput = document.getElementById('production_date');
+            const productionDateValue = productionDateInput.value;
+            const selectedDate = new Date(productionDateValue);
+            const today = new Date();
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() - 3);
+            const maxDate = new Date(today);
+            maxDate.setDate(today.getDate() + 3);
+            if (selectedDate < minDate || selectedDate > maxDate) {
+                dateIsValid = false;
+                
+            }
+        {% endif %}
 
         requiredFields.forEach(function(field) {
             if (!field.value.trim()) {
@@ -560,7 +578,22 @@
             document.querySelectorAll('.expire').forEach((expire) => {
                 expire.addAttribute('readonly');
             });
-    
+        } else if(!dateIsValid){ 
+            swal("Erreur", "La date de production doit être comprise entre 3 jours avant et 3 jours après la date actuelle.", "error");
+            {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
+                document.querySelectorAll('.lot_number').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+                document.querySelectorAll('.production_date').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+                document.querySelectorAll('.diff_qte').forEach((expire) => {
+                    expire.addAttribute('readonly');
+                });
+            {% endif %}
+            document.querySelectorAll('.expire').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
         } else {
             swal({
                 title: "Confirmer la modification",

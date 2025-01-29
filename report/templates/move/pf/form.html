@@ -158,23 +158,25 @@
 </style>
 
 <script>
-    const today = new Date();
+    {% if user.role != 'Admin' %}
+        const today = new Date();
 
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate() - 3);
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() - 3);
 
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + 3);
-    const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 3);
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
 
-    const productionDateInput = document.getElementById('production_date');
-    productionDateInput.min = formatDate(minDate);
-    productionDateInput.max = formatDate(maxDate);
+        const productionDateInput = document.getElementById('production_date');
+        productionDateInput.min = formatDate(minDate);
+        productionDateInput.max = formatDate(maxDate);
+    {% endif %}
     
     let rowId = 1;
 
@@ -398,10 +400,26 @@
     document.getElementById('submit-form').addEventListener('click', function() {
         let requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
         let formIsValid = true;
+        let dateIsValid = true;
 
         document.querySelectorAll('.expire').forEach((expire) => {
             expire.removeAttribute('readonly');
         });
+
+        {% if user.role != 'Admin' %}
+            const productionDateInput = document.getElementById('production_date');
+            const productionDateValue = productionDateInput.value;
+            const selectedDate = new Date(productionDateValue);
+            const today = new Date();
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() - 3);
+            const maxDate = new Date(today);
+            maxDate.setDate(today.getDate() + 3);
+            if (selectedDate < minDate || selectedDate > maxDate) {
+                dateIsValid = false;
+                
+            }
+        {% endif %}
     
         requiredFields.forEach(function(field) {
             if (!field.value.trim()) {
@@ -430,8 +448,13 @@
             document.querySelectorAll('.expire').forEach((expire) => {
                 expire.addAttribute('readonly');
             });
+        } else if(!dateIsValid){ 
+            swal("Erreur", "La date de production doit être comprise entre 3 jours avant et 3 jours après la date actuelle.", "error");
+            document.querySelectorAll('.expire').forEach((expire) => {
+                expire.addAttribute('readonly');
+            });
         } else {
-            swal({
+           swal({
                 title: "Confirmer la modification",
                 text: "Êtes-vous sûr de vouloir enregistrer ces informations ?",
                 icon: "warning",
