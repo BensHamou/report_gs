@@ -1146,6 +1146,7 @@ def extractStockView(request):
     return response
 
 def hasDraftMoves(move):
+    return False
     if not move.move_lines.filter(product__type='Produit Fini').exists():
         return False
 
