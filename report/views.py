@@ -19,6 +19,9 @@ from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
+from .forms import MoveBLForm
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 # PACKING
 
@@ -773,6 +776,39 @@ def cancelMove(request, move_id):
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 
+
+class EditMoveBLView(LoginRequiredMixin, View):
+    template_name = 'edit_move_bl.html'
+
+    def get(self, request, move_id):
+        move = get_object_or_404(Move, id=move_id)
+        bls = move.bls.all()
+        return render(request, self.template_name, {'move': move, 'bls': bls})
+
+    def post(self, request, move_id):
+        move = get_object_or_404(Move, id=move_id)
+
+        for bl in move.bls.all():
+            bl_id = str(bl.id)
+            delete_flag = request.POST.get(f'bl-delete-{bl_id}')
+            if delete_flag == 'true':
+                bl.delete()
+                continue
+
+            numero = request.POST.get(f'bl-numero-{bl_id}')
+            if not numero:
+                continue
+            is_annexe = request.POST.get(f'bl-is_annexe-{bl_id}') == 'on'
+            bl.numero = numero
+            bl.is_annexe = is_annexe
+            bl.save()
+
+        new_numero = request.POST.get('new-bl-numero')
+        new_is_annexe = request.POST.get('new-bl-is_annexe') == 'on'
+        if new_numero:
+            MoveBL.objects.create(move=move, numero=new_numero, is_annexe=new_is_annexe)
+        return redirect(reverse('move_detail', args=[move.id]))
+    
 # FETCH JSON
 
 @login_required(login_url='login')

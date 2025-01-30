@@ -43,6 +43,7 @@ urlpatterns = [
     path('', list_move, name='moves'),
     path('move/detail/<int:move_id>/', move_detail, name='move_detail'),
     path('move/delete/<int:move_id>/', delete_move, name='delete_move'),
+    path('move/<int:move_id>/edit-bl/', EditMoveBLView.as_view(), name='edit_move_bl'),
 
     path('move/confirm/<int:move_id>/', confirmMove, name='confirm_move'),
     path('move/cancel/<int:move_id>/', cancelMove, name='cancel_move'),

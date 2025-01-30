@@ -72,7 +72,11 @@
                 </div>
                 {% if move.type == 'Sortie' and not move.is_transfer %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
-                        <label for="bl_str" class="form-label">N° BL</label>
+                        <label for="bl_str" class="form-label" 
+                        {% if user.role == 'Admin' %}
+                            onclick="window.location=constructUrl('{% url 'edit_move_bl' move.id %}')"
+                            style="cursor: pointer; color: blue;"
+                        {% endif %}>N° BL</label>
                         <p class="custom-text-box">{{ move.bl_str|default:'/' }}</p>
                     </div>
                 {% endif %}

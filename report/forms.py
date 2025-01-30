@@ -84,3 +84,12 @@ class DisponibilityForm(BaseModelForm):
                 self.add_error('product', error_message)
 
         return cleaned_data
+    
+class MoveBLForm(forms.ModelForm):
+    class Meta:
+        model = MoveBL
+        fields = ['numero', 'is_annexe']
+        widgets = {
+            'numero': forms.NumberInput(attrs={'class': 'form-control'}),
+            'is_annexe': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

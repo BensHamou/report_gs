@@ -1,0 +1,120 @@
+{% extends "main.html" %}
+
+{% block title %}
+    Modification de BLs
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'moves' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Rapports</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">BLs</h4>
+    </div>
+    <div class="container">
+        <h2>Modification de BL [{{move.id}}] </h2>
+        <form method="post" id="bl-form">
+            {% csrf_token %}
+            <table class="table" id="bl-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: center">Numero</th>
+                        <th style="text-align: center">Annexe?</th>
+                        <th style="text-align: center">Supprimer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bl in bls %}
+                    <tr id="bl-row-{{ bl.id }}">
+                        <td>
+                            <input type="number" name="bl-numero-{{ bl.id }}" value="{{ bl.numero }}" class="form-control" required>
+                        </td>
+                        <td style="text-align: center">
+                            <input type="checkbox" name="bl-is_annexe-{{ bl.id }}" {% if bl.is_annexe %}checked{% endif %} class="form-check-input">
+                        </td>
+                        <td style="text-align: center">
+                            {% if not forloop.first %}
+                                <button type="button" class="btn btn-danger btn-sm delete-row" data-bl-id="{{ bl.id }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <input type="hidden" name="bl-delete-{{ bl.id }}" value="false" id="bl-delete-{{ bl.id }}">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" id="add-row" class="btn ms-2" style="background-color: #eaedf9">
+                    <i class="fas fa-plus" style="color: #0082cd"></i>
+                </button>
+                <button type="submit" class="btn btn-primary ms-2">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('add-row').addEventListener('click', function() {
+        const tableBody = document.querySelector('#bl-table tbody');
+        const rows = tableBody.querySelectorAll('tr');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>
+                <input type="number" name="new-bl-numero" class="form-control" required>
+            </td>
+            <td style="text-align: center">
+                <input type="checkbox" name="new-bl-is_annexe" class="form-check-input">
+            </td>
+            <td style="text-align: center">
+                ${rows.length > 0 ? '<button type="button" class="btn btn-danger btn-sm delete-row"><i class="fas fa-trash-alt"></i></button>' : ''}
+            </td>
+        `;
+        tableBody.appendChild(newRow);
+    });
+
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('delete-row')) {
+            const tableBody = document.querySelector('#bl-table tbody');
+            const rows = tableBody.querySelectorAll('tr');
+            if (rows.length > 1) {
+                const row = event.target.closest('tr');
+                const blId = event.target.getAttribute('data-bl-id');
+                let deleteInput = false;
+                if (blId) {
+                    deleteInput = document.getElementById(`bl-delete-${blId}`);
+                    if (deleteInput) {
+                        deleteInput.value = 'true';
+                    }
+                }
+                if(!deleteInput){
+                    row.remove();
+                } else {
+                    row.style.display = 'none';
+                }
+            } else {
+                alert('At least one BL must remain.');
+            }
+        }
+    });
+
+    document.getElementById('bl-form').addEventListener('submit', function(event) {
+        const newNumeroInput = document.querySelector('input[name="new-bl-numero"]');
+        if (newNumeroInput && !newNumeroInput.value) {
+            alert('Veuillez remplir le numéro pour la nouvelle ligne.');
+            event.preventDefault();
+        }
+    });
+</script>
+{% endblock %}
