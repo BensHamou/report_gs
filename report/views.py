@@ -720,8 +720,9 @@ def validateMove(request, move_id):
         if move.state != 'Confirmé':
             return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Confirmé pour être validé.'})
         
-        if not move.is_transfer and not move.is_isolation and hasDraftMoves(move):
-            return JsonResponse({'success': False, 'message': 'Il existe des mouvements en brouillon pour ce site.'})
+        if request.user.role != 'Admin' and not move.is_transfer and not move.is_isolation:
+            if hasDraftMoves(move):
+                return JsonResponse({'success': False, 'message': 'Il existe des mouvements en brouillon pour ce site.'})
         
         try:
             move.can_validate()

@@ -267,9 +267,10 @@ class ValidateMoveOut(APIView):
 
             if move.state != 'Confirmé':
                 return Response({"detail": "Le mouvement doit être confirmé avant de pouvoir être validé."}, status=400)
-        
-            if not move.is_transfer and not move.is_isolation and hasDraftMoves(move):
-                return Response({"detail": "Il existe des mouvements en brouillon pour ce site."}, status=400)
+            
+            if request.user.role != 'Admin' and not move.is_transfer and not move.is_isolation:
+                if hasDraftMoves(move):
+                    return Response({"detail": "Il existe des mouvements en brouillon pour ce site."}, status=400)
 
             try:
                 move.can_validate()
