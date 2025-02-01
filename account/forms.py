@@ -43,7 +43,7 @@ class BaseModelForm(ModelForm):
 class UserForm(BaseModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'is_admin', 'first_name', 'last_name', 'role', 'lines', 'default_site']
+        fields = ['username', 'email', 'is_admin', 'allow_policy', 'first_name', 'last_name', 'role', 'lines', 'default_site']
 
     username = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Nom d\'utilisateur')), disabled=True)
     last_name = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Nom de famille')), disabled=True)
@@ -58,6 +58,13 @@ class UserForm(BaseModelForm):
         'data-toggle': 'switchbutton',
         'data-onlabel': "Admin", 
         'data-offlabel': "User"
+    }))
+    allow_policy = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Autorise", 
+        'data-offlabel': "Non"
     }))
 
 class SiteForm(BaseModelForm):

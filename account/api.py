@@ -34,7 +34,9 @@ def login_api(request):
 
             if user is not None:
                 token, _ = Token.objects.get_or_create(user=user)
-                return JsonResponse({'success': True, 'token': token.key, 'fullname': user.fullname, 'default_site': user.default_site.id, 'role': user.role}, status=200)
+                return JsonResponse({'success': True, 'token': token.key, 'fullname': user.fullname, 
+                                     'default_site': user.default_site.id, 'role': user.role, 
+                                     'allow_policy': user.allow_policy}, status=200)
             else:
                 return JsonResponse({'success': False, 'message': 'Identifiants invalides.'}, status=401)
 

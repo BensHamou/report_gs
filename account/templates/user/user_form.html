@@ -66,12 +66,22 @@
                     <small class="text-danger">{{ form.email.errors }}</small>
                 {% endif %}
             </div>
-            <div class="col-lg-6 col-md-12 mb-2">
+            <div class="col-lg-5 col-md-12 mb-2">
                 <label class="form-label" style="color: #5d5d5d;">Site par défaut</label>
                 {{ form.default_site }}
                 {% if form.default_site.errors %}
                     <small class="text-danger">{{ form.default_site.errors }}</small>
                 {% endif %}
+            </div>
+            <div class="col-lg-1 col-md-12 mb-2">
+                <div class="form-outline">
+                    <label class="form-label" for="allow_policy" style="color: #5d5d5d;">Autorise?</label>
+                    </br>
+                    {{ form.allow_policy }}
+                    {% if form.allow_policy.errors %}
+                        <small class="text-danger">{{ form.allow_policy.errors }}</small>
+                    {% endif %}
+                </div>
             </div>
             <div class="col-lg-5 col-md-12 mb-2">
                 <label class="form-label" style="color: #5d5d5d;">Rôle</label>

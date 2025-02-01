@@ -121,6 +121,7 @@ class User(BaseModel, AbstractUser):
     default_site = models.ForeignKey(Site, related_name='users', on_delete=models.SET_NULL, null=True, blank=True)
     lines = models.ManyToManyField(Line, related_name='users', blank=True)
     is_admin = models.BooleanField(default=False)
+    allow_policy = models.BooleanField(default=False)
 
     def __str__(self):
         return self.fullname
