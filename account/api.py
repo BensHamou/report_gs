@@ -133,7 +133,8 @@ class CreateMoveOut(APIView):
         if move_type == 'normal' and request.user.role != 'Admin':
             for n_bl in n_bls:
                 numero = n_bl.get('numero')
-                if MoveBL.objects.filter(numero=numero, move__site=request.user.default_site, move__date__year=datetime.today().year).exists():
+                is_annexe = bl_data.get('is_annexe', False)
+                if MoveBL.objects.filter(numero=numero, move__site=request.user.default_site, move__date__year=datetime.today().year, is_annexe=is_annexe).exists():
                     return Response({"detail": f"Le BL {numero} existe déjà pour ce site."}, status=400)
 
         if not transferred_products:
