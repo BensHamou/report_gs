@@ -130,6 +130,12 @@ class CreateMoveOut(APIView):
         transferred_products = request.data.get('transferred_products', [])
         n_bls = request.data.get('n_bls', [])
 
+        if move_type == 'normal' and request.user.role != 'Admin':
+            for n_bl in n_bls:
+                numero = n_bl.get('numero')
+                if MoveBL.objects.filter(numero=numero, move__site=request.user.default_site, move__date__year=datetime.today().year).exists():
+                    return Response({"detail": f"Le BL {numero} existe déjà pour ce site."}, status=400)
+
         if not transferred_products:
             return Response({"detail": "Produits manquants"}, status=400)
         if move_type == 'transfer' and not transfer_to:

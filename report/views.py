@@ -777,7 +777,6 @@ def cancelMove(request, move_id):
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
 
-
 class EditMoveBLView(LoginRequiredMixin, View):
     template_name = 'edit_move_bl.html'
 
