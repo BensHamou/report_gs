@@ -103,10 +103,26 @@
                 {% endif %}
 
                 <div class="col-lg-12 col-md-12 mb-1">
-                    <label for="alert_stock" class="form-label" style="color: #5d5d5d;">Alerte Stock</label>
+                    <label for="alert_stock" class="form-label" style="color: #5d5d5d;">Alerte Stock (Min)</label>
                     {{ form.alert_stock }}
                     {% if form.alert_stock.errors %}
                         <small class="text-danger">{{ form.alert_stock.errors }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="alert_stock_max" class="form-label" style="color: #5d5d5d;">Alerte Stock (Max)</label>
+                    {{ form.alert_stock_max }}
+                    {% if form.alert_stock_max.errors %}
+                        <small class="text-danger">{{ form.alert_stock_max.errors }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="alert_expiration" class="form-label" style="color: #5d5d5d;">Alerte Expiration (jours)</label>
+                    {{ form.alert_expiration }}
+                    {% if form.alert_expiration.errors %}
+                        <small class="text-danger">{{ form.alert_expiration.errors }}</small>
                     {% endif %}
                 </div>
             </div>

@@ -63,7 +63,9 @@ class Product(BaseModel):
     delais_expiration = models.PositiveIntegerField(null=True, blank=True)
     qte_per_pal = models.FloatField(null=True, blank=True)
     qte_per_cond = models.FloatField(null=True, blank=True)
-    alert_stock = models.PositiveIntegerField(null=True, blank=True)
+    alert_stock = models.PositiveIntegerField(null=True, blank=True, default=0)
+    alert_stock_max = models.PositiveIntegerField(null=True, blank=True, default=0)
+    alert_expiration = models.PositiveIntegerField(null=True, blank=True, default=150)
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
     odoo_id = models.PositiveIntegerField(null=True, blank=True)
 

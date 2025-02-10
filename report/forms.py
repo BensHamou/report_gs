@@ -24,27 +24,31 @@ class ProductForm(BaseModelForm):
     
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input', 'accept': 'image/*'}), required=False)
-    delais_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Délais d\'expiration')))
+    delais_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Délais d\'expiration (Jours)')))
     qte_per_cond = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par unité')))
     qte_per_pal = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
     family = forms.ModelChoiceField(queryset=Family.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
     packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
-    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
+    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Min)')))
+    alert_stock_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Max)')))
+    alert_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Expiration (Jours)')))
 
     class Meta:
         model = Product
-        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock']
+        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration']
         
 class MProductForm(BaseModelForm):
     
     qte_per_cond = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par copnditionnement')))
     qte_per_pal = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
     packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
-    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock')))
+    alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Min)')))
+    alert_stock_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Max)')))
+    alert_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Expiration')))
 
     class Meta:
         model = Product
-        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock']
+        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration']
 
 class DisponibilityForm(BaseModelForm):
     

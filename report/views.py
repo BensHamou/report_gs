@@ -482,7 +482,7 @@ def create_move_pf(request):
                 
                 palette_total = int(request.POST.get('palette_total', 0))
                 existing_move_lines = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, 
-                                                              move__line_id=line_id, move__type='Entré', product__type='Produit Fini')
+                                                              move__line_id=line_id, move__type='Entré', product__type='Produit Fini').exclude(move__state='Annulé')
                 existing_total = sum(line.palette for line in existing_move_lines)
                 if (existing_total + palette_total) > 180:
                     return JsonResponse({'success': False, 'message': 'Le nombre de palettes pour ce lot est limité à 180.'}, status=200)
@@ -524,7 +524,7 @@ def update_move_pf(request, move_line_id):
                 
                     palette_total = int(request.POST.get('palette_total', 0))
                     existing_move_lines = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, 
-                                                                move__line_id=line_id, move__type='Entré', product__type='Produit Fini').exclude(id=move_line_id)
+                                                                move__line_id=line_id, move__type='Entré', product__type='Produit Fini').exclude(move__state='Annulé').exclude(id=move_line_id)
                     existing_total = sum(line.palette for line in existing_move_lines)
                     if (existing_total + palette_total) > 180:
                         return JsonResponse({'success': False, 'message': 'Le nombre de palettes pour ce lot est limité à 180.'}, status=200)
