@@ -41,7 +41,7 @@ def send_stock_state_by_site():
 
                 family_data.append({'family': family, 'disponibilities': family_disponibilities, 'total_palette': total_palette,'total_qte': total_qte})
 
-        html_message = render_to_string('fragment/stock_state.html', {'site': site, 'today': today,'family_data': family_data})
+        html_message = render_to_string('fragment/stock_state.html', {'site': site, 'today': today,'family_data': family_data, 'global': False})
 
         addresses = site.address.split('&') if site.address else []
         if not addresses:
@@ -52,4 +52,28 @@ def send_stock_state_by_site():
         email.send()
 
 
+def send_stock_state():
+    today = timezone.now().date()
+    families = Family.objects.all()
+
+    subject = f"Etat Stock Global - {today}"
+    
+    family_data = []
+    for family in families:
+        family_disponibilities = Disponibility.objects.filter(product__family=family).values('product__designation', 'product__packing__unit'
+                                        ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
+
+        if family_disponibilities:
+            total_palette = sum(item['total_palette'] for item in family_disponibilities)
+            total_qte = sum(item['total_qte'] for item in family_disponibilities)
+
+            family_data.append({'family': family, 'disponibilities': family_disponibilities, 'total_palette': total_palette,'total_qte': total_qte})
+
+    html_message = render_to_string('fragment/stock_state.html', {'site': '/', 'today': today,'family_data': family_data, 'global': True})
+
+    addresses = [address for site in Site.objects.all() if site.address for address in site.address.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+
+    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+    email.attach_alternative(html_message, "text/html")
+    email.send()
 

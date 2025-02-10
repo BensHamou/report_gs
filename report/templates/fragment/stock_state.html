@@ -9,14 +9,15 @@
             font-family: 'Montserrat', sans-serif;
         }
         table {
-            width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
         td {
             border: 1px solid black;
             text-align: left;
             vertical-align: middle;
+            padding-left: 5px;
+            padding-top: 2px;
         }
         th {
             border: 0px solid transparent;
@@ -27,7 +28,7 @@
 </head>
 <body>
     <b>Bonjour,</b>
-    <p>Prière de bien vouloir trouver ci-dessous l'état des stocks Produit finis / Matière Première <strong>{{ site.designation }}</strong> arrêté le <strong>{{ today }}</strong>.</p>
+    <p>Prière de bien vouloir trouver ci-dessous l'état des stocks Produit finis / Matière Première {% if global %}<strong>Global</strong>{% else %}<strong>{{ site.designation }}</strong>{% endif %} arrêté le <strong>{{ today }}</strong>.</p>
     <table>
         <thead>
             <tr style="background-color: #e7e6e6; color: black; border: 1px solid black;">
@@ -46,7 +47,7 @@
                 <tr style="color: white; background-color: #4472c4;">
                     <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
                     <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
-                    <td style="text-align: center;"><strong>{{ data.total_qte|floatformat:2 }}</strong></td>
+                    <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
                 </tr>
                 {% for item in data.disponibilities %}
                     <tr style="color: black; background-color: white;">
