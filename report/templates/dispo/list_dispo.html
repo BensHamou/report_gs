@@ -87,8 +87,8 @@
                         <td class="table-text">{{ dispo.emplacement.designation }}</td>
                         <td class="table-text">{{ dispo.n_lot|default:'/' }}</td>
                         <td class="table-text">{{ dispo.product }}</td>
-                        <td class="table-text">{{ dispo.qte|default:'1' }}</td>
-                        <td class="table-text">{{ dispo.palette|default:'1' }}</td>
+                        <td class="table-text">{{ dispo.qte|default:'1'|intcomma }}</td>
+                        <td class="table-text">{{ dispo.palette|default:'1'|intcomma }}</td>
                         <td class="table-text">{{ dispo.production_date|default:'/' }}</td>
                         <td class="table-text">{{ dispo.expiry_date|default:'31 décembre 2099' }}</td>
                         {% if user.role == 'Admin' %}

@@ -13,7 +13,7 @@
     </div>
 
     <ul class="nav flex-column flex-grow-1 d-none d-md-flex">
-        {% if user.role == 'Admin' %}
+        {% if user.role in 'Admin,Validateur' %}
         <li class="nav-item mb-2">
             <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                 <i class="margiin fas fa-house"></i> 
@@ -107,7 +107,7 @@
     </ul>
 
     <ul class="nav flex-row flex-wrap d-md-none">
-        {% if user.role == 'Admin' %}
+        {% if user.role in 'Admin,Validateur' %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name == 'home' %} active {% endif %}" href="{% url 'home' %}">
                     <i class="margiin fas fa-house"></i> 

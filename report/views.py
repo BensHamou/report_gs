@@ -19,7 +19,6 @@ from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
-from .forms import MoveBLForm
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
