@@ -89,7 +89,7 @@
                         <td class="table-text">{{ dispo.n_lot|default:'/' }}</td>
                         <td class="table-text">{{ dispo.product }}</td>
                         <td class="table-text">{{ dispo.qte|default:'1'|floatformat:2|intcomma }}</td>
-                        <td class="table-text">{{ dispo.palette|default:'1'|floatformat:2|intcomma }}</td>
+                        <td class="table-text">{{ dispo.palette|default:'1'|intcomma }}</td>
                         <td class="table-text">{{ dispo.production_date|default:'/' }}</td>
                         <td class="table-text">{{ dispo.expiry_date|default:'31 décembre 2099' }}</td>
                         {% if user.role == 'Admin' %}
@@ -109,7 +109,7 @@
                     <tr style="color: #5d5d5d; font-weight: bold; border-top: 2px solid #ccc;">
                         <td colspan="5" class="table-text">Totaux:</td>
                         <td class="table-text">{{ total_qte|floatformat:2|intcomma }}</td>
-                        <td class="table-text">{{ total_palettes|floatformat:2|intcomma }}</td>
+                        <td class="table-text">{{ total_palettes|intcomma }}</td>
                         <td colspan="3"></td>
                     </tr>
                 {% else %}
