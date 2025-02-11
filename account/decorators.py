@@ -41,6 +41,14 @@ def admin_only_required(view_func):
             return render(request, '403.html', status=403)
     return wrapper
 
+def admin_or_validator_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.role in ['Admin', 'Validateur']:
+            return view_func(request, *args, **kwargs)
+        else:
+            return render(request, '403.html', status=403)
+    return wrapper
+
 def page_not_found(request, exception):
     return render(request, '404.html', status=404)
 

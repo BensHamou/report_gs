@@ -16,7 +16,7 @@ import json
 # USERS
 
 @login_required(login_url='login')
-@admin_only_required
+@admin_or_validator_required
 def homeView(request):
     context = { 'content': 'content' }
     return render(request, 'home.html', context)
