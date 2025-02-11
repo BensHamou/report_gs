@@ -129,3 +129,16 @@ def global_state_mp():
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
+
+def mirror_email(move):
+    subject = f'BTR Mirroire'
+    
+    html_message = render_to_string('fragment/btr_mirror.html', {'move': move})
+
+    addresses = move.site.address.split('&')
+    if not addresses:
+        addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+    email.attach_alternative(html_message, "text/html") 
+    email.send()    
