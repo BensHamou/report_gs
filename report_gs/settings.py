@@ -86,7 +86,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CRONJOBS = [
     ('0 * * * *', 'report.cron.check_temp_emplacements'),
-    # ('0 8 * * *', 'report.cron.send_stock'),
+    ('0 8 * * *', 'report.cron.send_stock'),
 ]
 
 
@@ -177,7 +177,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'pumapaiement@gmail.com'
-EMAIL_HOST_PASSWORD = 'ctybajcnepviiqah'
+EMAIL_HOST_USER = 'm13o13bmw@gmail.com'
+EMAIL_HOST_PASSWORD = 'gnsyvjpwgclpwyet'
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'pumapaiement@gmail.com'
+DEFAULT_FROM_EMAIL = 'm13o13bmw@gmail.com'
