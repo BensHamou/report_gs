@@ -108,8 +108,8 @@
                     {% endfor %}
                     <tr style="color: #5d5d5d; font-weight: bold; border-top: 2px solid #ccc;">
                         <td colspan="5" class="table-text">Totaux:</td>
-                        <td class="table-text">{{ total_qte }}</td>
-                        <td class="table-text">{{ total_palettes }}</td>
+                        <td class="table-text">{{ total_qte|floatformat:2|intcomma }}</td>
+                        <td class="table-text">{{ total_palettes|floatformat:2|intcomma }}</td>
                         <td colspan="3"></td>
                     </tr>
                 {% else %}
