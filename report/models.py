@@ -211,10 +211,10 @@ class Move(BaseModel):
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
         
         if self.is_transfer and not self.is_isolation and self.type == 'Sortie':
-            # scheduler = BackgroundScheduler()
-            # scheduler.start()
+            scheduler = BackgroundScheduler()
+            scheduler.start()
             self.create_mirror()
-            # scheduler.add_job(mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(hours=48), args=[self.mirror])
+            scheduler.add_job(mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(hours=48), args=[self.mirror])
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
         elif self.is_transfer and self.is_isolation and self.type == 'Sortie':
