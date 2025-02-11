@@ -1,0 +1,61 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>État des Stocks</title>
+    <style>
+        *{
+            font-family: 'Montserrat', sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        td {
+            border: 1px solid black;
+            text-align: left;
+            vertical-align: middle;
+            padding-left: 5px;
+            padding-top: 2px;
+        }
+        th {
+            border: 0px solid transparent;
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <b>Bonjour,</b>
+    <p>Prière de bien vouloir trouver ci-dessous l'état des stocks Matière Première {% if global %}<strong>Global</strong>{% else %}<strong>{{ site.designation }}</strong>{% endif %} arrêté le <strong>{{ today }}</strong>.</p>
+    <table>
+        <thead>
+            <tr style="background-color: #e7e6e6; color: black; border: 1px solid black;">
+                <th>Article</th>
+                <th>Nombre Palettes</th>
+                <th>Quantité</th>
+            </tr>
+        </thead>
+        {% for data in datas %}
+            <tbody>
+                <tr style="color: white; background-color: #4472c4;">
+                    <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
+                    <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
+                    <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
+                </tr>
+                {% for item in data.disponibilities %}
+                    <tr style="color: black; background-color: white;">
+                        <td>{{ item.product__designation }}</td>
+                        <td>{{ item.total_palette|intcomma }} Palette</td>
+                        <td>{{ item.total_qte|intcomma }} {{ item.product__packing__unit }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        {% endfor %}
+    </table>
+
+    <p>Pour plus de détails, veuillez visiter : <a href="http://10.10.10.20:8176/"> PUMA STOCK</a></p>
+    <p>Cordialement,</p>
+</body>
+</html>

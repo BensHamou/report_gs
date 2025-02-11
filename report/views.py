@@ -21,7 +21,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 # PACKING
 
 @login_required(login_url='login')
