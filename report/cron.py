@@ -1,6 +1,10 @@
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
-from .models import *
+from .models import Disponibility, TemporaryEmplacementAlert, Family
+from account.models import Site
+from django.utils import timezone
+from django.db.models import Sum
+
 
 def check_temp_emplacements():
     allowed_in_temp = timezone.now() - timezone.timedelta(hours=5)
@@ -14,7 +18,7 @@ def send_alert(alert):
     
     html_message = render_to_string('fragment/temp_zone.html', {'alert': alert})
 
-    addresses = alert.dispo.emplacement.warehouse.site.address.split('&')
+    addresses = alert.dispo.emplacement.warehouse.site.email.split('&')
     if not addresses:
         addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
@@ -23,10 +27,10 @@ def send_alert(alert):
     email.send()    
 
 def send_stock():
-    site_state_pf()
+    # site_state_pf()
     global_state_pf()
-    site_state_mp()
-    global_state_mp()
+    # site_state_mp()
+    # global_state_mp()
 
 def site_state_pf():
     today = timezone.now().date()
@@ -49,7 +53,7 @@ def site_state_pf():
 
         html_message = render_to_string('fragment/pf_state.html', {'site': site, 'today': today,'family_data': family_data, 'global': False})
 
-        addresses = site.address.split('&') if site.address else []
+        addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
         
@@ -76,7 +80,7 @@ def global_state_pf():
 
     html_message = render_to_string('fragment/pf_state.html', {'site': '/', 'today': today,'family_data': family_data, 'global': True})
 
-    addresses = [address for site in Site.objects.all() if site.address for address in site.address.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+    addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
 
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
@@ -101,7 +105,7 @@ def site_state_mp():
 
         html_message = render_to_string('fragment/mp_state.html', {'site': site, 'today': today, 'datas': data, 'global': False})
 
-        addresses = site.address.split('&') if site.address else []
+        addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
     
@@ -124,21 +128,8 @@ def global_state_mp():
 
     html_message = render_to_string('fragment/mp_state.html', {'site': '/', 'today': today, 'datas': data, 'global': True})
 
-    addresses = [address for site in Site.objects.all() if site.address for address in site.address.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+    addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
 
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
-
-def mirror_email(move):
-    subject = f'BTR Mirroire'
-    
-    html_message = render_to_string('fragment/btr_mirror.html', {'move': move})
-
-    addresses = move.site.address.split('&')
-    if not addresses:
-        addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-
-    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
-    email.attach_alternative(html_message, "text/html") 
-    email.send()    

@@ -9,7 +9,8 @@ import os
 from django.utils import timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
-from .cron import mirror_email
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -206,6 +207,20 @@ class Move(BaseModel):
                     ds.delete()
         return True, 'Stock ajusté avec succès.'
 
+
+    def mirror_email(move):
+        subject = f'BTR Mirroire'
+        
+        html_message = render_to_string('fragment/btr_mirror.html', {'move': move})
+
+        addresses = move.site.email.split('&')
+        if not addresses:
+            addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+        email.attach_alternative(html_message, "text/html") 
+        email.send()    
+
     def do_after_validation(self, user):
         if not self.integrate_in_stock():
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
@@ -214,7 +229,7 @@ class Move(BaseModel):
             scheduler = BackgroundScheduler()
             scheduler.start()
             self.create_mirror()
-            scheduler.add_job(mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(hours=48), args=[self.mirror])
+            scheduler.add_job(self.mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(minutes=5), args=[self.mirror])
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
         elif self.is_transfer and self.is_isolation and self.type == 'Sortie':
