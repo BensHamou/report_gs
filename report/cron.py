@@ -27,10 +27,10 @@ def send_alert(alert):
     email.send()    
 
 def send_stock():
-    # site_state_pf()
+    site_state_pf()
     global_state_pf()
-    # site_state_mp()
-    # global_state_mp()
+    site_state_mp()
+    global_state_mp()
 
 def site_state_pf():
     today = timezone.now().date()
@@ -56,7 +56,7 @@ def site_state_pf():
         addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-        
+        addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
@@ -81,7 +81,7 @@ def global_state_pf():
     html_message = render_to_string('fragment/pf_state.html', {'site': '/', 'today': today,'family_data': family_data, 'global': True})
 
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
-
+    addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
@@ -108,7 +108,8 @@ def site_state_mp():
         addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-    
+
+        addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
