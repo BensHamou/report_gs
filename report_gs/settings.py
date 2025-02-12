@@ -86,7 +86,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CRONJOBS = [
     # ('0 * * * *', 'report.cron.check_temp_emplacements'),
-    ('25 18 * * *', 'report.cron.send_stock'),
+    ('30 18 * * *', 'report.cron.send_stock'),
 ]
 
 
