@@ -33,7 +33,6 @@
         <thead>
             <tr style="background-color: #e7e6e6; color: black; border: 1px solid black;">
                 <th>Article</th>
-                <th>Nombre Palettes</th>
                 <th>Quantité</th>
             </tr>
         </thead>
@@ -41,13 +40,11 @@
             <tbody>
                 <tr style="color: white; background-color: #4472c4;">
                     <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
-                    <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
                     <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
                 </tr>
                 {% for item in data.disponibilities %}
                     <tr style="color: black; background-color: white;">
                         <td>{{ item.product__designation }}</td>
-                        <td>{{ item.total_palette|intcomma }} Palette</td>
                         <td>{{ item.total_qte|intcomma }} {{ item.product__packing__unit }}</td>
                     </tr>
                 {% endfor %}

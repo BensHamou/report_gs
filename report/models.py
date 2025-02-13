@@ -7,10 +7,7 @@ from django.db import models
 import math
 import os
 from django.utils import timezone
-from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
-from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -106,20 +103,6 @@ class Product(BaseModel):
     def __str__(self):
         return self.designation
     
-    
-def mirror_email(mirror):
-    subject = f'BTR Mirroire'
-    html_message = render_to_string('fragment/btr_mirror.html', {'move': mirror})
-    addresses = mirror.site.email.split('&')
-    if not addresses:
-        addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-
-    addresses = ['mohammed.benslimane@groupe-hasnaoui.com', 'mohammed.senoussaoui@grupopuma-dz.com']
-
-    print(addresses, subject)
-    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
-    email.attach_alternative(html_message, "text/html") 
-    email.send()    
 
 class Move(BaseModel):
 
@@ -206,7 +189,7 @@ class Move(BaseModel):
                     
                     if detail.emplacement.temp:
                         ds.save()
-                        TemporaryEmplacementAlert.objects.get_or_create(dispo=ds, write_uid=detail.create_uid, create_uid=detail.create_uid)
+                        TemporaryEmplacementAlert.objects.get_or_create(dispo=ds, write_uid=detail.create_uid, create_uid=detail.create_uid, type='Temporaire')
 
                 else:
                     if not ds:
@@ -221,17 +204,12 @@ class Move(BaseModel):
         return True, 'Stock ajusté avec succès.'
 
 
-
-
     def do_after_validation(self, user):
         if not self.integrate_in_stock():
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
         
         if self.is_transfer and not self.is_isolation and self.type == 'Sortie':
-            scheduler = BackgroundScheduler()
-            scheduler.start()
             self.create_mirror()
-            scheduler.add_job(mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(minutes=5), args=[self.mirror])
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
         elif self.is_transfer and self.is_isolation and self.type == 'Sortie':
@@ -261,6 +239,7 @@ class Move(BaseModel):
                                                               move=mirror, transfered_qte=d.qte, create_uid=ml.create_uid, write_uid=ml.create_uid)
                         ml.mirror = d
                         ml.save()
+                TemporaryEmplacementAlert.objects.get_or_create(mirror=mirror, write_uid=mirror.create_uid, create_uid=mirror.create_uid, type='Transfer')
                 for bl in self.bls.all():
                     MoveBL.objects.create(move=mirror, numero=bl.numero)
             except Exception as e:
@@ -467,7 +446,12 @@ class Disponibility(BaseModel):
     expiry_date = models.DateField(null=True, blank=True)
 
 class TemporaryEmplacementAlert(BaseModel):
-    dispo = models.OneToOneField(Disponibility, on_delete=models.CASCADE)
+
+    ALERT_TYPE = [('Temporaire', 'Temporaire'), ('Transfer', 'Transfer')]
+
+    dispo = models.ForeignKey(Disponibility, on_delete=models.SET_NULL, null=True, blank=True, related_name='alert_dispo')
+    mirror = models.ForeignKey(Move, on_delete=models.SET_NULL, null=True, blank=True, related_name='alert_mirror')
     start_time = models.DateTimeField(auto_now_add=True)
     email_sent = models.BooleanField(default=False)
+    type = models.CharField(choices=ALERT_TYPE, max_length=25, default='Temporaire')
 

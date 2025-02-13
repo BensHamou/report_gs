@@ -8,10 +8,21 @@ from django.db.models import Sum
 
 def check_temp_emplacements():
     allowed_in_temp = timezone.now() - timezone.timedelta(hours=5)
-    alerts = TemporaryEmplacementAlert.objects.filter(email_sent=False, start_time__lte=allowed_in_temp)
+    alerts = TemporaryEmplacementAlert.objects.filter(email_sent=False, start_time__lte=allowed_in_temp, type='Temporaire')
     for alert in alerts:
         send_alert(alert)
         alert.email_sent = True
+        alert.save()
+
+
+def check_transfer_mirror():
+    allowed_in_temp = timezone.now() - timezone.timedelta(hours=48)
+    alerts = TemporaryEmplacementAlert.objects.filter(email_sent=False, start_time__lte=allowed_in_temp, type='Transfer')
+    for alert in alerts:
+        mirror_email(alert.mirror)
+        alert.email_sent = True
+        alert.save()
+
 
 def send_alert(alert):
     subject = f'Stock Temporaire'
@@ -25,6 +36,21 @@ def send_alert(alert):
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
     email.send()    
+
+def mirror_email(mirror):
+    subject = f'BTR Mirroire'
+    html_message = render_to_string('fragment/btr_mirror.html', {'move': mirror})
+    addresses = mirror.site.email.split('&')
+    if not addresses:
+        addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+    addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
+    
+    print(addresses, subject)
+    email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+    email.attach_alternative(html_message, "text/html") 
+    email.send()    
+
 
 def send_stock():
     site_state_pf()
@@ -91,18 +117,17 @@ def site_state_mp():
     today = timezone.now().date()
     sites = Site.objects.all()
 
-    data = []
-
     for site in sites:
         subject = f"[MP] Etat Stock {site.designation} - {today}"
+
+        data = []
         
         disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__type='Matière Première').values('product__designation', 'product__packing__unit'
-                                        ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
+                                        ).annotate(total_qte=Sum('qte')).order_by('product__designation')
         if disponibilities:
-            total_palette = round(sum(item['total_palette'] for item in disponibilities), 2)
             total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
 
-            data.append({'disponibilities': disponibilities, 'total_palette': total_palette,'total_qte': total_qte})
+            data.append({'disponibilities': disponibilities,'total_qte': total_qte})
 
         html_message = render_to_string('fragment/mp_state.html', {'site': site, 'today': today, 'datas': data, 'global': False})
 
@@ -121,11 +146,10 @@ def global_state_mp():
     
     data = []
     disponibilities = Disponibility.objects.filter(product__type='Matière Première').values('product__designation', 'product__packing__unit'
-                                    ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation') 
+                                    ).annotate(total_qte=Sum('qte')).order_by('product__designation') 
     if disponibilities:
-        total_palette = round(sum(item['total_palette'] for item in disponibilities), 2)
         total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
-        data.append({'disponibilities': disponibilities, 'total_palette': total_palette,'total_qte': total_qte})
+        data.append({'disponibilities': disponibilities,'total_qte': total_qte})
 
     html_message = render_to_string('fragment/mp_state.html', {'site': '/', 'today': today, 'datas': data, 'global': True})
 
