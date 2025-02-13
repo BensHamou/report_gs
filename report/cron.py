@@ -16,7 +16,7 @@ def check_temp_emplacements():
 
 
 def check_transfer_mirror():
-    allowed_in_temp = timezone.now() - timezone.timedelta(hours=48)
+    allowed_in_temp = timezone.now() - timezone.timedelta(minutes=10)
     alerts = TemporaryEmplacementAlert.objects.filter(email_sent=False, start_time__lte=allowed_in_temp, type='Transfer')
     for alert in alerts:
         mirror_email(alert.mirror)
@@ -45,7 +45,7 @@ def mirror_email(mirror):
         addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
     addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
-    
+
     print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
