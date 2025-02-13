@@ -115,6 +115,8 @@ def mirror_email(mirror):
         addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
     addresses = ['mohammed.benslimane@groupe-hasnaoui.com', 'mohammed.senoussaoui@grupopuma-dz.com']
+
+    print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
     email.send()    
