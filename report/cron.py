@@ -54,7 +54,7 @@ def site_state_pf():
         html_message = render_to_string('fragment/pf_state.html', {'site': site, 'today': today,'family_data': family_data, 'global': False})
 
         addresses = site.email.split('&') if site.email else []
-        print(addresses, 'pf')
+        print(addresses, subject)
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
@@ -82,7 +82,7 @@ def global_state_pf():
     
     
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
-    print(addresses, 'global pf')
+    print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
@@ -109,7 +109,7 @@ def site_state_mp():
         addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
-        print(addresses, 'mp')
+        print(addresses, subject)
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
@@ -130,7 +130,7 @@ def global_state_mp():
     html_message = render_to_string('fragment/mp_state.html', {'site': '/', 'today': today, 'datas': data, 'global': True})
 
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
-    print(addresses, 'global mp')
+    print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
