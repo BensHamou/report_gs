@@ -16,7 +16,7 @@ def check_temp_emplacements():
 
 
 def check_transfer_mirror():
-    allowed_in_temp = timezone.now() - timezone.timedelta(minutes=10)
+    allowed_in_temp = timezone.now() - timezone.timedelta(hours=48)
     alerts = TemporaryEmplacementAlert.objects.filter(email_sent=False, start_time__lte=allowed_in_temp, type='Transfer')
     for alert in alerts:
         mirror_email(alert.mirror)
