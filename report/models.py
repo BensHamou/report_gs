@@ -208,12 +208,14 @@ class Move(BaseModel):
         return True, 'Stock ajusté avec succès.'
 
 
-    def mirror_email(move):
+    def mirror_email(self):
         subject = f'BTR Mirroire'
-        
-        html_message = render_to_string('fragment/btr_mirror.html', {'move': move})
 
-        addresses = move.site.email.split('&')
+        mirror = self.mirror
+        
+        html_message = render_to_string('fragment/btr_mirror.html', {'move': mirror})
+
+        addresses = mirror.site.email.split('&')
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
@@ -230,7 +232,7 @@ class Move(BaseModel):
             scheduler = BackgroundScheduler()
             scheduler.start()
             self.create_mirror()
-            scheduler.add_job(self.mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(minutes=5), args=[self.mirror])
+            scheduler.add_job(self.mirror_email, 'date', run_date=datetime.datetime.now() + timedelta(minutes=5))
             return True, 'Stock ajusté et Transfer miroire créé avec succès.'
         
         elif self.is_transfer and self.is_isolation and self.type == 'Sortie':
