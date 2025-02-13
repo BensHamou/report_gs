@@ -223,7 +223,7 @@ class Move(BaseModel):
 
 
 
-    def do_after_validation(self):
+    def do_after_validation(self, user):
         if not self.integrate_in_stock():
             raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
         
