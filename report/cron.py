@@ -44,8 +44,6 @@ def mirror_email(mirror):
     if not addresses:
         addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
-    addresses = ['mohammed.senoussaoui@grupopuma-dz.com', 'mohammed.benslimane@groupe-hasnaoui.com']
-
     print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 

@@ -12,7 +12,6 @@ from .forms import *
 import requests
 import json
 
-
 # USERS
 
 @login_required(login_url='login')
@@ -161,7 +160,7 @@ def editSiteView(request, id):
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
     context = {'form': form, 'site': site}
     return render(request, 'site_form.html', context)
-
+    
 # LINES
 
 @login_required(login_url='login')

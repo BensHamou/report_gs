@@ -21,6 +21,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from report.cron import send_stock
 
 # PACKING
 
@@ -775,7 +776,6 @@ def cancelMove(request, move_id):
             return JsonResponse({'success': False, 'message': 'Erreur lors de l\'annulation du mouvement.'})
     return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'})
 
-
 class EditMoveBLView(LoginRequiredMixin, View):
     template_name = 'edit_move_bl.html'
 
@@ -807,6 +807,16 @@ class EditMoveBLView(LoginRequiredMixin, View):
         if new_numero:
             MoveBL.objects.create(move=move, numero=new_numero, is_annexe=new_is_annexe)
         return redirect(reverse('move_detail', args=[move.id]))
+    
+
+@login_required(login_url='login')
+@admin_only_required
+def sendStockState(request):
+    try:
+        send_stock()
+        return JsonResponse({'success': True, 'message': 'E-mail envoyé avec succès'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
     
 # FETCH JSON
 

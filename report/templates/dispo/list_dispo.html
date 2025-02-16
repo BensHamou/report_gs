@@ -52,11 +52,13 @@
                         <i class="fas fa-file-csv"></i>
                     </button>
                     {% if user.role == 'Admin' %}
+                        <button type="button" class="btn btn-primary me-2 mt-3 email-btn" style="background-color: #1d71b8;">
+                            <i class="far fa-envelope"></i>
+                        </button>
                         <a href="{% url 'create_stock' %}" class="btn btn-primary mt-3" style="background-color: #1d71b8;">
                             <i class="fas fa-plus"></i>
                         </a>
                     {% endif %}
-                    </a>
                 </div>
             </div>
         </form>
@@ -149,5 +151,39 @@
         const queryParams = new URLSearchParams(formData).toString();
         window.location.href = `${url}?${queryParams}`;
     });
+    document.querySelector('.email-btn').addEventListener('click', function () {
+        swal({
+            title: "Envoyer l'état du stock",
+            text: "Êtes-vous sûr de vouloir envoyer l'état du stock par email ?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'send_stock_state' %}",
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        if (response.success) {
+                            swal("Succès!", response.message, "success");
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    });
+
 </script>
 {% endblock %}

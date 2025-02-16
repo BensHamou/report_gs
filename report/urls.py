@@ -56,6 +56,8 @@ urlpatterns = [
     path('stock/edit/<int:id>/', editStockView, name='edit_stock'),
     path('stock/delete/<int:id>/', deleteStockView, name='delete_stock'),
     path('stock/extract/', extractStockView, name='extract_stock'),
+    path("stock/email/", sendStockState, name="send_stock_state"),
+
 
 ]
 
