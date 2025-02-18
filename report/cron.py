@@ -66,7 +66,8 @@ def site_state_pf():
         
         family_data = []
         for family in families:
-            family_disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__family=family, product__type='Produit Fini').values('product__designation', 'product__packing__unit'
+            family_disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__family=family, product__type='Produit Fini',
+                                                                  emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
                                             ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
             if family_disponibilities:
@@ -93,7 +94,7 @@ def global_state_pf():
     
     family_data = []
     for family in families:
-        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini').values('product__designation', 'product__packing__unit'
+        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
                                         ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
         if family_disponibilities:
@@ -120,7 +121,7 @@ def site_state_mp():
 
         data = []
         
-        disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__type='Matière Première').values('product__designation', 'product__packing__unit'
+        disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__type='Matière Première', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
                                         ).annotate(total_qte=Sum('qte')).order_by('product__designation')
         if disponibilities:
             total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
@@ -143,7 +144,7 @@ def global_state_mp():
     subject = f"[MP] Etat Stock Global - {today}"
     
     data = []
-    disponibilities = Disponibility.objects.filter(product__type='Matière Première').values('product__designation', 'product__packing__unit'
+    disponibilities = Disponibility.objects.filter(product__type='Matière Première', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
                                     ).annotate(total_qte=Sum('qte')).order_by('product__designation') 
     if disponibilities:
         total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
