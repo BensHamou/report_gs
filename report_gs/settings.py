@@ -102,6 +102,9 @@ CORS_ALLOW_HEADERS = [
     'accept',
 ]
 
+SECURE_BROWSER_XSS_FILTER = False
+X_FRAME_OPTIONS = 'ALLOWALL'
+
 DATABASES = {
     # 'default': {
     #   'ENGINE': 'django.db.backends.postgresql',
