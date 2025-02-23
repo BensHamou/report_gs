@@ -813,7 +813,16 @@ class EditMoveBLView(LoginRequiredMixin, View):
 @admin_only_required
 def sendStockState(request):
     try:
-        send_stock()
+        send_stock(include_qrt=False)
+        return JsonResponse({'success': True, 'message': 'E-mail envoyé avec succès'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@login_required(login_url='login')
+@admin_only_required
+def sendQRTStockState(request):
+    try:
+        send_stock(include_qrt=True)
         return JsonResponse({'success': True, 'message': 'E-mail envoyé avec succès'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})

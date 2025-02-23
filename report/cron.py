@@ -50,24 +50,27 @@ def mirror_email(mirror):
     email.send()    
 
 
-def send_stock():
-    site_state_pf()
-    global_state_pf()
-    site_state_mp()
-    global_state_mp()
+def send_stock(include_qrt=False):
+    site_state_pf(include_qrt)
+    global_state_pf(include_qrt)
+    site_state_mp(include_qrt)
+    global_state_mp(include_qrt)
 
-def site_state_pf():
+def site_state_pf(include_qrt=False):
     today = timezone.now().date()
     sites = Site.objects.all()
     families = Family.objects.all()
 
     for site in sites:
-        subject = f"[PF] Etat Stock {site.designation} - {today}"
+        if include_qrt:
+            subject = f"[PF] Etat Stock Quarantaine {site.designation} - {today}"
+        else:
+            subject = f"[PF] Etat Stock {site.designation} - {today}"
         
         family_data = []
         for family in families:
             family_disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__family=family, product__type='Produit Fini',
-                                                                  emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
+                                                                  emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
                                             ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
             if family_disponibilities:
@@ -79,22 +82,27 @@ def site_state_pf():
         html_message = render_to_string('fragment/pf_state.html', {'site': site, 'today': today,'family_data': family_data, 'global': False})
 
         addresses = site.email.split('&') if site.email else []
-        print(addresses, subject)
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        print(addresses, subject)
+
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
 
-def global_state_pf():
+def global_state_pf(include_qrt=False):
     today = timezone.now().date()
     families = Family.objects.all()
 
-    subject = f"[PF] Etat Stock Global - {today}"
+    if include_qrt:
+        subject = f"[PF] Etat Stock Global Quarantaine - {today}"
+    else:
+        subject = f"[PF] Etat Stock Global - {today}"
     
     family_data = []
     for family in families:
-        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
+        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini', emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
                                         ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
         if family_disponibilities:
@@ -105,23 +113,26 @@ def global_state_pf():
 
     html_message = render_to_string('fragment/pf_state.html', {'site': '/', 'today': today,'family_data': family_data, 'global': True})
     
-    
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
     print(addresses, subject)
+
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
 
-def site_state_mp():
+def site_state_mp(include_qrt=False):
     today = timezone.now().date()
     sites = Site.objects.all()
 
     for site in sites:
-        subject = f"[MP] Etat Stock {site.designation} - {today}"
+        if include_qrt:
+            subject = f"[MP] Etat Stock Quarantaine {site.designation} - {today}"
+        else:
+            subject = f"[MP] Etat Stock {site.designation} - {today}"
 
         data = []
         
-        disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__type='Matière Première', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
+        disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__type='Matière Première', emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
                                         ).annotate(total_qte=Sum('qte')).order_by('product__designation')
         if disponibilities:
             total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
@@ -133,18 +144,22 @@ def site_state_mp():
         addresses = site.email.split('&') if site.email else []
         if not addresses:
             addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
+
         print(addresses, subject)
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
 
-def global_state_mp():
+def global_state_mp(include_qrt=False):
     today = timezone.now().date()
 
-    subject = f"[MP] Etat Stock Global - {today}"
+    if include_qrt:
+        subject = f"[MP] Etat Stock Global Quarantaine - {today}"
+    else:
+        subject = f"[MP] Etat Stock Global - {today}"
     
     data = []
-    disponibilities = Disponibility.objects.filter(product__type='Matière Première', emplacement__quarantine=False).values('product__designation', 'product__packing__unit'
+    disponibilities = Disponibility.objects.filter(product__type='Matière Première', emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
                                     ).annotate(total_qte=Sum('qte')).order_by('product__designation') 
     if disponibilities:
         total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
@@ -153,6 +168,7 @@ def global_state_mp():
     html_message = render_to_string('fragment/mp_state.html', {'site': '/', 'today': today, 'datas': data, 'global': True})
 
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+
     print(addresses, subject)
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
