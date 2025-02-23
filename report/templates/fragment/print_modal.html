@@ -78,9 +78,11 @@
             const printWindow = window.open('', '_blank');
 
             small_content = `
-            <div class="label">
-                        <img src="${base64Image}" alt="QR Code">
-                        <div class="product-name">${document.getElementById('modal-product-name').textContent}</div>
+            <div style="margin: 1cm;">
+                <div class="label">
+                    <img src="${base64Image}" alt="QR Code">
+                    <div class="product-name">${document.getElementById('modal-product-name').textContent}</div>
+                </div>
             </div>`;
 
             big_content = `
@@ -160,19 +162,18 @@
                                 font-family: Arial, sans-serif;
                             }
                             .label {
-                                width: 20cm;
-                                height: 15cm;
+                                width: 48cm;
+                                height: 37cm;
                                 display: flex;
                                 flex-direction: column;
                                 justify-content: center;
                                 align-items: center;
-                                margin: 1cm;
                                 border: 1px solid #ccc;
                                 page-break-after: always;
                             }
                             img {
-                                max-width: 80%;
-                                max-height: 70%;
+                                width: 85%;
+                                height: 85%;
                                 object-fit: contain;
                                 margin-bottom: 10px;
                             }
