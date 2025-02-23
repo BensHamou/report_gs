@@ -136,7 +136,9 @@ class CreateMoveOut(APIView):
                 if numero == '/':
                     continue
                 is_annexe = n_bl.get('is_annexe', False)
-                if MoveBL.objects.filter(numero=numero, move__site=request.user.default_site, move__date__year=datetime.today().year, is_annexe=is_annexe).exists():
+                if MoveBL.objects.filter(numero=numero, move__site=request.user.default_site, move__date__year=datetime.today().year, 
+                                         is_annexe=is_annexe, move__state='Validé', move__is_transfer=False, move__is_isolation=False, 
+                                         move__type='Sortie').exists():
                     return Response({"detail": f"Le N° BL {numero} existe déjà pour ce site."}, status=400)
 
         if not transferred_products:
