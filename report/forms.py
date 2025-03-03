@@ -55,7 +55,7 @@ class DisponibilityForm(BaseModelForm):
     emplacement = forms.ModelChoiceField(queryset=Emplacement.objects.all(), widget=forms.Select(attrs=getAttrs('select3')), empty_label="Emplacement")
     product = forms.ModelChoiceField(queryset=Product.objects.all(), widget=forms.Select(attrs=getAttrs('select3')), empty_label="Produit")
     n_lot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'N° Lot')))
-    qte = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité')))
+    qte = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité')))
     palette = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Palette')))
     production_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
     expiry_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
