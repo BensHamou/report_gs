@@ -11,7 +11,7 @@
     <div class="w-100">
         <p class="page-title">Rapports <i class="fas fa-chart-bar" style='font-size: 24px'></i></p>
     </div>
-    <div class="row align-items-center mb-3">
+    {% comment %} <div class="row align-items-center mb-3">
         <div class="col-6">
             <h4 style="color: #5d5d5d;">Analyse Global</h4>
         </div>
@@ -20,9 +20,9 @@
                 <i class="fas fa-filter me-2"></i> Filtre
             </button>
         </div>
-    </div>
+    </div> {% endcomment %}
 
-    <div id="stats-section" class="row mb-3">
+    {% comment %} <div id="stats-section" class="row mb-3">
         <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
             <div class="stat-widget">
                 <small class="stat-widget-title">Palette scannées aujourd'hui</small>
@@ -59,9 +59,10 @@
                 data-label_1="SIDI BEL ABBÈS" style="border-radius: 8px" data-theme="original" >SIDI BEL ABBÈS</a>
             </div>
         </div>
-    </div>
-    <div id="filter-section" class="mb-3" style="display: none;">
-        <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;">
+    </div> {% endcomment %}
+    {% comment %} <div id="filter-section" class="mb-3" style="display: none;"> {% endcomment %}
+    <div id="filter-section" class="mb-3" >
+            <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;">
             <div class="row mb-3">
                 <div class="col-lg-2 col-md-6 col-sm-12 mb-2">
                     <label for="lot_number" class="form-label">Lot</label>
@@ -223,7 +224,7 @@
 </style>
 
 <script>
-    !function(d,s,id){
+    {% comment %} !function(d,s,id){
         var js,fjs=d.getElementsByTagName(s)[0];
         if(!d.getElementById(id)){
             js=d.createElement(s);
@@ -246,7 +247,7 @@
             filterSection.style.display = "block";
             this.innerHTML = '<i class="fas fa-times me-2"></i> Cacher';
         }
-    });
+    }); {% endcomment %}
     function confirmMoveDel(moveId) {
         swal({
             title: "Confirmation de la suppression.",
