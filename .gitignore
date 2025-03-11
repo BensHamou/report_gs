@@ -11,3 +11,4 @@ report/migrations/*
 !report/migrations/__init__.py
 
 media/
+.qodo

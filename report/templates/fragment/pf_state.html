@@ -34,25 +34,31 @@
             <tr style="background-color: #e7e6e6; color: black; border: 1px solid black;">
                 <th>Article</th>
                 <th>Nombre Palettes</th>
+                <th style="padding: 0px 10px">Quantité par palette</th>
+                <th style="padding: 0px 10px">Quantité conditionné</th>
                 <th>Quantité</th>
             </tr>
         </thead>
         {% for data in family_data %}
             <thead>
                 <tr style="background-color: #002060; color: white; border: 1px solid black;">
-                    <th colspan="3">{{ data.family.designation }}</th>
+                    <th colspan="5">{{ data.family.designation }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr style="color: white; background-color: #4472c4;">
                     <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
                     <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
+                    <td></td>
+                    <td></td>
                     <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
                 </tr>
                 {% for item in data.disponibilities %}
                     <tr style="color: black; background-color: white;">
                         <td>{{ item.product__designation }}</td>
                         <td>{{ item.total_palette|intcomma }} Palette</td>
+                        <td>{{ item.product__qte_per_pal|intcomma }} {{ item.product__packing__unit }}</td>
+                        <td>{{ item.product__qte_per_cond|intcomma }} {{ item.product__packing__unit }}</td>
                         <td>{{ item.total_qte|intcomma }} {{ item.product__packing__unit }}</td>
                     </tr>
                 {% endfor %}

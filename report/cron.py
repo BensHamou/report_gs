@@ -70,7 +70,7 @@ def site_state_pf(include_qrt=False):
         family_data = []
         for family in families:
             family_disponibilities = Disponibility.objects.filter(emplacement__warehouse__site=site, product__family=family, product__type='Produit Fini',
-                                                                  emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
+                                                                  emplacement__quarantine=include_qrt).values('product__designation', 'product__qte_per_pal', 'product__qte_per_cond', 'product__packing__unit'
                                             ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
             if family_disponibilities:
@@ -102,7 +102,8 @@ def global_state_pf(include_qrt=False):
     
     family_data = []
     for family in families:
-        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini', emplacement__quarantine=include_qrt).values('product__designation', 'product__packing__unit'
+        
+        family_disponibilities = Disponibility.objects.filter(product__family=family, product__type='Produit Fini', emplacement__quarantine=include_qrt).values('product__designation', 'product__qte_per_pal', 'product__qte_per_cond', 'product__packing__unit'
                                         ).annotate(total_palette=Sum('palette'), total_qte=Sum('qte')).order_by('product__designation')
 
         if family_disponibilities:
@@ -114,6 +115,7 @@ def global_state_pf(include_qrt=False):
     html_message = render_to_string('fragment/pf_state.html', {'site': '/', 'today': today,'family_data': family_data, 'global': True})
     
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+
     print(addresses, subject)
 
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
