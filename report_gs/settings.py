@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "bootstrap5",
     "fontawesomefree",
     "django_filters",
+    "mathfilters",
     "widget_tweaks",
     "django_extensions",
     'rest_framework',

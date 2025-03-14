@@ -1,4 +1,6 @@
 {% load humanize %}
+{% load mathfilters %}
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -32,11 +34,12 @@
     <table>
         <thead>
             <tr style="background-color: #e7e6e6; color: black; border: 1px solid black;">
-                <th>Article</th>
-                <th>Nombre Palettes</th>
-                <th style="padding: 0px 10px">Quantité par palette</th>
-                <th style="padding: 0px 10px">Quantité conditionné</th>
-                <th>Quantité</th>
+                <th style="padding: 0px 10px">Article</th>
+                <th style="padding: 0px 10px">Conditionnement</th>
+                <th style="padding: 0px 10px">Unité par palette</th>
+                <th style="padding: 0px 10px">Nombre Palettes</th>
+                <th style="padding: 0px 10px">Nombre de Sac/Seau</th>
+                <th style="padding: 0px 10px">Quantité</th>
             </tr>
         </thead>
         {% for data in family_data %}
@@ -46,22 +49,36 @@
                 </tr>
             </thead>
             <tbody>
-                <tr style="color: white; background-color: #4472c4;">
-                    <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
-                    <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
-                </tr>
                 {% for item in data.disponibilities %}
                     <tr style="color: black; background-color: white;">
                         <td>{{ item.product__designation }}</td>
-                        <td>{{ item.total_palette|intcomma }} Palette</td>
-                        <td>{{ item.product__qte_per_pal|intcomma }} {{ item.product__packing__unit }}</td>
                         <td>{{ item.product__qte_per_cond|intcomma }} {{ item.product__packing__unit }}</td>
+                        <td>
+                            {% if item.product__qte_per_cond != 0 %}
+                                {{ item.product__qte_per_pal|div:item.product__qte_per_cond|floatformat:0|intcomma }} Sac/Seau
+                            {% else %}
+                                /
+                            {% endif %}
+                        </td>
+                        <td>{{ item.total_palette|intcomma }} Palette</td>
+                        <td>
+                            {% if item.product__qte_per_cond != 0 %}
+                                {{ item.total_qte|div:item.product__qte_per_cond|floatformat:0|intcomma }} Sac/Seau
+                            {% else %}
+                                /
+                            {% endif %}
+                        </td>
                         <td>{{ item.total_qte|intcomma }} {{ item.product__packing__unit }}</td>
                     </tr>
                 {% endfor %}
+                <tr style="color: white; background-color: #4472c4;">
+                    <td style="text-align: center;"><strong>SOUS-TOTAL</strong></td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align: center;"><strong>{{ data.total_palette }} Palette</strong></td>
+                    <td></td>
+                    <td style="text-align: center;"><strong>{{ data.total_qte|intcomma }}</strong></td>
+                </tr>
             </tbody>
         {% endfor %}
     </table>

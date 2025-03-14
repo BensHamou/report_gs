@@ -116,6 +116,8 @@ def global_state_pf(include_qrt=False):
     
     addresses = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
 
+    # addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
+    
     print(addresses, subject)
 
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
