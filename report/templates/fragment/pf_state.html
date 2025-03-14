@@ -38,7 +38,7 @@
                 <th style="padding: 0px 10px">Conditionnement</th>
                 <th style="padding: 0px 10px">Unité par palette</th>
                 <th style="padding: 0px 10px">Nombre Palettes</th>
-                <th style="padding: 0px 10px">Nombre de Sac/Seau</th>
+                <th style="padding: 0px 10px">Nombre d'unité</th>
                 <th style="padding: 0px 10px">Quantité</th>
             </tr>
         </thead>
@@ -55,7 +55,7 @@
                         <td>{{ item.product__qte_per_cond|intcomma }} {{ item.product__packing__unit }}</td>
                         <td>
                             {% if item.product__qte_per_cond != 0 %}
-                                {{ item.product__qte_per_pal|div:item.product__qte_per_cond|floatformat:0|intcomma }} Sac/Seau
+                                {{ item.product__qte_per_pal|div:item.product__qte_per_cond|floatformat:0|intcomma }} unité
                             {% else %}
                                 /
                             {% endif %}
@@ -63,7 +63,7 @@
                         <td>{{ item.total_palette|intcomma }} Palette</td>
                         <td>
                             {% if item.product__qte_per_cond != 0 %}
-                                {{ item.total_qte|div:item.product__qte_per_cond|floatformat:0|intcomma }} Sac/Seau
+                                {{ item.total_qte|div:item.product__qte_per_cond|floatformat:0|intcomma }} unité
                             {% else %}
                                 /
                             {% endif %}
