@@ -21,7 +21,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from report.cron import send_stock
+from report.cron import send_stock, check_min_max
 
 # PACKING
 

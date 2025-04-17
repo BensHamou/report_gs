@@ -16,6 +16,9 @@ class FamilyForm(BaseModelForm):
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input','accept': 'image/*'}))
 
+    nb_days_min = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Min)')))
+    nb_days_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Max)')))
+
     class Meta:
         model = Family
         fields = ['designation', 'image']  

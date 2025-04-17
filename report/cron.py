@@ -1,10 +1,11 @@
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
-from .models import Disponibility, TemporaryEmplacementAlert, Family
+from .models import Disponibility, TemporaryEmplacementAlert, Family, Product, MoveLine
 from account.models import Site
 from django.utils import timezone
 from django.db.models import Sum
-
+from datetime import timedelta
+from collections import defaultdict
 
 def check_temp_emplacements():
     allowed_in_temp = timezone.now() - timezone.timedelta(hours=5)
@@ -177,3 +178,126 @@ def global_state_mp(include_qrt=False):
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
+
+
+def check_min_max():
+    check_min_max_mp_global()
+    check_min_max_pf_by_site()
+
+def check_min_max_mp_global():
+    products = Product.objects.filter(type='Matière Première').select_related('family')
+    
+    global_qtes = Disponibility.objects.filter(product__in=products).values('product').annotate(total_qte=Sum('qte'))
+    qte_dict = {item['product']: item['total_qte'] or 0 for item in global_qtes}
+
+    
+    cons_dict = calculate_global_consumption(products)
+       
+    alerts = []
+    for mp in products:
+        actual_qte = qte_dict.get(mp.id, 0)
+        cons_last_2_months = cons_dict.get(mp.id, 0)
+
+        if cons_last_2_months > 0:
+            print(mp, actual_qte, cons_last_2_months)
+        
+        if cons_last_2_months <= 0:
+            continue
+            
+        nj = actual_qte / cons_last_2_months
+        family = mp.family
+        
+        if nj < family.nb_days_min:
+            alerts.append({'type': 'global_min', 'product': mp, 'nj': nj, 'required': family.nb_days_min})
+        elif nj > family.nb_days_max:
+            alerts.append({'type': 'global_max', 'product': mp, 'nj': nj, 'required': family.nb_days_max})
+        else:
+            check_min_max_mp_by_site(mp)
+    
+    send_batched_alerts(alerts)
+
+def calculate_global_consumption(products):
+    move_lines = MoveLine.objects.filter(product__in=products, move__type='Sortie', move__state='Validé', move__date__gte=timezone.now() - timedelta(days=600), 
+                                         move__is_isolation=False).select_related('product')
+    
+    cons_dict = defaultdict(int)
+    for ml in move_lines:
+        cons_dict[ml.product_id] += ml.qte
+    return cons_dict
+
+def check_min_max_mp_by_site(product):
+    sites = Site.objects.all()
+    alerts = []
+    
+    site_qtes = product.disponibilities.filter(emplacement__warehouse__site__in=sites).values('emplacement__warehouse__site').annotate(total_qte=Sum('qte'))
+    qte_dict = {item['emplacement__warehouse__site']: item['total_qte'] or 0 for item in site_qtes}
+    
+    cons_dict = calculate_site_consumption(product, sites)
+    
+    for site in sites:
+        actual_qte = qte_dict.get(site.id, 0)
+        cons_last_2_months = cons_dict.get(site.id, 0)
+        
+        if cons_last_2_months <= 0:
+            continue
+            
+        nj = actual_qte / cons_last_2_months
+        family = product.family
+        
+        if nj < family.nb_days_min:
+            alerts.append({'type': 'site_min', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_min})
+        elif nj > family.nb_days_max:
+            alerts.append({'type': 'site_max', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_max})
+    
+    send_batched_alerts(alerts)
+
+def calculate_site_consumption(product, sites):
+    move_lines = MoveLine.objects.filter(product=product, move__type='Sortie', move__state='Validé', move__date__gte=timezone.now() - timedelta(days=60), 
+                                         move__is_isolation=False, move__site__in=sites).select_related('move__site')
+    
+    cons_dict = defaultdict(int)
+    for ml in move_lines:
+        cons_dict[ml.move.site_id] += ml.qte
+    return cons_dict
+
+def check_min_max_pf_by_site():
+    """Check min/max alerts for finished products by site"""
+    pass
+
+def send_batched_alerts(alerts):
+    if not alerts:
+        return
+    
+    alert_groups = defaultdict(list)
+    for alert in alerts:
+        alert_groups[alert['type']].append(alert)
+    
+    for alert_type, group in alert_groups.items():
+        if alert_type == 'global_min':
+            send_mp_global_min_alert(group)
+        elif alert_type == 'global_max':
+            send_mp_global_max_alert(group)
+        elif alert_type == 'site_min':
+            send_mp_site_min_alert(group)
+        elif alert_type == 'site_max':
+            send_mp_site_max_alert(group)
+
+def send_mp_global_min_alert(alerts):
+    """Send batch of global minimum alerts"""
+    for alert in alerts:
+        print(f"Global MIN alert for {alert['product']}: {alert['nj']} days (min {alert['required']})")
+
+def send_mp_global_max_alert(alerts):
+    """Send batch of global maximum alerts"""
+    for alert in alerts:
+        print(f"Global MAX alert for {alert['product']}: {alert['nj']} days (max {alert['required']})")
+
+def send_mp_site_min_alert(alerts):
+    """Send batch of site minimum alerts"""
+    for alert in alerts:
+        print(f"Site MIN alert for {alert['product']} at {alert['site']}: {alert['nj']} days (min {alert['required']})")
+
+def send_mp_site_max_alert(alerts):
+    """Send batch of site maximum alerts"""
+    for alert in alerts:
+        print(f"Site MAX alert for {alert['product']} at {alert['site']}: {alert['nj']} days (max {alert['required']})")
