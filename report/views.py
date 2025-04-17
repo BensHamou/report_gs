@@ -28,7 +28,7 @@ from report.cron import send_stock, check_min_max
 @login_required(login_url='login')
 @admin_only_required
 def listPackingView(request):
-    check_min_max()
+    # check_min_max()
     packings = Packing.objects.all().order_by('-date_modified')
     filteredData = PackingFilter(request.GET, queryset=packings)
     packings = filteredData.qs
