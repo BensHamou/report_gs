@@ -17,6 +17,7 @@ def get_family_image_filename(instance, filename):
 class Family(BaseModel):
     designation = models.CharField(max_length=255)
     image = models.ImageField(upload_to=get_family_image_filename, verbose_name='Image', blank=True, null=True)
+    for_mp = models.BooleanField(default=False)
     nb_days_min = models.PositiveIntegerField(null=True, blank=True, default=10)
     nb_days_max = models.PositiveIntegerField(null=True, blank=True, default=20)
 

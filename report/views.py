@@ -28,6 +28,7 @@ from report.cron import send_stock, check_min_max
 @login_required(login_url='login')
 @admin_only_required
 def listPackingView(request):
+    check_min_max()
     packings = Packing.objects.all().order_by('-date_modified')
     filteredData = PackingFilter(request.GET, queryset=packings)
     packings = filteredData.qs
@@ -400,7 +401,7 @@ def delete_move(request, move_id):
 @login_required(login_url='login')
 @admin_or_gs_required
 def families_view(request):
-    families = Family.objects.all()
+    families = Family.objects.filter(for_mp=False)
     return render(request, 'families.html', {'families': families})
 
 @login_required(login_url='login')

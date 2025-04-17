@@ -52,7 +52,7 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-1">
+            <div class="col-lg-4 col-md-12 mb-1">
                 <label for="nb_days_min" class="form-label" style="color: #5d5d5d;">Nombre de jours (Min)</label>
                 {{ form.nb_days_min }}
                 {% if form.nb_days_min.errors %}
@@ -60,11 +60,19 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-1">
+            <div class="col-lg-4 col-md-12 mb-1">
                 <label for="nb_days_max" class="form-label" style="color: #5d5d5d;">Nombre de jours (Max)</label>
                 {{ form.nb_days_max }}
                 {% if form.nb_days_max.errors %}
                     <small class="text-danger">{{ form.nb_days_max.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-1">
+                <label for="for_mp" class="form-label" style="color: #5d5d5d;">Pour MP</label>
+                {{ form.for_mp }}
+                {% if form.for_mp.errors %}
+                    <small class="text-danger">{{ form.for_mp.errors }}</small>
                 {% endif %}
             </div>
         </div>

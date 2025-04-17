@@ -16,12 +16,20 @@ class FamilyForm(BaseModelForm):
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input','accept': 'image/*'}))
 
+    for_mp = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
+    
     nb_days_min = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Min)')))
     nb_days_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Max)')))
 
     class Meta:
         model = Family
-        fields = ['designation', 'image']  
+        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max']  
 
 class ProductForm(BaseModelForm):
     

@@ -197,14 +197,11 @@ def check_min_max_mp_global():
     for mp in products:
         actual_qte = qte_dict.get(mp.id, 0)
         cons_last_2_months = cons_dict.get(mp.id, 0)
-
-        if cons_last_2_months > 0:
-            print(mp, actual_qte, cons_last_2_months)
         
         if cons_last_2_months <= 0:
             continue
             
-        nj = actual_qte / cons_last_2_months
+        nj = round(actual_qte / cons_last_2_months, 0)
         family = mp.family
         
         if nj < family.nb_days_min:
@@ -241,7 +238,7 @@ def check_min_max_mp_by_site(product):
         if cons_last_2_months <= 0:
             continue
             
-        nj = actual_qte / cons_last_2_months
+        nj = round(actual_qte / cons_last_2_months, 0)
         family = product.family
         
         if nj < family.nb_days_min:
