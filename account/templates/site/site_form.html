@@ -45,7 +45,7 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-2">
+            <div class="col-lg-4 col-md-12 mb-2">
                 <label for="address" class="form-label" style="color: #5d5d5d;">Adresse</label>
                 {{ form.address }}
                 {% if form.address.errors %}
@@ -53,11 +53,19 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-6 col-md-12 mb-2">
+            <div class="col-lg-4 col-md-12 mb-2">
                 <label for="email" class="form-label" style="color: #5d5d5d;">Email</label>
                 {{ form.email }}
                 {% if form.email.errors %}
                     <small class="text-danger">{{ form.email.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-2">
+                <label for="email" class="form-label" style="color: #5d5d5d;">Vérifier Rapports Brouillon</label></br>
+                {{ form.check_for_drafts }}
+                {% if form.check_for_drafts.errors %}
+                    <small class="text-danger">{{ form.check_for_drafts.errors }}</small>
                 {% endif %}
             </div>
 

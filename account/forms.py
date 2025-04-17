@@ -70,7 +70,7 @@ class UserForm(BaseModelForm):
 class SiteForm(BaseModelForm):
     class Meta:
         model = Site
-        fields = ['designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr']
+        fields = ['designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr', 'check_for_drafts']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     address = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Adresse')))
@@ -78,6 +78,13 @@ class SiteForm(BaseModelForm):
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_btr = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BTR')))
+    check_for_drafts = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
 
 class LineForm(BaseModelForm):
     class Meta:

@@ -44,6 +44,7 @@ class Site(BaseModel):
     prefix_bl = models.CharField(max_length=50)
     prefix_bl_a = models.CharField(max_length=50)
     prefix_btr = models.CharField(max_length=50)
+    check_for_drafts = models.BooleanField(default=False)
 
     def get_quarantine(self):
         return Emplacement.objects.filter(warehouse__site=self, quarantine=True).first()
