@@ -51,20 +51,21 @@
                             <small class="text-danger">{{ form.designation.errors }}</small>
                         {% endif %}
                     </div>
-                {% else %}
-                    <div class="col-lg-12 col-md-12 mb-1">
-                        <label for="palette" class="form-label">Désignation</label>
-                        <p class="custom-text-box" style="padding-left: 30px">{{ form.instance.designation }}</p>
-                    </div>
-                {% endif %}
-
-                {% if is_pf %}
                     <div class="col-lg-12 col-md-12 mb-1">
                         <label for="family" class="form-label" style="color: #5d5d5d;">Famille</label>
                         {{ form.family }}
                         {% if form.family.errors %}
                             <small class="text-danger">{{ form.family.errors }}</small>
                         {% endif %}
+                    </div>
+                {% else %}
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="designation" class="form-label">Désignation</label>
+                        <p class="custom-text-box" style="padding-left: 30px">{{ form.instance.designation }}</p>
+                    </div>
+                    <div class="col-lg-12 col-md-12 mb-1">
+                        <label for="family" class="form-label">Famille</label>
+                        <p class="custom-text-box" style="padding-left: 30px">{{ form.instance.family }}</p>
                     </div>
                 {% endif %}
 
