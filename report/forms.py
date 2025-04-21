@@ -65,9 +65,17 @@ class MProductForm(BaseModelForm):
     alert_stock_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Max)')))
     alert_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Expiration')))
 
+    check_minmax = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
+
     class Meta:
         model = Product
-        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration']
+        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
 
 class DisponibilityForm(BaseModelForm):
     
