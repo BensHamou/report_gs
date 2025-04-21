@@ -186,7 +186,7 @@ def check_min_max():
 
 # ====================== MP (Matières Premières) ======================
 def check_min_max_mp_global():
-    products = Product.objects.filter(type='Matière Première').select_related('family')
+    products = Product.objects.filter(type='Matière Première', check_minmax=True).select_related('family')
     
     global_qtes = Disponibility.objects.filter(product__in=products).values('product').annotate(total_qte=Sum('qte'))
     qte_dict = {item['product']: item['total_qte'] or 0 for item in global_qtes}
@@ -243,7 +243,7 @@ def check_min_max_mp_by_site(product):
 
 # ====================== PF (Produits Finis) ======================
 def check_min_max_pf_by_site():
-    products = Product.objects.filter(type='Produit Fini').select_related('family')
+    products = Product.objects.filter(type='Produit Fini', check_minmax=True).select_related('family')
     for pf in products:
         if not pf.family:
             continue

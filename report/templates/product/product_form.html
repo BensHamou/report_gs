@@ -126,6 +126,14 @@
                         <small class="text-danger">{{ form.alert_expiration.errors }}</small>
                     {% endif %}
                 </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="check_minmax" class="form-label" style="color: #5d5d5d;">Suivre Min/Max</label> </br>
+                    {{ form.check_minmax }}
+                    {% if form.check_minmax.errors %}
+                        <small class="text-danger">{{ form.check_minmax.errors }}</small>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="col-lg-6 col-md-12 text-center">

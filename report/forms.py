@@ -38,15 +38,23 @@ class ProductForm(BaseModelForm):
     delais_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Délais d\'expiration (Jours)')))
     qte_per_cond = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par unité')))
     qte_per_pal = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
-    family = forms.ModelChoiceField(queryset=Family.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
+    family = forms.ModelChoiceField(queryset=Family.objects.filter(for_mp=False), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
     packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
     alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Min)')))
     alert_stock_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Max)')))
     alert_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Expiration (Jours)')))
 
+    check_minmax = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
+
     class Meta:
         model = Product
-        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration']
+        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
         
 class MProductForm(BaseModelForm):
     

@@ -71,6 +71,7 @@ class Product(BaseModel):
     alert_stock_max = models.PositiveIntegerField(null=True, blank=True, default=0)
     alert_expiration = models.PositiveIntegerField(null=True, blank=True, default=150)
     lines = models.ManyToManyField(Line, related_name='products', blank=True)
+    check_minmax = models.BooleanField(default=True)
     odoo_id = models.PositiveIntegerField(null=True, blank=True)
 
     def unit_qte(self, site_id):
