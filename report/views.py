@@ -1109,7 +1109,8 @@ def extractStockView(request):
         queryset = queryset.filter(n_lot__icontains=n_lot)
     if product:
         queryset = queryset.filter(product__designation__icontains=product)
-
+    
+    queryset.order_by('emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation')
     wb = Workbook()
     ws = wb.active
     filename = f"État Stock {timezone.now().strftime('%Y-%m-%d')}"
