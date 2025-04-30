@@ -1098,7 +1098,7 @@ def extractStockView(request):
     n_lot = request.GET.get('n_lot')
     product = request.GET.get('product')
 
-    queryset = Disponibility.objects.all()
+    queryset = Disponibility.objects.all().order_by('-emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation')
     if site:
         queryset = queryset.filter(emplacement__warehouse__site__designation__icontains=site)
     if warehouse:
@@ -1110,7 +1110,6 @@ def extractStockView(request):
     if product:
         queryset = queryset.filter(product__designation__icontains=product)
     
-    queryset.order_by('emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation')
     wb = Workbook()
     ws = wb.active
     filename = f"État Stock {timezone.now().strftime('%Y-%m-%d')}"
