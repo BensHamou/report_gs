@@ -477,9 +477,15 @@ def create_move_pf(request):
                 lot_number = request.POST.get('lot_number')
                 production_date = request.POST.get('production_date')
                 product = request.POST.get('product')
+                observation = request.POST.get('observation', '/')
+
                 production_year = datetime.strptime(production_date, "%Y-%m-%d").year
                 if not (site_id and line_id and shift_id and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Ligne, Shift, Date et Gestionaire sont obligatoires.'}, status=200)
+
+                product_obj = Product.objects.get(id=product)
+                if product_obj.family.is_expiring and not expiry_date:
+                    return JsonResponse({'success': False, 'message': 'Le champ Date d\'expiration est obligatoire.'}, status=200)
                 
                 palette_total = int(request.POST.get('palette_total', 0))
                 existing_move_lines = MoveLine.objects.filter(lot_number=lot_number, move__date__year=production_year, 
@@ -491,7 +497,7 @@ def create_move_pf(request):
                 move = Move.objects.create(line_id=line_id, site_id=site_id, shift_id=shift_id, gestionaire_id=gestionaire_id, date=production_date,  
                                            state='Brouillon',  type='Entré',  create_uid=request.user, write_uid=request.user)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, move_id=move.id, create_uid=request.user, 
-                                                    expiry_date=expiry_date, write_uid=request.user)
+                                                    expiry_date=expiry_date, write_uid=request.user, observation=observation)
                 handleDetails(request, move_line)
 
                 return JsonResponse({'success': True, 'message': 'Entrée créée avec succès.', 'new_record': move_line.move.id}, status=200)
@@ -515,8 +521,12 @@ def update_move_pf(request, move_line_id):
                 expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 diff_qte = request.POST.get('diff_qte', 0)
                 do_check = int(request.POST.get('do_check', 0))
+                observation = request.POST.get('observation', '/')
                 move_line = MoveLine.objects.get(id=move_line_id)
                 move = Move.objects.get(id=move_line.move.id)
+
+                if move_line.product.family.is_expiring and not request.POST.get('expiry_date', False):
+                    return JsonResponse({'success': False, 'message': 'Le champ Date d\'expiration est obligatoire.'}, status=200)
     
                 if do_check == 0:
                     production_year = datetime.strptime(production_date, "%Y-%m-%d").year
@@ -548,6 +558,7 @@ def update_move_pf(request, move_line_id):
                 move_line.write_uid = request.user
                 move_line.diff_qte = diff_qte
                 move_line.expiry_date = expiry_date
+                move_line.observation = observation
                 move_line.save()
                 return JsonResponse({'success': True, 'message': 'Entrée mise à jour avec succès.'}, status=200)
         except Move.DoesNotExist:
@@ -596,6 +607,13 @@ def create_move_mp(request):
                 expiry_date = request.POST.get('expiry_date', False) or '2099-12-31'
                 if not site_id or not lot_number or not product:
                     return JsonResponse({'success': False, 'message': 'Les champs Site, N° Lot et Produit sont obligatoires.'}, status=200)
+
+                product_obj = Product.objects.get(id=product)
+
+                if product_obj.family:
+                    if product_obj.family.is_expiring and not request.POST.get('expiry_date', False):
+                        return JsonResponse({'success': False, 'message': 'Le champ Date d\'expiration est obligatoire.'}, status=200)
+                    
                 cu = request.user
                 move = Move.objects.create(site_id=site_id, gestionaire=cu, state='Brouillon', type='Entré', create_uid=cu, write_uid=cu, date=production_date)
                 move_line = MoveLine.objects.create(lot_number=lot_number, product_id=product, observation=observation, move_id=move.id, 
@@ -626,6 +644,11 @@ def update_move_mp(request, move_line_id):
                 move_line = MoveLine.objects.get(id=move_line_id)
                 move = Move.objects.get(id=move_line.move.id)
                 cu = request.user
+
+
+                if move_line.product.family:
+                    if move_line.product.family.is_expiring and not request.POST.get('expiry_date', False):
+                        return JsonResponse({'success': False, 'message': 'Le champ Date d\'expiration est obligatoire.'}, status=200)
 
                 try:
 

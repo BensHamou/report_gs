@@ -160,6 +160,10 @@
                                     <p class="custom-text-box">{{ line.diff_qte|intcomma }}</p>
                                 </div>
                             {% endif %}
+                            <div class="col-lg-12 col-12 mb-2">
+                                <label for="observation" class="form-label">Observation</label>
+                                <p class="custom-text-box">{{ line.observation|default:'/'|linebreaksbr  }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,6 +251,10 @@
                                     <p class="custom-text-box">{{ line.diff_qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
                                 </div>
                             {% endif %}
+                            <div class="col-lg-12 col-12 mb-2">
+                                <label for="observation" class="form-label">Observation</label>
+                                <p class="custom-text-box">{{ line.observation|default:'/'|linebreaksbr  }}</p>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-12 col-sm-12 d-flex align-items-center flex-column">

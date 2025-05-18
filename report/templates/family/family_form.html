@@ -68,11 +68,19 @@
                 {% endif %}
             </div>
 
-            <div class="col-lg-4 col-md-12 mb-1">
+            <div class="col-lg-2 col-md-12 mb-1">
                 <label for="for_mp" class="form-label" style="color: #5d5d5d;">Pour MP</label></br>
                 {{ form.for_mp }}
                 {% if form.for_mp.errors %}
                     <small class="text-danger">{{ form.for_mp.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-2 col-md-12 mb-1">
+                <label for="is_expiring" class="form-label" style="color: #5d5d5d;">Dates Obligatoire?</label></br>
+                {{ form.is_expiring }}
+                {% if form.is_expiring.errors %}
+                    <small class="text-danger">{{ form.is_expiring.errors }}</small>
                 {% endif %}
             </div>
         </div>
