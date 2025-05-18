@@ -113,14 +113,14 @@ DATABASES = {
     #   'HOST': '10.10.10.53',
     #   'PORT': '5176',
     # },
-    # 'default': {
-    #   'ENGINE': 'django.db.backends.postgresql',
-    #   'NAME': 'PumaGS',
-    #   'USER': 'puma_gs',
-    #   'PASSWORD': 'puma_gs',
-    #   'HOST': '10.10.10.20',
-    #   'PORT': '5176',
-    # },
+    'default': {
+      'ENGINE': 'django.db.backends.postgresql',
+      'NAME': 'PumaGS',
+      'USER': 'puma_gs',
+      'PASSWORD': 'puma_gs',
+      'HOST': '10.10.10.20',
+      'PORT': '5176',
+    },
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql',
     #     'NAME': 'PumaGS',
@@ -129,14 +129,14 @@ DATABASES = {
     #     'HOST': '127.0.0.1',
     #     'PORT': '5432',
     # },
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('DB_NAME'),
+    #     'USER': os.environ.get('DB_USER'),
+    #     'PASSWORD': os.environ.get('DB_PASS'),
+    #     'HOST': os.environ.get('DB_HOST'),
+    #     'PORT': os.environ.get('DB_PORT'),
+    # }
 }
 
 
@@ -183,6 +183,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'm13o13bmw@gmail.com'
-EMAIL_HOST_PASSWORD = 'ggfxrsgpieuqief'
+EMAIL_HOST_PASSWORD = 'utovgkbuqnjrphja'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'm13o13bmw@gmail.com'
