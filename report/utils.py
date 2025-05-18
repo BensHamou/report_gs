@@ -19,7 +19,7 @@ def execute_query(query, params=None):
     return records
 
 
-def getMProducts():
+def getMProducts(): 
     query = """SELECT 
                     pp.id, 
                     pp.default_code, 

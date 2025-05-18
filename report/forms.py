@@ -27,9 +27,17 @@ class FamilyForm(BaseModelForm):
     nb_days_min = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Min)')))
     nb_days_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Max)')))
 
+    is_expiring = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
+
     class Meta:
         model = Family
-        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max']  
+        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max', 'is_expiring']  
 
 class ProductForm(BaseModelForm):
     
@@ -61,6 +69,7 @@ class MProductForm(BaseModelForm):
     qte_per_cond = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par copnditionnement')))
     qte_per_pal = forms.FloatField(widget=forms.NumberInput(attrs=getAttrs('control', 'Quantité par palette')))
     packing = forms.ModelChoiceField(queryset=Packing.objects.all(), widget=forms.Select(attrs=getAttrs('control')), empty_label="Conditionnement")
+    family = forms.ModelChoiceField(queryset=Family.objects.filter(for_mp=True), widget=forms.Select(attrs=getAttrs('control')), empty_label="Famille")
     alert_stock = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Min)')))
     alert_stock_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Stock (Max)')))
     alert_expiration = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Alerte Expiration')))
@@ -75,7 +84,7 @@ class MProductForm(BaseModelForm):
 
     class Meta:
         model = Product
-        fields = ['qte_per_pal', 'qte_per_cond', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
+        fields = ['qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
 
 class DisponibilityForm(BaseModelForm):
     
