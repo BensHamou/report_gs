@@ -388,7 +388,9 @@ def send_site_inventory_reports():
         subject = f"[INVENTAIRE] Stock {site.designation} - {today.strftime('%d/%m/%Y')}"
         html_message = render_to_string('fragment/site_inventory_report.html', {'site': site, 'today': today, 'family_data': family_data})
 
-        addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
+        addresses = site.email.split('&') if site.email else []
+        if not addresses:
+            addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
 
         print(addresses, subject)
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
