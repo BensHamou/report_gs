@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+{% load humanize %}
+{% load mathfilters %}
+<html>
+<head>
+    <style>
+        *{
+            font-family: 'Montserrat', sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        td {
+            border: 1px solid black;
+            text-align: left;
+            vertical-align: middle;
+            padding-left: 5px;
+            padding-top: 2px;
+        }
+        th {
+            border: 0px solid transparent;
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <b>Bonjour,</b>
+    <p>Prière de bien vouloir trouver ci-dessous l'état des stocks des produit finis par N° de lot - <strong>{{ site.designation }}</strong> arrêté le <strong>{{ today|date:"d/m/Y" }}</strong>.</p>
+    
+    <table style="width: 100%; margin-bottom: 10px;">
+        <thead>
+            <tr style="padding: 0px 10px; background-color: e7e6e6; color: black;">
+                <th>Article</th>
+                <th>N° Lot</th>
+                <th>Expire le</th>
+                <th>Unité par palette</th>
+                <th>Nombre Palettes</th>
+                <th>Nombre d'unité</th>
+                <th>Quantité</th>
+            </tr>
+        </thead>
+        <thead>
+        {% for family in family_data %}
+            <tr style="background-color: #002060; color: white; border: 1px solid black;">
+                <th colspan="7" style="padding: 0px 10px">{{ family.family.designation|upper }}</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for product in family.products %}
+                <tr>
+                    <td style="border-right: none !important;">{{ product.product.designation }}</td>
+                    <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                    <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                    <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                    <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                    <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                    <td style="border: none !important; border-top: 1px solid black !important; border-right: 1px solid black !important;"></td>
+                </tr>
+                
+                {% for lot in product.lot_groups %}
+                <tr>
+                    <td></td>
+                    <td>{{ lot.n_lot }}</td>
+                    <td>{{ lot.expiry_date|date:'d M Y' }}</td>
+                    <td>
+                        {% if product.product.qte_per_cond != 0 %}
+                            {{ product.product.qte_per_pal|div:product.product.qte_per_cond|floatformat:0|intcomma }} unité
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td>{{ lot.total_palettes|floatformat:"0" }} Palette</td>
+                    <td>
+                        {% if product.product.qte_per_cond != 0 %}
+                            {{ lot.total_quantity|div:product.product.qte_per_cond|floatformat:0|intcomma }} unité
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td>{{ lot.total_quantity|floatformat:"1" }} {{ product.product.packing.unit }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="color: white; background-color: #4472c4;">
+                    <td colspan="4">Sous-total produit</td>
+                    <td style="text-align: center;">{{ product.product_total.palettes|floatformat:"0" }} Palette</td>
+                    <td style="text-align: center;">
+                        {% if product.product.qte_per_cond != 0 %}
+                            {{ product.product_total.quantity|div:product.product.qte_per_cond|floatformat:0|intcomma }} unité
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">{{ product.product_total.quantity|floatformat:"1" }} {{ product.product.packing.unit }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="color: white; background-color: #002060;">
+                    <td colspan="4">TOTAL {{ family.family.designation }}</td>
+                    <td style="text-align: center;">{{ family.family_total.palettes|floatformat:"0" }} Palette</td>
+                    <td style="text-align: center;">{{ family.family_total.units|floatformat:"0" }} unité</td>
+                    <td style="text-align: center;">{{ family.family_total.quantity|floatformat:"1" }}</td>
+                </tr>
+            </tbody>
+        {% endfor %}
+    </table>
+
+    <p>Pour plus de détails, veuillez visiter : <a href="http://pumastock.grupopuma-dz.com/stock/all/"> PUMA STOCK</a></p>
+    <p>Cordialement,</p>
+</body>
+</html>

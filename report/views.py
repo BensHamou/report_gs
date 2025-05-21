@@ -21,7 +21,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from report.cron import send_stock, check_min_max
+from report.cron import send_stock, check_min_max, send_site_inventory_reports
 
 # PACKING
 
@@ -29,6 +29,7 @@ from report.cron import send_stock, check_min_max
 @admin_only_required
 def listPackingView(request):
     # check_min_max()
+    # send_site_inventory_reports()
     packings = Packing.objects.all().order_by('-date_modified')
     filteredData = PackingFilter(request.GET, queryset=packings)
     packings = filteredData.qs

@@ -3,7 +3,7 @@ from django.core.mail import EmailMultiAlternatives
 from .models import Disponibility, TemporaryEmplacementAlert, Family, Product, MoveLine
 from account.models import Site
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, F
 from datetime import timedelta
 from collections import defaultdict
 
@@ -340,3 +340,57 @@ def send_pf_site_min_alert(alerts):
 def send_pf_site_max_alert(alerts):
     for alert in alerts:
         print(f"PF SITE MAX: {alert['product']} at {alert['site']} - {alert['nj']}j (max {alert['required']}j)")
+
+def send_site_inventory_reports():
+    today = timezone.now().date()
+    sites = Site.objects.all()
+    
+    for site in sites:
+        families = Family.objects.filter(products__disponibilities__emplacement__warehouse__site=site, for_mp=False).distinct()
+        
+        if not families.exists():
+            continue
+        
+        family_data = []
+        
+        for family in families:
+            products_data = []
+            products = Product.objects.filter(family=family, disponibilities__emplacement__warehouse__site=site).distinct()
+            
+            for product in products:
+                lot_groups = Disponibility.objects.filter(product=product, emplacement__warehouse__site=site).values('n_lot', 'expiry_date').annotate(
+                    total_palettes=Sum('palette'), total_units=Sum('nqte'), total_quantity=Sum('qte'), 
+                    units_per_palette=F('product__qte_per_pal')).order_by('n_lot')
+                
+                if not lot_groups:
+                    continue
+                
+                products_data.append({'product': product, 'lot_groups': lot_groups,
+                    'product_total': {
+                        'palettes': sum(lg['total_palettes'] for lg in lot_groups),
+                        'units': sum(lg['total_units'] for lg in lot_groups),
+                        'quantity': sum(lg['total_quantity'] for lg in lot_groups),
+                    }
+                })
+            
+            if products_data:
+                family_data.append({'family': family, 'products': products_data,
+                    'family_total': {
+                        'palettes': sum(p['product_total']['palettes'] for p in products_data),
+                        'units': sum(p['product_total']['units'] for p in products_data),
+                        'quantity': sum(p['product_total']['quantity'] for p in products_data),
+                    }
+                })
+        
+        if not family_data:
+            continue
+        
+        subject = f"[INVENTAIRE] Stock {site.designation} - {today.strftime('%d/%m/%Y')}"
+        html_message = render_to_string('fragment/site_inventory_report.html', {'site': site, 'today': today, 'family_data': family_data})
+
+        addresses = ['mohammed.benslimane@groupe-hasnaoui.com']
+
+        print(addresses, subject)
+        email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
+        email.attach_alternative(html_message, "text/html")
+        email.send()
