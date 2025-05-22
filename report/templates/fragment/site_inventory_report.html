@@ -31,7 +31,7 @@
     
     <table style="width: 100%; margin-bottom: 10px;">
         <thead>
-            <tr style="padding: 0px 10px; background-color: e7e6e6; color: black;">
+            <tr style="padding: 0px 10px; background-color: #e7e6e6 !important; color: black;">
                 <th>Article</th>
                 <th>N° Lot</th>
                 <th>Expire le</th>
@@ -100,6 +100,9 @@
                     <td style="text-align: center;">{{ family.family_total.palettes|floatformat:"0" }} Palette</td>
                     <td style="text-align: center;">{{ family.family_total.units|floatformat:"0" }} unité</td>
                     <td style="text-align: center;">{{ family.family_total.quantity|floatformat:"1" }}</td>
+                </tr>
+                <tr>
+                    <td colspan="7" style="border: none !important;">&nbsp;</td>
                 </tr>
             </tbody>
         {% endfor %}
