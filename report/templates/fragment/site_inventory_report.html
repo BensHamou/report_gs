@@ -84,7 +84,7 @@
                 {% endfor %}
                 <tr style="color: white; background-color: #4472c4;">
                     <td colspan="4">Sous-total produit</td>
-                    <td style="text-align: center;">{{ product.product_total.palettes|floatformat:"0" }} Palette</td>
+                    <td style="text-align: center;">{{ product.product_total.palettes|floatformat:"0"|intcomma }} Palette</td>
                     <td style="text-align: center;">
                         {% if product.product.qte_per_cond != 0 %}
                             {{ product.product_total.quantity|div:product.product.qte_per_cond|floatformat:0|intcomma }} unité
@@ -92,14 +92,14 @@
                             /
                         {% endif %}
                     </td>
-                    <td style="text-align: center;">{{ product.product_total.quantity|floatformat:"1" }} {{ product.product.packing.unit }}</td>
+                    <td style="text-align: center;">{{ product.product_total.quantity|floatformat:"1"|intcomma }} {{ product.product.packing.unit }}</td>
                 </tr>
                 {% endfor %}
                 <tr style="color: white; background-color: #002060;">
                     <td colspan="4">TOTAL {{ family.family.designation }}</td>
-                    <td style="text-align: center;">{{ family.family_total.palettes|floatformat:"0" }} Palette</td>
-                    <td style="text-align: center;">{{ family.family_total.units|floatformat:"0" }} unité</td>
-                    <td style="text-align: center;">{{ family.family_total.quantity|floatformat:"1" }}</td>
+                    <td style="text-align: center;">{{ family.family_total.palettes|floatformat:"0"|intcomma }} Palette</td>
+                    <td style="text-align: center;">{{ family.family_total.units|floatformat:"0"|intcomma }} unité</td>
+                    <td style="text-align: center;">{{ family.family_total.quantity|floatformat:"1"|intcomma }}</td>
                 </tr>
                 <tr>
                     <td colspan="7" style="border: none !important;">&nbsp;</td>

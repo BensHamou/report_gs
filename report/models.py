@@ -21,6 +21,7 @@ class Family(BaseModel):
     nb_days_min = models.PositiveIntegerField(null=True, blank=True, default=10)
     nb_days_max = models.PositiveIntegerField(null=True, blank=True, default=20)
     is_expiring = models.BooleanField(default=False)
+    sequence = models.PositiveIntegerField(default=99)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

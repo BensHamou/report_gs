@@ -26,6 +26,7 @@ class FamilyForm(BaseModelForm):
     
     nb_days_min = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Min)')))
     nb_days_max = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Nombre de jours (Max)')))
+    sequence = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Séquence')))
 
     is_expiring = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox',
@@ -37,7 +38,7 @@ class FamilyForm(BaseModelForm):
 
     class Meta:
         model = Family
-        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max', 'is_expiring']  
+        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max', 'is_expiring', 'sequence']  
 
 class ProductForm(BaseModelForm):
     

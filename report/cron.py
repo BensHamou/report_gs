@@ -6,6 +6,10 @@ from django.utils import timezone
 from django.db.models import Sum, F
 from datetime import timedelta
 from collections import defaultdict
+import math
+from itertools import groupby
+from operator import attrgetter
+
 
 def check_temp_emplacements():
     allowed_in_temp = timezone.now() - timezone.timedelta(hours=5)
@@ -181,18 +185,84 @@ def global_state_mp(include_qrt=False):
 
 
 def check_min_max():
-    check_min_max_mp_global()
-    check_min_max_pf_by_site()
+    global_mp, by_site_mp = check_min_max_mp_global()
+    by_site_pf = check_min_max_pf_by_site()
+    
+    def prepare_items(items):
+        return [item for item in items if item is not None]
+    
+    all_mp = prepare_items(global_mp) + prepare_items(by_site_mp)
+    all_pf = prepare_items(by_site_pf)
+    
+    def organize_by_site_and_family(items):
+        
+        sorted_items = sorted(items, key=lambda x: (x.get('site').designation if 'site' in x else 'Global', x.get('product').family.sequence, x.get('nj')))
+
+        site_groups = {}
+        for item in sorted_items:
+            site_name = item.get('site').designation if 'site' in item else 'Global'
+            family_name = item.get('product').family.designation
+            
+            if site_name not in site_groups:
+                site_groups[site_name] = {}
+            
+            if family_name not in site_groups[site_name]:
+                site_groups[site_name][family_name] = []
+            
+            site_groups[site_name][family_name].append(item)
+        
+        return site_groups
+    
+    mp_min = organize_by_site_and_family([item for item in all_mp if 'min' in item.get('type')])
+    mp_max = organize_by_site_and_family([item for item in all_mp if 'max' in item.get('type')])
+    pf_min = organize_by_site_and_family([item for item in all_pf if 'min' in item.get('type')])
+    pf_max = organize_by_site_and_family([item for item in all_pf if 'max' in item.get('type')])
+    
+    sites = list(Site.objects.all()) + [None]
+    
+    for site in sites:
+        site_name = site.designation if site else 'Global'
+        site_recipients = []
+        
+        if not site:
+            site_recipients = [email for site in Site.objects.all() if site.email for email in site.email.split('&')] or ['mohammed.senoussaoui@grupopuma-dz.com']
+        elif site and site.email:
+            site_recipients = site.email.split('&')
+        else:
+            site_recipients = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        if site_name in mp_min and mp_min[site_name]:
+            send_site_alert(recipients=site_recipients, subject=f"[MP MIN - {site_name}] Alerte Stock",
+                message=f"Veuillez trouver ci-dessous les matières premières en dessous du niveau minimum - {site_name}", alert_data={site_name: mp_min[site_name]})
+        
+        if site_name in mp_max and mp_max[site_name]:
+            send_site_alert(recipients=site_recipients, subject=f"[MP MAX - {site_name}] Alerte Stock",
+                message=f"Veuillez trouver ci-dessous les matières premières au dessus du niveau maximum - {site_name}", alert_data={site_name: mp_max[site_name]})
+        
+        if site and site_name in pf_min and pf_min[site_name]:
+            send_site_alert(recipients=site_recipients, subject=f"[PF MIN - {site_name}] Alerte Stock",
+                message=f"Veuillez trouver ci-dessous les produits finis en dessous du niveau minimum - {site_name}", alert_data={site_name: pf_min[site_name]})
+        
+        if site and site_name in pf_max and pf_max[site_name]:
+            send_site_alert(recipients=site_recipients, subject=f"[PF MAX - {site_name}] Alerte Stock",
+                message=f"Veuillez trouver ci-dessous les produits finis au dessus du niveau maximum - {site_name}", alert_data={site_name: pf_max[site_name]})
+
+def send_site_alert(recipients, subject, message, alert_data):
+    today = timezone.now().date()
+    html = render_to_string('fragment/minmax_alert.html', {'alert_data': alert_data, 'message': message, 'today': today})
+    email = EmailMultiAlternatives(subject, None, 'Puma Stock', recipients)
+    email.attach_alternative(html, "text/html")
+    email.send()
 
 # ====================== MP (Matières Premières) ======================
 def check_min_max_mp_global():
-    products = Product.objects.filter(type='Matière Première', check_minmax=True).select_related('family')
-    
+    global_mp = []
+    by_site_mp = []
+    products = Product.objects.filter(type='Matière Première', check_minmax=True, family__nb_days_min__gt=0, family__nb_days_max__gt=0).select_related('family')
     global_qtes = Disponibility.objects.filter(product__in=products).values('product').annotate(total_qte=Sum('qte'))
     qte_dict = {item['product']: item['total_qte'] or 0 for item in global_qtes}
     cons_dict = calculate_global_consumption(products, days=60)
-       
-    alerts = []
+
     for mp in products:
         if not mp.family:
             continue
@@ -203,17 +273,17 @@ def check_min_max_mp_global():
         if cons_last_2_months <= 0:
             continue
             
-        nj = round(actual_qte / cons_last_2_months, 0)
+        nj = math.floor(actual_qte / cons_last_2_months)
         family = mp.family
         
         if nj < family.nb_days_min:
-            alerts.append({ 'type': 'mp_global_min',  'product': mp,  'nj': nj,  'required': family.nb_days_min })
+            global_mp.append({ 'type': 'mp_global_min',  'product': mp,  'nj': nj,  'required': family.nb_days_min, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months })
         elif nj > family.nb_days_max:
-            alerts.append({ 'type': 'mp_global_max',  'product': mp,  'nj': nj,  'required': family.nb_days_max })
+            global_mp.append({ 'type': 'mp_global_max',  'product': mp,  'nj': nj,  'required': family.nb_days_max, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months })
         else:
-            check_min_max_mp_by_site(mp)
+            by_site_mp.append(check_min_max_mp_by_site(mp))
     
-    send_batched_alerts(alerts)
+    return global_mp, by_site_mp
 
 def check_min_max_mp_by_site(product):
     sites = Site.objects.all()
@@ -231,27 +301,29 @@ def check_min_max_mp_by_site(product):
         if cons_last_2_months <= 0:
             continue
             
-        nj = round(actual_qte / cons_last_2_months, 0)
+        nj = math.floor(actual_qte / cons_last_2_months)
         family = product.family
         
         if nj < family.nb_days_min:
-            alerts.append({ 'type': 'mp_site_min', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_min })
+            return { 'type': 'mp_site_min', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_min, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months }
         elif nj > family.nb_days_max:
-            alerts.append({ 'type': 'mp_site_max', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_max })
+            return { 'type': 'mp_site_max', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_max, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months }
     
-    send_batched_alerts(alerts)
+    return
 
 # ====================== PF (Produits Finis) ======================
 def check_min_max_pf_by_site():
-    products = Product.objects.filter(type='Produit Fini', check_minmax=True).select_related('family')
+    products = Product.objects.filter(type='Produit Fini', check_minmax=True, family__nb_days_min__gt=0, family__nb_days_max__gt=0).select_related('family')
+    by_site_mp = []
     for pf in products:
         if not pf.family:
             continue
-        check_min_max_pf_by_site_product(pf)
+        by_site_mp.append(check_min_max_pf_by_site_product(pf))
+
+    return by_site_mp
 
 def check_min_max_pf_by_site_product(product):
     sites = Site.objects.all()
-    alerts = []
     
     site_qtes = Disponibility.objects.filter(product=product, emplacement__warehouse__site__in=sites).values('emplacement__warehouse__site').annotate(total_qte=Sum('qte'))
     qte_dict = {item['emplacement__warehouse__site']: item['total_qte'] or 0 for item in site_qtes}
@@ -265,15 +337,15 @@ def check_min_max_pf_by_site_product(product):
         if cons_last_2_months <= 0:
             continue
             
-        nj = round(actual_qte / cons_last_2_months, 0)
+        nj = math.floor(actual_qte / cons_last_2_months)
         family = product.family
         
         if nj < family.nb_days_min:
-            alerts.append({ 'type': 'pf_site_min', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_min })
+            return { 'type': 'pf_site_min', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_min, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months }
         elif nj > family.nb_days_max:
-            alerts.append({ 'type': 'pf_site_max', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_max })
+            return { 'type': 'pf_site_max', 'product': product, 'site': site, 'nj': nj, 'required': family.nb_days_max, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months }
     
-    send_batched_alerts(alerts)
+    return
 
 # ====================== SHARED HELPER FUNCTIONS ======================
 def calculate_global_consumption(products, days=60):
@@ -293,53 +365,6 @@ def calculate_site_consumption(product, sites):
     for ml in move_lines:
         cons_dict[ml.move.site_id] += ml.qte
     return cons_dict
-
-def send_batched_alerts(alerts):
-    if not alerts:
-        return
-    
-    alert_groups = defaultdict(list)
-    for alert in alerts:
-        alert_groups[alert['type']].append(alert)
-    
-    if 'mp_global_min' in alert_groups:
-        send_mp_global_min_alert(alert_groups['mp_global_min'])
-    if 'mp_global_max' in alert_groups:
-        send_mp_global_max_alert(alert_groups['mp_global_max'])
-    if 'mp_site_min' in alert_groups:
-        send_mp_site_min_alert(alert_groups['mp_site_min'])
-    if 'mp_site_max' in alert_groups:
-        send_mp_site_max_alert(alert_groups['mp_site_max'])
-    
-    if 'pf_site_min' in alert_groups:
-        send_pf_site_min_alert(alert_groups['pf_site_min'])
-    if 'pf_site_max' in alert_groups:
-        send_pf_site_max_alert(alert_groups['pf_site_max'])
-
-# ====================== ALERT FUNCTIONS ======================
-def send_mp_global_min_alert(alerts):
-    for alert in alerts:
-        print(f"MP GLOBAL MIN: {alert['product']} - {alert['nj']}j (min {alert['required']}j)")
-
-def send_mp_global_max_alert(alerts):
-    for alert in alerts:
-        print(f"MP GLOBAL MAX: {alert['product']} - {alert['nj']}j (max {alert['required']}j)")
-
-def send_mp_site_min_alert(alerts):
-    for alert in alerts:
-        print(f"MP SITE MIN: {alert['product']} at {alert['site']} - {alert['nj']}j (min {alert['required']}j)")
-
-def send_mp_site_max_alert(alerts):
-    for alert in alerts:
-        print(f"MP SITE MAX: {alert['product']} at {alert['site']} - {alert['nj']}j (max {alert['required']}j)")
-
-def send_pf_site_min_alert(alerts):
-    for alert in alerts:
-        print(f"PF SITE MIN: {alert['product']} at {alert['site']} - {alert['nj']}j (min {alert['required']}j)")
-
-def send_pf_site_max_alert(alerts):
-    for alert in alerts:
-        print(f"PF SITE MAX: {alert['product']} at {alert['site']} - {alert['nj']}j (max {alert['required']}j)")
 
 def send_site_inventory_reports():
     today = timezone.now().date()

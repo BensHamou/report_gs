@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html>
+<head>
+    <style>
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        td {
+            border: 1px solid black;
+            text-align: left;
+            vertical-align: middle;
+            padding: 5px 8px;
+        }
+        th {
+            border: 1px solid black;
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px;
+            background-color: #e7e6e6;
+        }
+        .family-header {
+            color: white;
+            background-color: #002060;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .global-header {
+            color: white;
+            background-color: #4472c4;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <b>Bonjour,</b>
+    <p>{{ message }} - {{ today|date:"d/m/Y" }}</p>
+
+    {% if alert_data %}
+        <table>
+            <tr>
+                <th>Article</th>
+                <th>Restants</th>
+                <th>Requis</th>
+                <th>Actuel</th>
+                <th>Consommé (2m)</th>
+            </tr>
+            {% for site_name, families in alert_data.items %}
+                {% for family_name, items in families.items %}
+                    <tr class="family-header">
+                        <td colspan="5" style="text-align: center;">
+                            {{ family_name|upper }}
+                        </td>
+                    </tr>
+                    
+                    {% for item in items %}
+                        <tr>
+                            <td>{{ item.product.designation }}</td>
+                            <td style="text-align: center;">{{ item.nj|floatformat:"0"|intcomma }}j</td>
+                            <td style="text-align: center;">{{ item.required|floatformat:"1"|intcomma }}j</td>
+                            <td style="text-align: center;">{{ item.actual_qte|floatformat:"1"|intcomma }} {{ item.product.packing.unit }}</td>
+                            <td style="text-align: center;">{{ item.cons_last_2_months|floatformat:"1"|intcomma }} {{ item.product.packing.unit }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </table>
+    {% else %}
+        <p><strong>Aucune alerte à signaler pour cette catégorie.</strong></p>
+    {% endif %}
+
+    <p>Pour plus de détails, veuillez visiter : <a href="http://pumastock.grupopuma-dz.com/stock/all/">PUMA STOCK</a></p>
+    <p>Cordialement</p>
+</body>
+</html>
