@@ -410,7 +410,7 @@ def send_site_inventory_reports():
         if not family_data:
             continue
         
-        subject = f"[INVENTAIRE] Stock {site.designation} - {today.strftime('%d/%m/%Y')}"
+        subject = f"[PAR N LOT] Stock {site.designation} - {today.strftime('%d/%m/%Y')}"
         html_message = render_to_string('fragment/site_inventory_report.html', {'site': site, 'today': today, 'family_data': family_data})
 
         addresses = site.email.split('&') if site.email else []
