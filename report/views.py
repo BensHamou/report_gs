@@ -177,7 +177,7 @@ def listProductView(request):
                 'designation': product.designation,
                 'tn_qte': product.tn_qte(selected_site.id),
                 'state_stock': product.state_stock(selected_site.id),
-                'family': product.family.designation or '/',
+                'family': product.family.designation if product.family else '/',
                 'type': product.type,
             })
     else:

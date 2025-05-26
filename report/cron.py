@@ -247,6 +247,9 @@ def check_min_max():
             send_site_alert(recipients=site_recipients, subject=f"[PF MAX - {site_name}] Alerte Stock",
                 message=f"Veuillez trouver ci-dessous les produits finis au dessus du niveau maximum - {site_name}", alert_data={site_name: pf_max[site_name]})
 
+    # if by_site_mp:
+    #     send_btr_recommendations(prepare_items(by_site_mp))
+
 def send_site_alert(recipients, subject, message, alert_data):
     today = timezone.now().date()
     html = render_to_string('fragment/minmax_alert.html', {'alert_data': alert_data, 'message': message, 'today': today})
@@ -421,3 +424,38 @@ def send_site_inventory_reports():
         email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
         email.attach_alternative(html_message, "text/html")
         email.send()
+
+
+def get_btr_recommendations(alerts):
+
+    def get_alerts_below_threshold(items):
+        return [item for item in items if item['nj'] < item['product'].family.nb_min_btr]
+    
+    recommendations = []
+    recommended_alerts = get_alerts_below_threshold(alerts)
+    sites = Site.objects.all()
+    
+    for alert in recommended_alerts:
+        filtred_sited = sites.exclude(id=alert['site'].id)
+        product = alert['product']
+        site_qtes = Disponibility.objects.filter(product=product, emplacement__warehouse__site__in=filtred_sited).values('emplacement__warehouse__site').annotate(total_qte=Sum('qte'))
+        qte_dict = {item['emplacement__warehouse__site']: item['total_qte'] or 0 for item in site_qtes}
+        cons_dict = calculate_site_consumption(product, filtred_sited)
+    
+        for site in filtred_sited:
+            actual_qte = qte_dict.get(site.id, 0)
+            cons_last_2_months = cons_dict.get(site.id, 0)
+            
+            if cons_last_2_months <= 0:
+                continue
+
+            nj = math.floor(actual_qte / cons_last_2_months)
+            family = product.family
+        
+            if nj > family.nb_min_btr:
+                recommendations.append({'alert_site': alert['site'], 'alert_nj': alert['nj'], 'type': 'btr_recommendation', 'product': product,
+                'site': site, 'nj': nj, 'required': family.nb_min_btr, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months})
+                break
+        
+        return recommendations
+
