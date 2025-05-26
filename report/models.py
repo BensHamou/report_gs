@@ -20,6 +20,7 @@ class Family(BaseModel):
     for_mp = models.BooleanField(default=False)
     nb_days_min = models.PositiveIntegerField(null=True, blank=True, default=10)
     nb_days_max = models.PositiveIntegerField(null=True, blank=True, default=20)
+    nb_min_btr = models.PositiveIntegerField(null=True, blank=True, default=10)
     is_expiring = models.BooleanField(default=False)
     sequence = models.PositiveIntegerField(default=99)
 
