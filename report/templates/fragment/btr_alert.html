@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html>
+<head>
+    <style>
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <b>Bonjour,</b>
+    <p>Veuillez trouver ci-dessous les transferts recommandés pour les matières premières - {{ today|date:"d/m/Y" }}</p>
+    {% if alert_data %}
+        {% for item in alert_data %}
+            Un transfert (BTR) est nécessaire entre le site {{ item.alert_site.designation }} et le site {{ item.site.designation }} concernant l'article {{ item.product.designation }}.
+        {% endfor %}
+    {% else %}
+        <p><strong>Aucune recommendation ce site.</strong></p>
+    {% endif %}
+
+    <p>Pour plus de détails, veuillez visiter : <a href="http://pumastock.grupopuma-dz.com/stock/all/">PUMA STOCK</a></p>
+    <p>Cordialement</p>
+</body>
+</html>

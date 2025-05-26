@@ -28,7 +28,6 @@ def check_transfer_mirror():
         alert.email_sent = True
         alert.save()
 
-
 def send_alert(alert):
     subject = f'Stock Temporaire'
     
@@ -53,7 +52,6 @@ def mirror_email(mirror):
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
     email.send()    
-
 
 def send_stock(include_qrt=False):
     site_state_pf(include_qrt)
@@ -230,7 +228,7 @@ def check_min_max():
             site_recipients = site.email.split('&')
         else:
             site_recipients = ['mohammed.senoussaoui@grupopuma-dz.com']
-
+        
         if site_name in mp_min and mp_min[site_name]:
             send_site_alert(recipients=site_recipients, subject=f"[MP MIN - {site_name}] Alerte Stock",
                 message=f"Veuillez trouver ci-dessous les matières premières en dessous du niveau minimum - {site_name}", alert_data={site_name: mp_min[site_name]})
@@ -456,6 +454,35 @@ def get_btr_recommendations(alerts):
                 recommendations.append({'alert_site': alert['site'], 'alert_nj': alert['nj'], 'type': 'btr_recommendation', 'product': product,
                 'site': site, 'nj': nj, 'required': family.nb_min_btr, 'actual_qte': actual_qte, 'cons_last_2_months': cons_last_2_months})
                 break
-        
-        return recommendations
 
+    sorted_items = sorted(recommendations, key=lambda x: (x.get('alert_site').designation, x.get('product').family.sequence, x.get('alert_nj')))
+
+    site_groups = {}
+    for item in sorted_items:
+        site_name = item.get('alert_site').designation
+        if site_name not in site_groups:
+            site_groups[site_name] = []
+        site_groups[site_name].append(item)
+        
+    return site_groups
+
+def send_btr_recommendations(alerts):
+    sites = list(Site.objects.all())
+    alerts = get_btr_recommendations(alerts)
+    
+    for site in sites:
+        site_name = site.designation
+        site_recipients = []
+        
+        if site and site.email:
+            site_recipients = site.email.split('&')
+        else:
+            site_recipients = ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        if site_name in alerts and alerts[site_name]:
+            subject=f"[MP BTR - {site_name}] Alerte Stock"
+            today = timezone.now().date()
+            html = render_to_string('fragment/btr_alert.html', {'alert_data': alerts[site_name], 'today': today})
+            email = EmailMultiAlternatives(subject, None, 'Puma Stock', site_recipients)
+            email.attach_alternative(html, "text/html")
+            email.send()
