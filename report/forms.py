@@ -39,7 +39,7 @@ class FamilyForm(BaseModelForm):
 
     class Meta:
         model = Family
-        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max', 'is_expiring', 'sequence']  
+        fields = ['designation', 'image', 'for_mp', 'nb_days_min', 'nb_days_max', 'is_expiring', 'sequence', 'nb_min_btr']  
 
 class ProductForm(BaseModelForm):
     
