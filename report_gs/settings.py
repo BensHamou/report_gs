@@ -89,10 +89,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CRONJOBS = [
     # ('0 * * * *', 'report.cron.check_temp_emplacements'),
-    ('0 * * * *', 'report.cron.check_transfer_mirror'),
-    ('0 8 * * *', 'report.cron.send_stock'),
-    ('0 6 * * *', 'report.cron.send_site_inventory_reports'),
-    ('30 9 * * *', 'report.cron.check_min_max'),
+    # ('0 * * * *', 'report.cron.check_transfer_mirror'),
+    # ('0 8 * * *', 'report.cron.send_stock'),
+    # ('0 6 * * *', 'report.cron.send_site_inventory_reports'),
+    # ('30 9 * * *', 'report.cron.check_min_max'),
 ]
 
 
@@ -107,14 +107,14 @@ CORS_ALLOW_HEADERS = [
 
 
 DATABASES = {
-    # 'default': {
-    #   'ENGINE': 'django.db.backends.postgresql',
-    #   'NAME': 'PumaGS',
-    #   'USER': 'puma_gs',
-    #   'PASSWORD': 'puma_gs',
-    #   'HOST': '10.10.10.53',
-    #   'PORT': '5176',
-    # },
+    'default': {
+      'ENGINE': 'django.db.backends.postgresql',
+      'NAME': 'PumaGS',
+      'USER': 'puma_gs',
+      'PASSWORD': 'puma_gs',
+      'HOST': '10.10.10.53',
+      'PORT': '5176',
+    },
     # 'default': {
     #   'ENGINE': 'django.db.backends.postgresql',
     #   'NAME': 'PumaGS',
@@ -131,14 +131,14 @@ DATABASES = {
     #     'HOST': '127.0.0.1',
     #     'PORT': '5432',
     # },
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASS'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
-    }
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('DB_NAME'),
+    #     'USER': os.environ.get('DB_USER'),
+    #     'PASSWORD': os.environ.get('DB_PASS'),
+    #     'HOST': os.environ.get('DB_HOST'),
+    #     'PORT': os.environ.get('DB_PORT'),
+    # }
 }
 
 
