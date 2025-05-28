@@ -245,8 +245,8 @@ def check_min_max():
             send_site_alert(recipients=site_recipients, subject=f"[PF MAX - {site_name}] Alerte Stock",
                 message=f"Veuillez trouver ci-dessous les produits finis au dessus du niveau maximum - {site_name}", alert_data={site_name: pf_max[site_name]})
 
-    # if by_site_mp:
-    #     send_btr_recommendations(prepare_items(by_site_mp))
+    if by_site_mp:
+        send_btr_recommendations(prepare_items(by_site_mp))
 
 def send_site_alert(recipients, subject, message, alert_data):
     today = timezone.now().date()
