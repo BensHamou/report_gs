@@ -129,6 +129,7 @@ class Move(BaseModel):
     date = models.DateField(default=datetime.date.today, null=True, blank=True)
     is_transfer = models.BooleanField(default=False)
     is_isolation = models.BooleanField(default=False)
+    is_inventory = models.BooleanField(default=False)
     stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
 
 
@@ -309,6 +310,10 @@ class Move(BaseModel):
             return 'Transfer Entrant' if self.type == 'Entré' else 'Transfer Sortant'
         elif self.is_isolation and self.type == 'Sortie':
             return 'Consomation'
+        elif self.is_inventory and self.type == 'Sortie':
+            return 'Inverntaire Sortant'
+        elif self.is_inventory and self.type == 'Entré':
+            return 'Inverntaire Entrant'
         else:
             return self.type
 

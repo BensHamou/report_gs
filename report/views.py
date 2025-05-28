@@ -1198,3 +1198,173 @@ def hasDraftMoves(move):
     draft_moves = Move.objects.filter(Q(state='Brouillon') | Q(state='Confirmé'), site=move.site, is_transfer=False, is_isolation=False)
     draft_moves_with_finished_products = draft_moves.filter(move_lines__product__type='Produit Fini').distinct()
     return draft_moves_with_finished_products.exists()
+
+@login_required(login_url='login')
+@admin_required
+def startInventory(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'}, status=405)
+
+    try:
+        export_response = export_current_stock()
+        if not export_response['success']:
+            return JsonResponse(export_response, status=500)
+
+        create_move_outs_response = create_move_outs(request.user)
+        if not create_move_outs_response['success']:
+            return JsonResponse(create_move_outs_response, status=500)
+
+        return JsonResponse({'success': True, 'message': 'Inventaire vidé avec succès. Tous les stocks ont été exportés et des mouvements de sortie ont été créés.',
+        'export_path': export_response.get('file_path')}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erreur lors du démarrage de l\'inventaire: {str(e)}'}, status=500)
+
+def export_current_stock():
+    try:
+        queryset = Disponibility.objects.all().order_by('-emplacement__warehouse__site__designation',
+            'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation').select_related(
+            'product', 'emplacement__warehouse__site', 'emplacement__warehouse')
+
+        wb = Workbook()
+        ws = wb.active
+        filename = f"Etat_Stock_Avant_Vidage_{timezone.now().strftime('%Y-%m-%d_%H-%M')}"
+        ws.title = "Stock"
+
+        header_text = f"Extraction du Stock avant vidage - {timezone.now().strftime('%Y-%m-%d %H:%M')} - GrupoPuma"
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
+        ws["A1"] = header_text
+        ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+        ws["A1"].font = Font(bold=True, color="FFFFFF", size=14)
+        ws["A1"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+
+        headers = ["Site", "Magasin", "Zone", "Produit", "N° Lot", "Quantité", "Palette", "Date Production", "Date Expiration"]
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}3"] = header
+            ws[f"{col_letter}3"].font = Font(bold=True, color="FFFFFF")
+            ws[f"{col_letter}3"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+            ws[f"{col_letter}3"].alignment = Alignment(horizontal="center", vertical="center")
+
+        for row_num, dispo in enumerate(queryset, 4):
+            ws[f"A{row_num}"] = dispo.emplacement.warehouse.site.designation
+            ws[f"B{row_num}"] = dispo.emplacement.warehouse.designation
+            ws[f"C{row_num}"] = dispo.emplacement.designation
+            ws[f"D{row_num}"] = dispo.product.designation
+            ws[f"E{row_num}"] = dispo.n_lot or '/'
+            ws[f"F{row_num}"] = dispo.qte or 0
+            ws[f"G{row_num}"] = dispo.palette or 0
+            ws[f"H{row_num}"] = dispo.production_date.strftime('%Y-%m-%d') if dispo.production_date else "/"
+            ws[f"I{row_num}"] = dispo.expiry_date.strftime('%Y-%m-%d') if dispo.expiry_date else "/"
+
+        for col in ws.columns:
+            max_length = 0
+            col_letter = get_column_letter(col[0].column)
+            for cell in col:
+                try:
+                    if cell.value:
+                        max_length = max(max_length, len(str(cell.value)))
+                except:
+                    pass
+            adjusted_width = (max_length + 2) * 1.2
+            ws.column_dimensions[col_letter].width = adjusted_width
+
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'inventory_exports')
+        os.makedirs(temp_dir, exist_ok=True)
+        file_path = os.path.join(temp_dir, f"{filename}.xlsx")
+        wb.save(file_path)
+
+        return {
+            'success': True,
+            'file_path': file_path,
+            'filename': f"{filename}.xlsx"
+        }
+
+    except Exception as e:
+        return {
+            'success': False,
+            'message': f'Erreur lors de l\'export du stock: {str(e)}'
+        }
+
+def create_move_outs(user):
+    try:
+        disponibilities = Disponibility.objects.all().select_related('product', 'emplacement__warehouse').order_by('emplacement__warehouse')
+
+        warehouses_data = {}
+        for dispo in disponibilities:
+            warehouse_id = dispo.emplacement.warehouse.id
+            if warehouse_id not in warehouses_data:
+                warehouses_data[warehouse_id] = {'warehouse': dispo.emplacement.warehouse, 'items': []}
+            warehouses_data[warehouse_id]['items'].append(dispo)
+
+        for wahrehouse_id, wahrehouse_data in warehouses_data.items():
+            site = wahrehouse_data['warehouse'].site
+            move = Move.objects.create(
+                site=site, 
+                gestionaire=user, 
+                date=timezone.now().date(),
+                type='Sortie',
+                state='Brouillon',
+                create_uid=user,
+                write_uid=user,
+                is_inventory=True
+            )
+
+            product_lot_groups = {}
+            for dispo in wahrehouse_data['items']:
+                key = (dispo.product.id, dispo.n_lot or '/')
+                if key not in product_lot_groups:
+                    product_lot_groups[key] = {
+                        'product': dispo.product,
+                        'n_lot': dispo.n_lot,
+                        'expiry_date': dispo.expiry_date,
+                        'dispos': []
+                    }
+                product_lot_groups[key]['dispos'].append(dispo)
+
+            for (product_id, n_lot), group in product_lot_groups.items():
+                move_line = MoveLine.objects.create(
+                    move=move,
+                    product=group['product'],
+                    lot_number=n_lot or '/',
+                    expiry_date=group['expiry_date'],
+                    create_uid=user,
+                    write_uid=user
+                )
+
+                for dispo in group['dispos']:
+                    LineDetail.objects.create(
+                        move_line=move_line,
+                        warehouse=dispo.emplacement.warehouse,
+                        emplacement=dispo.emplacement,
+                        qte=dispo.qte,
+                        palette=dispo.palette,
+                        expiry_date=group['expiry_date'],
+                        n_lot=n_lot or '/',
+                        create_uid=user,
+                        write_uid=user
+                    )
+            
+            try:
+                move.check_can_confirm()
+            except ValueError as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+
+            move.changeState(user.id, 'Confirmé')
+            try:
+                move.can_validate()
+            except ValueError as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+                
+            success = move.changeState(user.id, 'Validé')
+            if success:
+                try:
+                    success, message = move.do_after_validation(user)
+                except ValueError as e:
+                    return JsonResponse({'success': False, 'message': str(e)})
+
+        return {'success': True, 'message': f'Créé {len(wahrehouse_data)} mouvements de sortie'}
+
+    except Exception as e:
+        return {'success': False, 'message': f'Erreur lors de la création des mouvements de sortie: {str(e)}'}
+

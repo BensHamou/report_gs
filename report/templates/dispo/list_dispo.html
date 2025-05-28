@@ -54,7 +54,7 @@
                     <label for="page_size" class="form-label">Ligne</label>
                     <input type="number" name="page_size" value="{{ request.GET.page_size|default:12 }}" class="form-control">
                 </div>
-                <div class="col-lg-2 col-md-6 col-sm-12 d-flex justify-content-end align-items-center">
+                <div class="col-lg-2 col-md-6 col-sm-12 d-flex justify-content-end align-items-center mt-2">
                     <button type="submit" class="btn btn-primary me-2 mt-3" style="background-color: #1d71b8;">
                         <i class="fas fa-filter"></i>
                     </button>
@@ -62,6 +62,9 @@
                         <i class="fas fa-file-csv"></i>
                     </button>
                     {% if user.role == 'Admin' %}
+                        {% comment %} <button type="button" class="btn btn-primary me-2 mt-3 inventory-btn" style="background-color: #1d71b8;">
+                            <i class="fas fa-cart-flatbed"></i>
+                        </button> {% endcomment %}
                         <a href="{% url 'create_stock' %}" class="btn btn-primary mt-3" style="background-color: #1d71b8;">
                             <i class="fas fa-plus"></i>
                         </a>
@@ -173,6 +176,39 @@
                 $.ajax({
                     type: "POST",
                     url: "{% url 'send_stock_state' %}",
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        if (response.success) {
+                            swal("Succès!", response.message, "success");
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    });
+    document.querySelector('.inventory-btn').addEventListener('click', function () {
+        swal({
+            title: "Démarrer l'inventaire",
+            text: "Êtes-vous sûr de vouloir démarrer l'inventaire ? Cette opération videra tout le stock actuel, créant ainsi des sorties et ne pourra pas être annulée.",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'start_inventory' %}",
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
                     },
