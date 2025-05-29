@@ -228,7 +228,7 @@ def check_min_max():
             site_recipients = site.email.split('&')
         else:
             site_recipients = ['mohammed.senoussaoui@grupopuma-dz.com']
-        
+
         if site_name in mp_min and mp_min[site_name]:
             send_site_alert(recipients=site_recipients, subject=f"[MP MIN - {site_name}] Alerte Stock",
                 message=f"Veuillez trouver ci-dessous les matières premières en dessous du niveau minimum - {site_name}", alert_data={site_name: mp_min[site_name]})
@@ -274,7 +274,7 @@ def check_min_max_mp_global():
         if cons_last_2_months <= 0:
             continue
             
-        nj = math.floor(actual_qte / cons_last_2_months) * 60
+        nj = math.floor((actual_qte / cons_last_2_months) * 60)
         family = mp.family
         
         if nj < family.nb_days_min:
@@ -302,7 +302,7 @@ def check_min_max_mp_by_site(product):
         if cons_last_2_months <= 0:
             continue
             
-        nj = math.floor(actual_qte / cons_last_2_months) * 60
+        nj = math.floor((actual_qte / cons_last_2_months) * 60)
         family = product.family
         
         if nj < family.nb_days_min:
@@ -338,7 +338,7 @@ def check_min_max_pf_by_site_product(product):
         if cons_last_2_months <= 0:
             continue
             
-        nj = math.floor(actual_qte / cons_last_2_months) * 60
+        nj = math.floor((actual_qte / cons_last_2_months) * 60)
         family = product.family
         
         if nj < family.nb_days_min:
@@ -447,7 +447,7 @@ def get_btr_recommendations(alerts):
             if cons_last_2_months <= 0:
                 continue
 
-            nj = math.floor(actual_qte / cons_last_2_months) * 60
+            nj = math.floor((actual_qte / cons_last_2_months) * 60)
             family = product.family
         
             if nj > family.nb_min_btr:
