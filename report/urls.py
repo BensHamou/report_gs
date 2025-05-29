@@ -57,7 +57,7 @@ urlpatterns = [
     path('stock/delete/<int:id>/', deleteStockView, name='delete_stock'),
     path('stock/extract/', extractStockView, name='extract_stock'),
     path("stock/email/", sendStockState, name="send_stock_state"),
-    # path("stock/inventory/", startInventory, name="start_inventory"),
+    path("stock/inventory/", startInventory, name="start_inventory"),
     path("stock/email/quarantine/", sendQRTStockState, name="send_qrt_stock_state"),
 
 
