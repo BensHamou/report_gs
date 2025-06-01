@@ -89,10 +89,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CRONJOBS = [
     # ('0 * * * *', 'report.cron.check_temp_emplacements'),
-    ('0 * * * *', 'report.cron.check_transfer_mirror'),
-    ('0 8 * * *', 'report.cron.send_stock'),
-    ('0 6 * * *', 'report.cron.send_site_inventory_reports'),
-    ('30 9 * * *', 'report.cron.check_min_max'),
+    # ('0 * * * *', 'report.cron.check_transfer_mirror'),
+    # ('0 8 * * *', 'report.cron.send_stock'),
+    # ('0 6 * * *', 'report.cron.send_site_inventory_reports'),
+    # ('30 9 * * *', 'report.cron.check_min_max'),
 ]
 
 

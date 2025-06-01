@@ -21,15 +21,13 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from report.cron import send_stock, check_min_max, send_site_inventory_reports
+from report.cron import send_stock
 
 # PACKING
 
 @login_required(login_url='login')
 @admin_only_required
 def listPackingView(request):
-    # check_min_max()
-    # send_site_inventory_reports()
     packings = Packing.objects.all().order_by('-date_modified')
     filteredData = PackingFilter(request.GET, queryset=packings)
     packings = filteredData.qs
@@ -1206,85 +1204,71 @@ def startInventory(request):
         return JsonResponse({'success': False, 'message': 'Méthode de requête non valide.'}, status=405)
 
     try:
-        export_response = export_current_stock()
-        if not export_response['success']:
-            return JsonResponse(export_response, status=500)
+        excel_file = export_current_stock()
 
         create_move_outs_response = create_move_outs(request.user)
         if not create_move_outs_response['success']:
             return JsonResponse(create_move_outs_response, status=500)
 
-        return JsonResponse({'success': True, 'message': 'Inventaire vidé avec succès. Tous les stocks ont été exportés et des mouvements de sortie ont été créés.',
-        'export_path': export_response.get('file_path')}, status=200)
+        response = HttpResponse(excel_file, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"Etat_Stock_Avant_Vidage_{timezone.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
 
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Erreur lors du démarrage de l\'inventaire: {str(e)}'}, status=500)
 
 def export_current_stock():
-    try:
-        queryset = Disponibility.objects.all().order_by('-emplacement__warehouse__site__designation',
-            'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation').select_related(
-            'product', 'emplacement__warehouse__site', 'emplacement__warehouse')
+    queryset = Disponibility.objects.all().order_by('-emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation',
+    'product__designation').select_related('product', 'emplacement__warehouse__site', 'emplacement__warehouse')
 
-        wb = Workbook()
-        ws = wb.active
-        filename = f"Etat_Stock_Avant_Vidage_{timezone.now().strftime('%Y-%m-%d_%H-%M')}"
-        ws.title = "Stock"
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Stock"
 
-        header_text = f"Extraction du Stock avant vidage - {timezone.now().strftime('%Y-%m-%d %H:%M')} - GrupoPuma"
-        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
-        ws["A1"] = header_text
-        ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
-        ws["A1"].font = Font(bold=True, color="FFFFFF", size=14)
-        ws["A1"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+    header_text = f"Extraction du Stock avant vidage - {timezone.now().strftime('%Y-%m-%d %H:%M')} - GrupoPuma"
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
+    ws["A1"] = header_text
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws["A1"].font = Font(bold=True, color="FFFFFF", size=14)
+    ws["A1"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
 
-        headers = ["Site", "Magasin", "Zone", "Produit", "N° Lot", "Quantité", "Palette", "Date Production", "Date Expiration"]
-        for col_num, header in enumerate(headers, 1):
-            col_letter = get_column_letter(col_num)
-            ws[f"{col_letter}3"] = header
-            ws[f"{col_letter}3"].font = Font(bold=True, color="FFFFFF")
-            ws[f"{col_letter}3"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
-            ws[f"{col_letter}3"].alignment = Alignment(horizontal="center", vertical="center")
+    headers = ["Site", "Magasin", "Zone", "Produit", "N° Lot", "Quantité", "Palette", "Date Production", "Date Expiration"]
+    for col_num, header in enumerate(headers, 1):
+        col_letter = get_column_letter(col_num)
+        ws[f"{col_letter}3"] = header
+        ws[f"{col_letter}3"].font = Font(bold=True, color="FFFFFF")
+        ws[f"{col_letter}3"].fill = PatternFill(start_color="151f31", end_color="151f31", fill_type="solid")
+        ws[f"{col_letter}3"].alignment = Alignment(horizontal="center", vertical="center")
 
-        for row_num, dispo in enumerate(queryset, 4):
-            ws[f"A{row_num}"] = dispo.emplacement.warehouse.site.designation
-            ws[f"B{row_num}"] = dispo.emplacement.warehouse.designation
-            ws[f"C{row_num}"] = dispo.emplacement.designation
-            ws[f"D{row_num}"] = dispo.product.designation
-            ws[f"E{row_num}"] = dispo.n_lot or '/'
-            ws[f"F{row_num}"] = dispo.qte or 0
-            ws[f"G{row_num}"] = dispo.palette or 0
-            ws[f"H{row_num}"] = dispo.production_date.strftime('%Y-%m-%d') if dispo.production_date else "/"
-            ws[f"I{row_num}"] = dispo.expiry_date.strftime('%Y-%m-%d') if dispo.expiry_date else "/"
+    for row_num, dispo in enumerate(queryset, 4):
+        ws[f"A{row_num}"] = dispo.emplacement.warehouse.site.designation
+        ws[f"B{row_num}"] = dispo.emplacement.warehouse.designation
+        ws[f"C{row_num}"] = dispo.emplacement.designation
+        ws[f"D{row_num}"] = dispo.product.designation
+        ws[f"E{row_num}"] = dispo.n_lot or '/'
+        ws[f"F{row_num}"] = dispo.qte or 0
+        ws[f"G{row_num}"] = dispo.palette or 0
+        ws[f"H{row_num}"] = dispo.production_date.strftime('%Y-%m-%d') if dispo.production_date else "/"
+        ws[f"I{row_num}"] = dispo.expiry_date.strftime('%Y-%m-%d') if dispo.expiry_date else "/"
 
-        for col in ws.columns:
-            max_length = 0
-            col_letter = get_column_letter(col[0].column)
-            for cell in col:
-                try:
-                    if cell.value:
-                        max_length = max(max_length, len(str(cell.value)))
-                except:
-                    pass
-            adjusted_width = (max_length + 2) * 1.2
-            ws.column_dimensions[col_letter].width = adjusted_width
+    for col in ws.columns:
+        max_length = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = (max_length + 2) * 1.2
+        ws.column_dimensions[col_letter].width = adjusted_width
 
-        temp_dir = os.path.join(settings.MEDIA_ROOT, 'inventory_exports')
-        os.makedirs(temp_dir, exist_ok=True)
-        file_path = os.path.join(temp_dir, f"{filename}.xlsx")
-        wb.save(file_path)
-
-        return {
-            'success': True,
-            'file_path': file_path,
-            'filename': f"{filename}.xlsx"
-        }
-
-    except Exception as e:
-        return {
-            'success': False,
-            'message': f'Erreur lors de l\'export du stock: {str(e)}'
-        }
+    from io import BytesIO
+    output = BytesIO()
+    wb.save(output)
+    return output.getvalue()
 
 def create_move_outs(user):
     try:
