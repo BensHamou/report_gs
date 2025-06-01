@@ -467,3 +467,7 @@ class TemporaryEmplacementAlert(BaseModel):
     email_sent = models.BooleanField(default=False)
     type = models.CharField(choices=ALERT_TYPE, max_length=25, default='Temporaire')
 
+class ExpiryAlertLog(models.Model):
+    dispo = models.ForeignKey(Disponibility, related_name='alerts', on_delete=models.CASCADE)
+    sent_at = models.DateField(auto_now_add=True)
+    

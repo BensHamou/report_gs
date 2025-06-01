@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html>
+<head>
+    <style>
+        * { font-family: 'Montserrat', sans-serif; }
+        table { border-collapse: collapse; margin-bottom: 15px; width: 100%; }
+        td, th { border: 1px solid black; padding: 6px 8px; }
+        th { background-color: #e7e6e6; text-align: center; }
+        .family-header {
+            background-color: #002060;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <p>Bonjour,</p>
+    <p>{{ message }} dans <b style='color: red;'>6 mois</b> - <b>{{ site.designation }}</b> arrêté le <b>{{ today|date:"d/m/Y" }}</b></p>
+
+    {% if alert_data %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>N° Lot</th>
+                    <th>Magasin</th>
+                    <th>Emplacement</th>
+                    <th>Quantité</th>
+                    <th>Expire le</th>
+                    <th>Jour restant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for family_name, products in alert_data.items %}
+                    <tr class="family-header">
+                        <td colspan="7" style="text-align: center;">{{ family_name|upper }}</td>
+                    </tr>
+
+                    {% for product_name, lots in products.items %}
+                        <tr>
+                            <td style="border-right: none !important;">{{ product_name }}</td>
+                            <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                            <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                            <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                            <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                            <td style="border: none !important; border-top: 1px solid black !important;"></td>
+                            <td style="border: none !important; border-top: 1px solid black !important; border-right: 1px solid black !important;"></td>
+                        </tr>
+
+                        {% for lot in lots %}
+                            <tr>
+                                <td></td>
+                                <td>{{ lot.n_lot }}</td>
+                                <td>{{ lot.emplacement.warehouse.designation }}</td>
+                                <td>{{ lot.emplacement.designation }}</td>
+                                <td style="text-align: center;">{{ lot.qte|intcomma }} {{ lot.product.packing.unit }}</td>
+                                <td style="text-align: center;">{{ lot.expiry_date|date:"d-M-Y" }}</td>
+                                <td style="text-align:center;">
+                                    {% if item.days_left < 0 %}
+                                        <span style="color:red;">{{ item.days_left }}</span>
+                                    {% else %}
+                                        {{ item.days_left }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+
+        </table>
+    {% else %}
+        <p><strong>Aucune alerte d'expiration pour cette période.</strong></p>
+    {% endif %}
+
+    <p>Pour plus de détails, veuillez visiter : 
+        <a href="http://pumastock.grupopuma-dz.com/stock/all/">PUMA STOCK</a>
+    </p>
+
+    <p>Cordialement,</p>
+</body>
+</html>

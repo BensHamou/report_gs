@@ -1,9 +1,9 @@
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
-from .models import Disponibility, TemporaryEmplacementAlert, Family, Product, MoveLine
+from .models import Disponibility, TemporaryEmplacementAlert, Family, Product, MoveLine, ExpiryAlertLog
 from account.models import Site
 from django.utils import timezone
-from django.db.models import Sum, F
+from django.db.models import Sum, F, OuterRef, Subquery
 from datetime import timedelta
 from collections import defaultdict
 import math
@@ -486,3 +486,103 @@ def send_btr_recommendations(alerts):
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', site_recipients)
             email.attach_alternative(html, "text/html")
             email.send()
+
+
+def get_expiring_lots(days_threshold=180):
+    today = timezone.now().date()
+    threshold = today + timedelta(days=days_threshold)
+    month_ago = today - timedelta(days=-1)
+
+    recent_alerts = ExpiryAlertLog.objects.filter(dispo=OuterRef('pk'), sent_at__gte=month_ago)
+
+    queryset = Disponibility.objects.annotate(
+        recently_alerted=Subquery(recent_alerts.values('id')[:1])
+    ).filter(
+        expiry_date__isnull=False,
+        expiry_date__lte=threshold,
+        recently_alerted__isnull=True
+    ).exclude(
+        emplacement__quarantine=True
+    ).select_related(
+        'product__family',
+        'product__packing',
+        'emplacement__warehouse__site'
+    ).order_by(
+        'product__family__sequence',
+        'emplacement__warehouse__designation',
+        'product__designation',
+        'expiry_date'
+    )
+
+    print(queryset)
+
+    alerts = {}
+
+    for dispo in queryset:
+        site = dispo.emplacement.warehouse.site
+        site_name = site.designation
+        product = dispo.product
+        product_type = product.type or "Autre"
+
+        family = product.family
+        family_name = family.designation if family else "Autre"
+        product_name = product.designation
+
+        site_alert = alerts.setdefault(site_name, {})
+        type_alert = site_alert.setdefault(product_type, {})
+        family_alert = type_alert.setdefault(family_name, {})
+        product_alert = family_alert.setdefault(product_name, [])
+
+        product_alert.append({
+            "dispo": dispo,
+            "n_lot": dispo.n_lot,
+            "qte": round(dispo.qte, 2),
+            "emplacement": dispo.emplacement,
+            "expiry_date": dispo.expiry_date,
+            "days_left": (dispo.expiry_date - today).days,
+            "product": product
+        })
+
+    return alerts
+
+def send_expiring_lot_alerts_by_family():
+    alerts = get_expiring_lots()
+    sites = Site.objects.all()
+    today = timezone.now().date()
+
+    PRODUCT_TYPES = ['Produit Fini', 'Matière Première']
+
+    for site in sites:
+        site_name = site.designation
+        recipients = site.email.split('&') if site.email else ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        site_alert = alerts.get(site_name)
+        if not site_alert:
+            continue
+
+        for p_type in PRODUCT_TYPES:
+            type_data = site_alert.get(p_type)
+            if not type_data:
+                continue
+
+            context = {
+                'alert_data': type_data,
+                'site': site,
+                'today': today,
+                'message': f"Prière de bien vouloir trouver ci-dessous l'état des stocks des produits ({p_type}) qui expirent dans"
+            }
+
+            subject = f"[Expiration Lots - {site_name}] Alerte {p_type}"
+            html = render_to_string('fragment/expiring_lots_by_family.html', context)
+
+            email = EmailMultiAlternatives(subject, None, 'Puma Stock', recipients)
+            email.attach_alternative(html, "text/html")
+            email.send()
+            for family_lots in type_data.values():
+                for product_lots in family_lots.values():
+                    for lot in product_lots:
+                        ExpiryAlertLog.objects.get_or_create(dispo=lot['dispo'])
+
+
+    
+
