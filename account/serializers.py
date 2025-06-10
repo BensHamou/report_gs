@@ -14,11 +14,12 @@ class MoveLineSerializer(serializers.ModelSerializer):
     expiry_date = serializers.ReadOnlyField()
     qte = serializers.ReadOnlyField()
     palette = serializers.ReadOnlyField()
+    observation = serializers.ReadOnlyField()
     details = LineDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = MoveLine
-        fields = ['id',  'product', 'expiry_date',  'details', 'qte', 'palette', 'n_lot']
+        fields = ['id',  'product', 'expiry_date',  'details', 'qte', 'palette', 'n_lot', 'observation']
         
 class MoveSerializer(serializers.ModelSerializer):
     n_lots = serializers.ReadOnlyField()
@@ -34,7 +35,7 @@ class MoveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Move
         fields = ['id', 'date', 'move_lines', 'qte', 'palette', 'n_lots', 'state', 'product_display', 'transfer_to',
-                  'gestionaire', 'bl_str', 'display_type', 'is_transfer', 'is_isolation', 'line', 'site', 'date_created', 'shift']
+                  'gestionaire', 'bl_str', 'display_type', 'is_transfer', 'is_inventory', 'is_isolation', 'line', 'site', 'date_created', 'shift']
 
 class SiteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,7 +64,7 @@ class FamilySerializer(serializers.ModelSerializer):
     image = serializers.ImageField(use_url=True)
     class Meta:
         model = Family
-        fields = ['id', 'designation', 'image']
+        fields = ['id', 'designation', 'image', 'for_mp', 'is_expiring', 'sequence']
 
 class PackingSerializer(serializers.ModelSerializer):
     class Meta:
