@@ -491,15 +491,14 @@ def send_btr_recommendations(alerts):
 def get_expiring_lots(days_threshold=180):
     today = timezone.now().date()
     threshold = today + timedelta(days=days_threshold)
-    month_ago = today - timedelta(days=-1)
+    month_ago = today - timedelta(days=30)
 
     recent_alerts = ExpiryAlertLog.objects.filter(dispo=OuterRef('pk'), sent_at__gte=month_ago)
 
-    queryset = Disponibility.objects.annotate(
-        recently_alerted=Subquery(recent_alerts.values('id')[:1])
-    ).filter(
+    queryset = Disponibility.objects.annotate(recently_alerted=Subquery(recent_alerts.values('id')[:1])).filter(
         expiry_date__isnull=False,
         expiry_date__lte=threshold,
+        product__family__is_expiring=True,
         recently_alerted__isnull=True
     ).exclude(
         emplacement__quarantine=True
@@ -513,8 +512,6 @@ def get_expiring_lots(days_threshold=180):
         'product__designation',
         'expiry_date'
     )
-
-    print(queryset)
 
     alerts = {}
 
@@ -545,8 +542,12 @@ def get_expiring_lots(days_threshold=180):
 
     return alerts
 
-def send_expiring_lot_alerts_by_family():
-    alerts = get_expiring_lots()
+def send_expiring_lot_alerts():
+    send_expiring_lot_alerts_by_family(90)
+    send_expiring_lot_alerts_by_family(180)
+
+def send_expiring_lot_alerts_by_family(days_threshold=180):
+    alerts = get_expiring_lots(days_threshold)
     sites = Site.objects.all()
     today = timezone.now().date()
 
@@ -555,6 +556,8 @@ def send_expiring_lot_alerts_by_family():
     for site in sites:
         site_name = site.designation
         recipients = site.email.split('&') if site.email else ['mohammed.senoussaoui@grupopuma-dz.com']
+
+        recipients = ['mohammed.benslimane@groupe-hasnaoui.com']
 
         site_alert = alerts.get(site_name)
         if not site_alert:
@@ -569,10 +572,11 @@ def send_expiring_lot_alerts_by_family():
                 'alert_data': type_data,
                 'site': site,
                 'today': today,
+                'months': int(days_threshold / 30),
                 'message': f"Prière de bien vouloir trouver ci-dessous l'état des stocks des produits ({p_type}) qui expirent dans"
             }
 
-            subject = f"[Expiration Lots - {site_name}] Alerte {p_type}"
+            subject = f"[Expiration Lots ({days_threshold}j) - {site_name}] Alerte {p_type}"
             html = render_to_string('fragment/expiring_lots_by_family.html', context)
 
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', recipients)

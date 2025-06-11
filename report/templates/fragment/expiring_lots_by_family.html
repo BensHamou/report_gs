@@ -17,7 +17,7 @@
 </head>
 <body>
     <p>Bonjour,</p>
-    <p>{{ message }} dans <b style='color: red;'>6 mois</b> - <b>{{ site.designation }}</b> arrêté le <b>{{ today|date:"d/m/Y" }}</b></p>
+    <p>{{ message }} dans <b style='color: red;'>{{ months }} mois</b> - <b>{{ site.designation }}</b> arrêté le <b>{{ today|date:"d/m/Y" }}</b></p>
 
     {% if alert_data %}
         <table>
