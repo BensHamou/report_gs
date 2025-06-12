@@ -1352,3 +1352,14 @@ def create_move_outs(user):
     except Exception as e:
         return {'success': False, 'message': f'Erreur lors de la création des mouvements de sortie: {str(e)}'}
 
+# def cartographieView(request):
+#     sites = Site.objects.prefetch_related(
+#         'warehouses',
+#         'warehouses__emplacements',
+#         'warehouses__emplacements__disponibilities',
+#         'warehouses__emplacements__disponibilities__product',
+#         'warehouses__emplacements__disponibilities__product__packing'
+#     ).all()
+#     return render(request, 'cartographie.html', {'sites': sites})
+
+
