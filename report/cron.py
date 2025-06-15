@@ -557,8 +557,6 @@ def send_expiring_lot_alerts_by_family(days_threshold=180):
         site_name = site.designation
         recipients = site.email.split('&') if site.email else ['mohammed.senoussaoui@grupopuma-dz.com']
 
-        recipients = ['mohammed.benslimane@groupe-hasnaoui.com']
-
         site_alert = alerts.get(site_name)
         if not site_alert:
             continue
@@ -578,6 +576,8 @@ def send_expiring_lot_alerts_by_family(days_threshold=180):
 
             subject = f"[Expiration Lots ({days_threshold}j) - {site_name}] Alerte {p_type}"
             html = render_to_string('fragment/expiring_lots_by_family.html', context)
+
+            print(recipients, subject)
 
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', recipients)
             email.attach_alternative(html, "text/html")
