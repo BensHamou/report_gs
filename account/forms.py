@@ -70,7 +70,7 @@ class UserForm(BaseModelForm):
 class SiteForm(BaseModelForm):
     class Meta:
         model = Site
-        fields = ['designation', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr', 'check_for_drafts']
+        fields = ['designation', 'image', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr', 'check_for_drafts']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     address = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Adresse')))
@@ -78,6 +78,7 @@ class SiteForm(BaseModelForm):
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_btr = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BTR')))
+    image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input','accept': 'image/*'}))
     check_for_drafts = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox',
         'data-onstyle': 'primary',
@@ -85,6 +86,7 @@ class SiteForm(BaseModelForm):
         'data-onlabel': "Oui",
         'data-offlabel': "Non" 
     }))
+
 
 class LineForm(BaseModelForm):
     class Meta:
@@ -99,10 +101,11 @@ class LineForm(BaseModelForm):
 class WarehouseForm(BaseModelForm):
     class Meta:
         model = Warehouse
-        fields = ['designation', 'site']
+        fields = ['designation', 'site', 'image']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     site = forms.ModelChoiceField(queryset=Site.objects.all(), widget=forms.Select(attrs=getAttrs('select2')), empty_label="Site")
+    image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input','accept': 'image/*'}))
 
 
 class EmplacementForm(BaseModelForm):

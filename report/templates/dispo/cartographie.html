@@ -1,544 +1,300 @@
 {% extends "main.html" %}
 
 {% block title %} Cartographie {% endblock %}
+{% load static %}
 
 {% block content %}
 <h2 class="page-title mb-4">Cartographie des Sites</h2>
 
-<div class="carto-navigation">
-    <div class="carto-level active" id="level-sites">
-        <div class="carto-header">
-            <h3>Sites</h3>
-        </div>
-        <div class="carto-items sites-grid">
-            {% for site in sites %}
-                <div class="carto-site-card" data-id="{{ site.id }}">
-                    <div class="site-image-container">
-                        {% if site.image %}
-                            <img src="{{ site.image.url }}" alt="{{ site.designation }}" class="site-image">
-                        {% else %}
-                            <div class="site-image-placeholder">
-                                <i class="fas fa-map-location-dot"></i>
-                            </div>
-                        {% endif %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <ul class="nav nav-tabs mb-3" id="siteTabs" role="tablist">
+                {% for site in sites %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if forloop.first %}active{% endif %}" 
+                            id="site-{{ site.id }}-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#site-{{ site.id }}" 
+                            type="button" 
+                            role="tab" 
+                            aria-controls="site-{{ site.id }}" 
+                            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                            data-site-id="{{ site.id }}">
+                        {{ site.designation }}
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <div class="tab-content" id="siteTabsContent">
+                {% for site in sites %}
+                <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" 
+                    id="site-{{ site.id }}" 
+                    role="tabpanel" 
+                    aria-labelledby="site-{{ site.id }}-tab">
+                    <div class="card h-100">
+                        <div class="card-body d-flex justify-content-center align-items-center">
+                            <img src="{% if site.image %}{{ site.image.url }}{% else %}{{ default_site_image }}{% endif %}" 
+                                alt="Cartographie {{ site.designation }}" 
+                                class="img-fluid site-image mx-auto d-block"
+                                data-site-id="{{ site.id}}"
+                                data-default-src="{% if site.image %}{{ site.image.url }}{% else %}{{ default_site_image }}{% endif %}">
+                        </div>
                     </div>
-                    <div class="site-label">{{ site.designation }}</div>
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
-
-    <div class="carto-level" id="level-warehouses">
-        <div class="carto-header">
-            <button class="btn btn-sm btn-back">← Retour</button>
-            <h3>Entrepôts</h3>
-        </div>
-        <div class="carto-items" id="warehouses-container">
-        </div>
-    </div>
-
-    <div class="carto-level" id="level-emplacements">
-        <div class="carto-header">
-            <button class="btn btn-sm btn-back">← Retour</button>
-            <h3>Emplacements</h3>
-        </div>
-        <div class="carto-items" id="emplacements-container">
-        </div>
-    </div>
-
-    <div class="carto-level" id="level-details">
-        <div class="carto-header">
-            <button class="btn btn-sm btn-back">← Retour</button>
-            <h3>Détails</h3>
-        </div>
-        <div class="carto-details" id="details-container">
+        
+        <div class="col-md-4">
+            <div id="rightColumnContainer">
+                <div class="card" id="warehouseCard">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Entrepôts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group" id="warehouseList">
+                            {% with first_site=sites.first %}
+                                {% for warehouse in first_site.warehouses.all %}
+                                    <a href="#" class="list-group-item list-group-item-action warehouse-item" 
+                                    data-warehouse-id="{{ warehouse.id }}"
+                                    data-warehouse-designation="{{ warehouse.designation }}"
+                                    data-warehouse-image="{% if warehouse.image %}{{ warehouse.image.url }}{% else %}{{ default_warehouse_image }}{% endif %}"> 
+                                        {{ warehouse.designation }}
+                                    </a>
+                                {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" id="emplacementCard" style="display: none; position: absolute; top: 0; width: 100%; height: 100%;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary back-to-warehouses">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </button>
+                        <h5 class="card-title mb-0 text-start flex-grow-1 ps-2" id="emplacementCardTitle">Zone</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group overflow-auto" id="emplacementList" 
+                            style="max-height: calc(100vh - 200px);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="allWarehousesData" style="display: none;">
+                {% for site in sites %}
+                <div class="site-warehouses" data-site-id="{{ site.id }}">
+                    {% for warehouse in site.warehouses.all %}
+                    <div class="warehouse-data" 
+                        data-warehouse-id="{{ warehouse.id }}"
+                        data-warehouse-designation="{{ warehouse.designation }}"
+                        data-warehouse-image="{% static 'img/empty_cartography.png' %}">
+                        {% for emplacement in warehouse.emplacements.all %}
+                        <div class="emplacement-data" 
+                            data-emplacement-id="{{ emplacement.id }}"
+                            data-emplacement-designation="{{ emplacement.designation }}">
+                                {% for disp in emplacement.disponibilities.all %}
+                                    <div class="disponibility-data"
+                                        data-lot-number="{{ disp.n_lot|default:'' }}"
+                                        data-product-designation="{{ disp.product.designation|default:'' }}"
+                                        data-quantity="{{ disp.qte|default:'' }}"
+                                        data-unit="{{ disp.unit|default:'' }}"
+                                        data-palettes="{{ disp.palette|default:'' }}"
+                                        data-production-date="{{ disp.production_date|date:'d/m/Y'|default:'-' }}"
+                                        data-expiry-date="{{ disp.expiry_date|date:'d/m/Y'|default:'-' }}">
+                                    </div>
+                                {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
+{% include 'emplcamenet_popup.html' %}
 
 <style>
-    .carto-site-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .card-body img {
+        max-height: 70vh;
+        width: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .tab-content .card {
         height: 100%;
-        max-height: 200px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .site-image-container {
-        height: 120px; /* Fixed image height */
-        background-color: #f5f5f5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        flex-shrink: 0; /* Prevent image container from shrinking */
-    }
-
-    .site-label {
-        padding: 12px;
-        background-color: #f8f9fa;
-        font-weight: 500;
-        text-align: center;
-        flex-grow: 1; /* Allow label to grow if needed */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 50px; /* Minimum height for label */
-    }
-
-    .sites-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 20px;
-        align-items: stretch; /* Make all cards same height */
-    }
-
-    .carto-site-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .site-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
+        transition: opacity 0.3s ease;
     }
 
-    .carto-site-card:hover .site-image {
-        transform: scale(1.05);
+    .site-image.loading {
+        opacity: 0.5;
     }
 
-    .site-image-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #d1e7dd;
-        color: #0f5132;
-        font-size: 2.5rem;
+    #rightColumnContainer {
+        position: relative;
+        min-height: 300px;
+    }
+
+    .nav-link{
+        color: #1082cd;
+    }
+
+    .card-title{
+        color: #1082cd;
     }
     
-    .carto-navigation {
-        position: relative;
-        width: 100%;
-        height: 70vh;
-        min-height: 500px;
-        max-height: 800px;
-        overflow: hidden;
+    .card {
+        transition: transform 0.3s ease, opacity 0.3s ease;
     }
-
-    .carto-level {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        padding: 20px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-        transform: translateX(100%);
-        opacity: 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .carto-level.active {
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    .carto-level.slide-out {
+    
+    .slide-out {
         transform: translateX(-100%);
         opacity: 0;
+        display: none !important;
     }
-
-    .carto-level.slide-in {
+    
+    .slide-in {
         transform: translateX(0);
         opacity: 1;
     }
-
-    .carto-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #eee;
-    }
-
-    .carto-header h3 {
-        margin: 0 0 0 10px;
-    }
-
-
-    .btn-back {
-        margin-right: 10px;
-        cursor: pointer;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        padding: 5px 10px;
-    }
-
-    .btn-back:hover {
-        background: #e9ecef;
-    }
-
-    .carto-items {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 15px;
-        overflow-y: auto;
-        flex-grow: 1;
-        padding-bottom: 20px; /* Space at bottom */
-        margin-right: -10px; /* Compensate for scrollbar */
-        padding-right: 10px; /* Compensate for scrollbar */
-    }
-
-    .carto-items::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .carto-items::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .carto-items::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-    }
-
-    .carto-items::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-
-
-    .carto-item {
-        padding: 15px;
-        height: 80px; /* Fixed height */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px;
-        background-color: #f8f9fa;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* Add icon styling */
-    .carto-item-icon {
-        font-size: 1.5rem;
-        margin-bottom: 8px;
-        color: inherit;
-    }
-
-    /* Specific icon colors */
-    .warehouse-item .carto-item-icon {
-        color: #087990; /* Darker blue for warehouse icon */
-    }
-
-    .emplacement-item .carto-item-icon {
-        color: #b02a37; /* Darker red for emplacement icon */
-    }
-
-    /* Adjust emplacements grid to be more compact */
-    #emplacements-container {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 10px;
+    #emplacementList {
+        scrollbar-width: thin;
     }
     
-
-    .carto-item:hover {
-        background-color: #e9ecef;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    #emplacementList::-webkit-scrollbar {
+        width: 8px;
     }
-
-    .site-item { background-color: #d1e7dd; }
-    .warehouse-item { background-color: #cff4fc; }
-    .emplacement-item { background-color: #f8d7da; }
-
-    .carto-details {
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        overflow-y: auto;
-        max-height: 400px;
+    
+    #emplacementList::-webkit-scrollbar-thumb {
+        background-color: #c1c1c1;
+        border-radius: 4px;
     }
-
-    .details-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-
-    .details-table th, .details-table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .details-table th {
-        background-color: #e9ecef;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
-
-    .details-table tr:hover {
+    
+    #emplacementList::-webkit-scrollbar-track {
         background-color: #f1f1f1;
     }
-
-    .no-products {
-        padding: 15px;
-        background-color: #f8d7da;
-        border-radius: 4px;
-        text-align: center;
-    }
-
-    .details-header {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .details-header h4 {
-        margin-bottom: 5px;
-    }
-
-    .details-header p {
-        margin: 5px 0;
-        color: #6c757d;
-    }
-
-    #emplacements-container {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px; /* Smaller gap */
-    }
-
-    h3{
-        color: #0082cd;
-        font-family: Open Sans;
-        font-size: 30px;
-        font-weight: 400;
-        line-height: 40.85px;
+    
+    #emplacementList .list-group-item {
+        border-left: none;
+        border-right: none;
     }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const navigationData = {
-        sites: {
-            {% for site in sites %}
-                {{ site.id }}: {
-                    id: {{ site.id }},
-                    designation: "{{ site.designation }}",
-                    warehouses: [
-                        {% for warehouse in site.warehouses.all %}
-                            {
-                                id: {{ warehouse.id }},
-                                designation: "{{ warehouse.designation }}",
-                                emplacements: [
-                                    {% for emp in warehouse.emplacements.all %}
-                                        {
-                                            id: {{ emp.id }},
-                                            designation: "{{ emp.designation }}",
-                                            disponibilities: [
-                                                {% for disp in emp.disponibilities.all %}
-                                                    {
-                                                        id: {{ disp.id }},
-                                                        product: {
-                                                            id: {{ disp.product.id }},
-                                                            designation: "{{ disp.product.designation }}",
-                                                        },
-                                                        n_lot: "{{ disp.n_lot }}",
-                                                        unit: "{{ disp.product.packing.unit|default:'Kg' }}",
-                                                        qte: "{% with qte=disp.qte|default:0 %}{{ qte|floatformat:"-2" }}{% endwith %}",
-                                                        nqte: "{% with nqte=disp.nqte|default:0 %}{{ nqte|floatformat:"-2" }}{% endwith %}",
-                                                        palette: {{ disp.palette|default:0 }},
-                                                        production_date: "{% if disp.production_date %}{{ disp.production_date|date:'Y-m-d' }}{% endif %}",
-                                                        expiry_date: "{% if disp.expiry_date %}{{ disp.expiry_date|date:'Y-m-d' }}{% endif %}"
-                                                    }{% if not forloop.last %},{% endif %}
-                                                {% endfor %}
-                                            ]
-                                        }{% if not forloop.last %},{% endif %}
-                                    {% endfor %}
-                                ]
-                            }{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ]
-                }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        }
-    };
 
-    function navigateTo(level, data = null) {
-        const currentActive = document.querySelector('.carto-level.active');
-        if (currentActive) {
-            currentActive.classList.remove('active');
-            currentActive.classList.add('slide-out');
-        }
+    $(document).ready(function() {
+        let currentWarehouseImage = null;
+        let currentSiteId = $('.nav-link.active').data('site-id');
+        
+        $(document).on('error', 'img', function() {
+            $(this).attr('src', '{% static "img/warehouse.png" %}');
+        });
 
-        const newLevel = document.getElementById(`level-${level}`);
-        newLevel.classList.remove('slide-out');
-        newLevel.classList.add('active', 'slide-in');
+        $('.site-image').each(function() {
+            $(this).data('default-src', $(this).attr('src'));
+        });
 
-        setTimeout(() => {
-            newLevel.classList.remove('slide-in');
-        }, 300);
-
-        if (data) {
-            const container = document.getElementById(`${level}-container`);
-            if (container) {
-                container.scrollTop = 0;
-            }
-            container.innerHTML = '';
-
-            if (level === 'warehouses') {
-                const site = navigationData.sites[data.siteId];
-                document.querySelector('#level-warehouses h3').textContent = `Entrepôts - ${site.designation}`;
-
-                site.warehouses.forEach(warehouse => {
-                    const item = document.createElement('div');
-                    item.className = 'carto-item warehouse-item';
-                    item.innerHTML = `
-                        <i class="fas fa-warehouse carto-item-icon"></i>
-                        <div class="item-label">${warehouse.designation}</div>
-                    `;
-                    item.dataset.id = warehouse.id;
-                    item.addEventListener('click', () => {
-                        navigateTo('emplacements', {
-                            siteId: data.siteId,
-                            warehouseId: warehouse.id
-                        });
-                    });
-                    container.appendChild(item);
-                });
-            }
-            else if (level === 'emplacements') {
-                const site = navigationData.sites[data.siteId];
-                const warehouse = site.warehouses.find(w => w.id == data.warehouseId);
-                document.querySelector('#level-emplacements h3').textContent = `Emplacements - ${warehouse.designation} - ${site.designation}`;
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            const siteId = $(e.target).data('site-id');
+            const siteImage = $(`#site-${siteId} .site-image`);
+            const defaultImage = siteImage.data('default-src');
             
-                warehouse.emplacements.forEach(emp => {
-                    const item = document.createElement('div');
-                    item.className = 'carto-item emplacement-item';
-                    item.innerHTML = `
-                        <i class="fas fa-cubes carto-item-icon"></i>
-                        <div class="item-label">${emp.designation}</div>
-                    `;
-                    item.dataset.id = emp.id;
-                    item.addEventListener('click', () => {
-                        navigateTo('details', {
-                            siteId: data.siteId,
-                            warehouseId: data.warehouseId,
-                            emplacementId: emp.id
-                        });
-                    });
-                    container.appendChild(item);
-                });
-            }
-            else if (level === 'details') {
-                const site = navigationData.sites[data.siteId];
-                const warehouse = site.warehouses.find(w => w.id == data.warehouseId);
-                const emplacement = warehouse.emplacements.find(e => e.id == data.emplacementId);
-                
-                document.querySelector('#level-details h3').textContent = `Détails de l'emplacement`;
-                const detailsContainer = document.getElementById('details-container');
-                
-                let html = `
-                    <div class="details-header">
-                        <h4>${emplacement.designation}</h4>
-                        <p><strong>Site:</strong> ${site.designation}</p>
-                        <p><strong>Entrepôt:</strong> ${warehouse.designation}</p>
-                    </div>
-                `;
-                
-                if (emplacement.disponibilities.length > 0) {
-                    html += `
-                        <table class="details-table">
-                            <thead>
-                                <tr>
-                                    <th>N° Lot</th>
-                                    <th>Produit</th>
-                                    <th>Quantité</th>
-                                    <th>Palettes</th>
-                                    <th>Date Prod.</th>
-                                    <th>Date Exp.</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    
-                    emplacement.disponibilities.forEach(disp => {
-                        html += `
-                            <tr>
-                                <td>${disp.n_lot}</td>
-                                <td>${disp.product.designation}</td>
-                                <td>${disp.qte}${disp.unit }</td>
-                                <td>${disp.palette}</td>
-                                <td>${disp.production_date || '-'}</td>
-                                <td>${disp.expiry_date || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    html += `
-                            </tbody>
-                        </table>
-                    `;
-                } else {
-                    html += `
-                        <div class="no-products">
-                            Aucun produit trouvé dans cet emplacement.
-                        </div>
-                    `;
-                }
-                
-                detailsContainer.innerHTML = html;
-            }
+            siteImage.attr('src', defaultImage);
+            
+            loadWarehousesForSite(siteId);
+            showWarehouseCard();
+        });
+
+        $(document).on('click', '.warehouse-item', function(e) {
+            e.preventDefault();
+            const warehouseId = $(this).data('warehouse-id');
+            const warehouseDesignation = $(this).text().trim();
+            const warehouseImage = $(this).data('warehouse-image');
+            const activeSiteId = $('.nav-link.active').data('site-id');
+            const siteImage = $(`#site-${activeSiteId} .site-image`);
+
+            siteImage.attr('src', warehouseImage);
+            showEmplacementCard(warehouseId, warehouseDesignation);
+        });
+        
+        $(document).on('click', '.back-to-warehouses', function() {
+            const siteId = $('.nav-link.active').data('site-id');
+            const siteImage = $(`#site-${siteId} .site-image`);
+            const defaultImage = siteImage.data('default-src');
+            siteImage.attr('src', defaultImage);
+            showWarehouseCard();
+        });
+
+        function showWarehouseCard() {
+            $('#emplacementCard').removeClass('slide-in').addClass('slide-out');
+            
+            setTimeout(() => {
+                $('#emplacementCard').hide();
+                $('#warehouseCard').show().removeClass('slide-out slide-in');
+            }, 150);
         }
-    }
-    
-    document.querySelectorAll('.carto-site-card').forEach(card => {
-        card.addEventListener('click', () => {
-            navigateTo('warehouses', {
-                siteId: card.dataset.id
+        
+        function showEmplacementCard(warehouseId, warehouseDesignation) {
+            $('#warehouseCard').addClass('slide-out');
+            
+            $('#emplacementCardTitle').text(`Zones - ${warehouseDesignation}`);
+            
+            setTimeout(() => {
+                loadEmplacementsForWarehouse(warehouseId);
+                $('#warehouseCard').hide();
+                $('#emplacementCard').show().removeClass('slide-out').addClass('slide-in');
+            }, 150);
+        }
+        
+        function loadWarehousesForSite(siteId) {
+            $('#warehouseList').empty();
+            
+            const siteWarehouses = $(`.site-warehouses[data-site-id="${siteId}"] .warehouse-data`);
+            
+            siteWarehouses.each(function() {
+                const warehouseId = $(this).data('warehouse-id');
+                const designation = $(this).data('warehouse-designation');
+                const imageSrc = $(this).data('warehouse-image');
+                
+                console.log("Loading warehouse:", warehouseId, designation, imageSrc); // Debug
+                
+                $('#warehouseList').append(`
+                    <a href="#" class="list-group-item list-group-item-action warehouse-item" 
+                    data-warehouse-id="${warehouseId}"
+                    data-warehouse-designation="${designation}"
+                    data-warehouse-image="${imageSrc}">
+                        ${designation}
+                    </a>
+                `);
             });
-        });
-    });
-
-    document.querySelectorAll('.btn-back').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const currentLevel = btn.closest('.carto-level');
-            let targetLevel = 'sites';
+        }
+        
+        function loadEmplacementsForWarehouse(warehouseId) {
+            $('#emplacementList').empty();
             
-            if (currentLevel.id === 'level-warehouses') targetLevel = 'sites';
-            else if (currentLevel.id === 'level-emplacements') targetLevel = 'warehouses';
-            else if (currentLevel.id === 'level-details') targetLevel = 'emplacements';
+            const emplacements = $(`.warehouse-data[data-warehouse-id="${warehouseId}"] .emplacement-data`);
             
-            navigateTo(targetLevel);
-        });
+            emplacements.each(function() {
+                const emplacementId = $(this).data('emplacement-id');
+                const designation = $(this).data('emplacement-designation');
+                
+                $('#emplacementList').append(`
+                    <a href="#" class="list-group-item list-group-item-action emplacement-item" 
+                    data-emplacement-id="${emplacementId}">
+                        ${designation}
+                    </a>
+                `);
+            });
+        }
     });
-
-    document.getElementById('level-sites').classList.add('active');
-});
 </script>
 {% endblock %}
-

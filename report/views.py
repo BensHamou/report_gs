@@ -22,6 +22,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from report.cron import send_stock
+from django.templatetags.static import static
 
 # PACKING
 
@@ -57,7 +58,7 @@ def createPackingView(request):
     if request.method == 'POST':
         form = PackingForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('packings')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -75,7 +76,7 @@ def editPackingView(request, id):
     if request.method == 'POST':
         form = PackingForm(request.POST, instance=packing)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('packings')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -118,7 +119,7 @@ def createFamilyView(request):
     if request.method == 'POST':
         form = FamilyForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             messages.success(request, "Famille créée avec succès.")
             return redirect(getRedirectionURL(request, reverse('families')))
         else:
@@ -134,7 +135,7 @@ def editFamilyView(request, id):
     if request.method == 'POST':
         form = FamilyForm(request.POST, request.FILES, instance=family)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             messages.success(request, "Famille mise à jour avec succès.")
             return redirect(getRedirectionURL(request, reverse('families')))
         else:
@@ -210,7 +211,7 @@ def createProductView(request):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             messages.success(request, "Produit créé avec succès.")
             return redirect(getRedirectionURL(request, reverse('products')))
         else:
@@ -226,9 +227,10 @@ def editProductView(request, id):
     form = ProductForm(instance=product)
     
     if request.method == 'POST':
+        print(request.FILES)
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             messages.success(request, "Produit mis à jour avec succès.")
             return redirect(getRedirectionURL(request, reverse('products')))
         else:
@@ -298,7 +300,7 @@ def editMProductView(request, id):
     if request.method == 'POST':
         form = MProductForm(request.POST, instance=product)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             messages.success(request, "Produit mis à jour avec succès.")
             return redirect(getRedirectionURL(request, reverse('mproducts')))
         else:
@@ -1086,7 +1088,7 @@ def createStockView(request):
     if request.method == 'POST':
         form = DisponibilityForm(request.POST)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('stocks')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -1104,7 +1106,7 @@ def editStockView(request, id):
     if request.method == 'POST':
         form = DisponibilityForm(request.POST, instance=stock)
         if form.is_valid():
-            form.save()
+            form.save(user=request.user)
             url_path = reverse('stocks')
             return redirect(getRedirectionURL(request, url_path))
         else:
@@ -1352,14 +1354,17 @@ def create_move_outs(user):
     except Exception as e:
         return {'success': False, 'message': f'Erreur lors de la création des mouvements de sortie: {str(e)}'}
 
-# def cartographieView(request):
-#     sites = Site.objects.prefetch_related(
-#         'warehouses',
-#         'warehouses__emplacements',
-#         'warehouses__emplacements__disponibilities',
-#         'warehouses__emplacements__disponibilities__product',
-#         'warehouses__emplacements__disponibilities__product__packing'
-#     ).all()
-#     return render(request, 'cartographie.html', {'sites': sites})
+def cartographieView(request):
+    sites = Site.objects.prefetch_related(
+        'warehouses',
+        'warehouses__emplacements',
+        'warehouses__emplacements__disponibilities',
+        'warehouses__emplacements__disponibilities__product',
+        'warehouses__emplacements__disponibilities__product__packing'
+    ).all()
+    return render(request, 'cartographie.html', {'sites': sites,
+        'default_warehouse_image': static('img/warehouse.png'),
+        'empty_image': static('img/empty_cartography.png')
+        })
 
 

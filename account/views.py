@@ -135,7 +135,7 @@ def deleteSiteView(request, id):
 def createSiteView(request):
     form = SiteForm()
     if request.method == 'POST':
-        form = SiteForm(request.POST)
+        form = SiteForm(request.POST, request.FILES)
         if form.is_valid():
             form.save(user=request.user)
             url_path = reverse('sites')
@@ -151,7 +151,7 @@ def editSiteView(request, id):
     site = get_object_or_404(Site, id=id)
     form = SiteForm(instance=site)
     if request.method == 'POST':
-        form = SiteForm(request.POST, instance=site)
+        form = SiteForm(request.POST, request.FILES, instance=site)
         if form.is_valid():
             form.save(user=request.user)
             url_path = reverse('sites')
@@ -381,7 +381,7 @@ def createWarehouseView(request):
     form = WarehouseForm()
     
     if request.method == 'POST':
-        form = WarehouseForm(request.POST)
+        form = WarehouseForm(request.POST, request.FILES)
         if form.is_valid():
             form.save(user=request.user)
             url_path = reverse('warehouses')
@@ -399,7 +399,7 @@ def editWarehouseView(request, id):
     form = WarehouseForm(instance=warehouse)
     
     if request.method == 'POST':
-        form = WarehouseForm(request.POST, instance=warehouse)
+        form = WarehouseForm(request.POST, request.FILES, instance=warehouse)
         if form.is_valid():
             form.save(user=request.user)
             url_path = reverse('warehouses')

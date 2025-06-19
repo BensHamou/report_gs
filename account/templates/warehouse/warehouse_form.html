@@ -1,4 +1,5 @@
 {% extends "main.html" %}
+{% load static %}
 
 {% block title %}
     {% if warehouse %} Modification du Magasin {% else %} Création d'un Magasin {% endif %}
@@ -31,9 +32,17 @@
     </div>
 </div>
 
-<form method="POST" id="warehouse-form">
+<form method="POST" id="warehouse-form" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+        <div class="d-flex flex-column align-items-center image-container"> 
+            <img id="imagePreview" src="{% if warehouse and warehouse.image %}{{ warehouse.image.url }}{% else %}{% static 'img/empty_warehouse.png' %}{% endif %}" 
+                alt="Image Preview" style="width: 300px; height: 300px; margin-bottom: 15px; border-radius: 5px; object-fit: cover; cursor: pointer;"/>
+            {{ form.image }}
+        </div>
+        {% if form.image.errors %}
+            <small class="text-danger">{{ form.image.errors }}</small>
+        {% endif %}
         <div class="row mb-4">
             <div class="col-lg-6 col-md-12 mb-2">
                 <label for="designation" class="form-label" style="color: #5d5d5d;">Désignation</label>
@@ -53,4 +62,48 @@
         </div>
     </div>
 </form>
+
+<script>
+    const imagePreview = document.getElementById("imagePreview");
+    const imageInput = document.getElementById("id_image");
+
+    imagePreview.addEventListener("click", () => {
+        imageInput.click();
+    });
+
+    imageInput.onchange = function (e) {
+        const [file] = e.target.files;
+
+        if (file) {
+            imagePreview.src = URL.createObjectURL(file);
+        } else {
+            imagePreview.src = "{% if site and site.image %}{{ site.image.url }}{% else %}{% static 'img/empty_warehouse.png' %}{% endif %}";
+        }
+    };
+    
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const imageDivs = document.querySelectorAll('.image-container');
+        imageDivs.forEach(div => {
+          const children = Array.from(div.childNodes);
+          children.forEach(child => {
+            if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== "") {
+              child.remove(); 
+            }
+          });
+        });
+    });
+</script>
+<style>
+    .image-container img:hover {
+        filter: brightness(0.8); 
+        transform: scale(1.05);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, filter 0.2s; 
+    }
+
+    .image-container > a,
+    .image-container > br { 
+        display: none; 
+    }
+</style>
 {% endblock %}

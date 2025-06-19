@@ -59,7 +59,7 @@ urlpatterns = [
     path("stock/email/", sendStockState, name="send_stock_state"),
     path("stock/inventory/", startInventory, name="start_inventory"),
     path("stock/email/quarantine/", sendQRTStockState, name="send_qrt_stock_state"),
-    # path("stock/cartographie/", cartographieView, name="stock_cartographie"),
+    path("stock/cartographie/", cartographieView, name="stock_cartographie"),
 
 ]
 

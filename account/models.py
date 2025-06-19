@@ -3,6 +3,9 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from datetime import timedelta
+from django.template.defaultfilters import slugify
+from PIL import Image as PILImage
+import os
 
 
 class BaseModel(models.Model):
@@ -35,7 +38,11 @@ class Shift(BaseModel):
 
     def __str__(self):
         return self.designation
-
+    
+def get_site_image_filename(instance, filename):
+    title = instance.designation
+    slug = slugify(title)
+    return f"images/site/{slug}-{filename}"
 
 class Site(BaseModel):
     designation = models.CharField(max_length=255)
@@ -45,17 +52,40 @@ class Site(BaseModel):
     prefix_bl_a = models.CharField(max_length=50)
     prefix_btr = models.CharField(max_length=50)
     check_for_drafts = models.BooleanField(default=False)
+    image = models.ImageField(upload_to=get_site_image_filename, verbose_name='Image', blank=True, null=True)
 
     def get_quarantine(self):
         return Emplacement.objects.filter(warehouse__site=self, quarantine=True).first()
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and os.path.exists(self.image.path):
+            img = PILImage.open(self.image.path)
+            max_size = (1280, 720)
+            img.thumbnail(max_size, PILImage.LANCZOS)
+            img.save(self.image.path, quality=50, optimize=True)
+
     def __str__(self):
         return self.designation
 
+    
+def get_warehouse_image_filename(instance, filename):
+    title = instance.designation
+    slug = slugify(title)
+    return f"images/warehouse/{slug}-{filename}"
 
 class Warehouse(BaseModel):
     designation = models.CharField(max_length=255)
     site = models.ForeignKey(Site, related_name='warehouses', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=get_warehouse_image_filename, verbose_name='Image', blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and os.path.exists(self.image.path):
+            img = PILImage.open(self.image.path)
+            max_size = (1280, 720)
+            img.thumbnail(max_size, PILImage.LANCZOS)
+            img.save(self.image.path, quality=50, optimize=True)
 
     def __str__(self):
         return f'{self.designation} - {self.site}'

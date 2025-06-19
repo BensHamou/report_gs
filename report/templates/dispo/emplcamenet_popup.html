@@ -1,0 +1,150 @@
+<div class="modal fade" id="emplacementPopup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emplacementPopupTitle">Détails de la zone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="emplacementPopupContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #emplacementPopup .table {
+        font-size: 0.9rem;
+    }
+
+    .modal-title{
+        color: #1082cd;
+    }
+
+    #emplacementPopup .table th {
+        white-space: nowrap;
+        background: #f8f9fa;
+    }
+
+    #emplacementPopup .table td, 
+    #emplacementPopup .table th {
+        vertical-align: middle;
+        padding: 0.5rem 0.75rem;
+    }
+    .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .details-table th, 
+    .details-table td {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+    
+    .details-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .details-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .no-products {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .emplacement-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .emplacement-info {
+        margin-bottom: 1.5rem;
+    }
+    
+    .emplacement-info p {
+        margin-bottom: 0.3rem;
+    }
+</style>
+
+<script>
+$(document).on('click', '.emplacement-item', function(e) {
+    e.preventDefault();
+    const emplacementId = $(this).data('emplacement-id');
+    showEmplacementPopup(emplacementId);
+});
+
+function showEmplacementPopup(emplacementId) {
+    const emplacement = $(`.emplacement-data[data-emplacement-id="${emplacementId}"]`);
+    const designation = emplacement.data('emplacement-designation');
+    
+    let html = `
+        <div class="emplacement-header">
+            <h6>Zone: ${designation}</h6>
+        </div>
+    `;
+    
+    const disponibilities = emplacement.find('.disponibility-data');
+    
+    if (disponibilities.length > 0) {
+        html += `
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>N° Lot</th>
+                            <th>Produit</th>
+                            <th>Quantité</th>
+                            <th>Palettes</th>
+                            <th>Date Prod.</th>
+                            <th>Date Exp.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        disponibilities.each(function() {
+            const disp = $(this);
+            html += `
+                <tr>
+                    <td>${disp.data('lot-number') || '-'}</td>
+                    <td>${disp.data('product-designation') || '-'}</td>
+                    <td>${disp.data('quantity') || '0'} ${disp.data('unit') || ''}</td>
+                    <td>${disp.data('palettes') || '-'}</td>
+                    <td>${disp.data('production-date') || '-'}</td>
+                    <td>${disp.data('expiry-date') || '-'}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="alert alert-info mt-3">
+                Aucun produit trouvé dans cet emplacement.
+            </div>
+        `;
+    }
+    
+    $('#emplacementPopupTitle').text(`Stock réel de la zone: ${designation}`);
+    $('#emplacementPopupContent').html(html);
+    
+    const popupModal = new bootstrap.Modal(document.getElementById('emplacementPopup'));
+    popupModal.show();
+}
+</script>
