@@ -1362,8 +1362,8 @@ def cartographieView(request):
         'warehouses__emplacements__disponibilities__product',
         'warehouses__emplacements__disponibilities__product__packing'
     ).all()
-    return render(request, 'cartographie.html', {'sites': sites,
-        'default_warehouse_image': static('img/empty_cartography.png'),
+    return render(request, 'cartographie.html', {
+        'sites': sites,
         'empty_image': static('img/empty_cartography.png')
         })
 
