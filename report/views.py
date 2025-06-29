@@ -1355,13 +1355,16 @@ def create_move_outs(user):
         return {'success': False, 'message': f'Erreur lors de la création des mouvements de sortie: {str(e)}'}
 
 def cartographieView(request):
+    allowed_sites = Line.objects.filter(id__in=request.user.lines.all()).values_list('site_id', flat=True).distinct()
     sites = Site.objects.prefetch_related(
         'warehouses',
         'warehouses__emplacements',
         'warehouses__emplacements__disponibilities',
         'warehouses__emplacements__disponibilities__product',
         'warehouses__emplacements__disponibilities__product__packing'
-    ).all()
+    ).filter(
+        id__in=allowed_sites
+    ).order_by('designation')
     return render(request, 'cartographie.html', {
         'sites': sites,
         'empty_image': static('img/empty_cartography.png')
