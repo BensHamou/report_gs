@@ -61,7 +61,7 @@ class Site(BaseModel):
         super().save(*args, **kwargs)
         if self.image and os.path.exists(self.image.path):
             img = PILImage.open(self.image.path)
-            max_size = (1280, 720)
+            max_size = (3840, 2160)
             img.thumbnail(max_size, PILImage.LANCZOS)
             img.save(self.image.path, quality=50, optimize=True)
 
@@ -83,7 +83,7 @@ class Warehouse(BaseModel):
         super().save(*args, **kwargs)
         if self.image and os.path.exists(self.image.path):
             img = PILImage.open(self.image.path)
-            max_size = (1280, 720)
+            max_size = (3840, 2160)
             img.thumbnail(max_size, PILImage.LANCZOS)
             img.save(self.image.path, quality=50, optimize=True)
 
