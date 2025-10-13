@@ -21,6 +21,11 @@ ADMIN_URL = 'puma_gs/admin/'
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://pumastock.grupopuma-dz.com',
+    'https://www.pumastock.grupopuma-dz.com'
+]
+
 CSRF_COOKIE_SECURE = False
 
 INSTALLED_APPS = [
