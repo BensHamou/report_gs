@@ -690,7 +690,7 @@ def move_detail(request, move_id):
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
         can_edit = move.type == 'Entré'
-        can_cancel = move.state == 'Brouillon'
+        can_cancel = move.state in ['Brouillon', 'Confirmé']
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
     elif request.user.role == 'Gestionaire' and move.gestionaire == request.user:
@@ -698,7 +698,6 @@ def move_detail(request, move_id):
         can_cancel = move.state == 'Brouillon' and (move.type == 'Sotrie' or not move.is_transfer)
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:
-        
         can_edit = move.state == 'Brouillon' and move.type == 'Entré'
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
