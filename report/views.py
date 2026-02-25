@@ -784,8 +784,8 @@ def cancelMove(request, move_id):
             messages.success(request, 'Mouvement introuvable')
             return JsonResponse({'success': False, 'message': 'Mouvement introuvable.'})
         
-        if move.state != 'Brouillon':
-            return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon pour être annulé.'})
+        if move.state not in ['Brouillon', 'Confirmé']:
+            return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon ou Confirmé pour être annulé.'})
 
         success = move.changeState(request.user.id, 'Annulé')
         if success:
