@@ -42,6 +42,8 @@ def send_alert(alert):
     email.send()    
 
 def mirror_email(mirror):
+    if not mirror:
+        return
     subject = f'BTR Mirroire'
     html_message = render_to_string('fragment/btr_mirror.html', {'move': mirror})
     addresses = mirror.site.email.split('&')
