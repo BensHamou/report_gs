@@ -13,6 +13,14 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5176:5432"
+    networks:
+      - default
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U puma_gs -d PumaGS" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -26,26 +34,31 @@ services:
       - ./report_gs:/report_gs
       - ./media:/app/media
     command: >
-      sh -c " python manage.py makemigrations &&
+      sh -c "python manage.py makemigrations &&
               python manage.py migrate &&
               python manage.py runserver 0.0.0.0:8176"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DB_HOST=db
       - DB_NAME=PumaGS
       - DB_USER=puma_gs
       - DB_PASS=puma_gs
       - DB_PORT=5432
+    networks:
+      - default
+
   cron:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     image: stock_cron:dev
     container_name: CRON_STOCK
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - ./report_gs:/report_gs
       - ./media:/app/media
@@ -56,12 +69,17 @@ services:
       - DB_PASS=puma_gs
       - DB_PORT=5432
     command: >
-      sh -c "python manage.py crontab remove &&
-            python manage.py crontab add &&
-            crond -f"
+      sh -c "sleep 10 &&
+              python manage.py crontab remove &&
+              python manage.py crontab add &&
+              crond -f"
+    networks:
+      - default
+
 volumes:
   db_data:
   media_volume:
+
 networks:
   default:
     driver: bridge
