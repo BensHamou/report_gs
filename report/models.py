@@ -230,10 +230,13 @@ class Move(BaseModel):
                             ds = dl.disponibility
                             dl.qte -= dc.qte
                             ds.qte -= dc.qte
+                            
                             if ml.product.type == 'Produit Fini':
-                                ds.palette = max(ds.palette - 1, 0)
+                                if dl.qte <= 0:
+                                    ds.palette = max(ds.palette - 1, 0)
                             else:
                                 ds.palette = max(ds.palette - dc.palette, 0)
+                                dl.palette = max(dl.palette - dc.palette, 0)
                             
                             if dl.qte <= 0:
                                 dl.delete()
