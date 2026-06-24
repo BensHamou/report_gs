@@ -110,7 +110,6 @@ class Product(BaseModel):
     def __str__(self):
         return self.designation
     
-
 class Move(BaseModel):
 
     MOVE_STATE = [
@@ -156,13 +155,23 @@ class Move(BaseModel):
         Validation.objects.create(old_state=self.state, new_state=new_state, actor_id=actor_id, move=self)
         self.state = new_state
         self.save()
+        
+        if new_state == 'Annulé':
+            for ml in self.move_lines.all():
+                for detail in ml.details.all():
+                    for dc in detail.detail_codes.all():
+                        DisponibilityLine.objects.filter(code=dc.code, status__in=['Sortie', 'Partialement Sortie']).update(status='Valide')
         return True
+
+    def delete(self, *args, **kwargs):
+        for ml in self.move_lines.all():
+            for detail in ml.details.all():
+                for dc in detail.detail_codes.all():
+                    DisponibilityLine.objects.filter(code=dc.code, status__in=['Sortie', 'Partialement Sortie']).update(status='Valide')
+        super().delete(*args, **kwargs)
         
     def can_validate(self):
         def check_emplacement(detail, operation):
-            # if operation == 'stock' and not detail.emplacement.can_stock(detail.palette):
-            #     return True, None
-                # return False, f'Emplacement {detail.emplacement} n\'a pas la capacité suffisante pour stocker cette quantité de palettes'
             if operation == 'destock' and not detail.emplacement.can_destock(detail.qte):
                 return False, f"Ajustement entraînerait un stock négatif pour l'emplacement {detail.emplacement}."
             return True, None
@@ -173,48 +182,87 @@ class Move(BaseModel):
                 is_valid, error_message = check_emplacement(detail, operation)
                 if not is_valid:
                     raise ValueError(f"{detail.n_lot} - {error_message}")
-                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
-                if not ds and operation == 'destock':
-                    raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
+                
+                if operation == 'destock':
+                    detail_codes = detail.detail_codes.all()
+                    if detail_codes.exists():
+                        for dc in detail_codes:
+                            dl = DisponibilityLine.objects.filter(code=dc.code).first()
+                            if not dl:
+                                raise ValueError(f"Code QR {dc.code} introuvable en stock.")
+                            if dl.qte < dc.qte:
+                                raise ValueError(f"Quantité insuffisante sur la palette {dc.code} (Requis: {dc.qte}, Dispo: {dl.qte}).")
+                    else:
+                        ds = Disponibility.objects.filter(product=ml.product, emplacement=detail.emplacement, n_lot=detail.n_lot).first()
+                        if not ds:
+                            raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
+                        if ds.qte < detail.qte:
+                            raise ValueError(f"{detail.n_lot} - Quantité en stock insuffisante pour le produit {ml.product} dans {detail.emplacement.designation}.")
         return True, 'Can stock'
     
     def integrate_in_stock(self):
         is_entry = self.type == 'Entré'
         for ml in self.move_lines.all():
-            pal = ml.product.qte_per_pal
-            if pal == 0:
-                pal = 99999999
             for detail in ml.details.all():
-                ds = Disponibility.objects.filter(product=ml.product,emplacement=detail.emplacement, n_lot=detail.n_lot).first()
                 if is_entry:
+                    ds = Disponibility.objects.filter(product=ml.product, emplacement=detail.emplacement, n_lot=detail.n_lot).first()
                     if ds:
                         ds.qte += detail.qte
                         ds.palette += detail.palette
                         ds.write_uid = ml.create_uid
                     else:
                         ds = Disponibility(product=ml.product, emplacement=detail.emplacement, qte=detail.qte, palette=detail.palette, create_uid=ml.create_uid, 
-                                        production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=ml.n_lot)
+                                           production_date=ml.move.date, expiry_date=ml.expiry_date, write_uid=ml.create_uid, n_lot=detail.n_lot)
                     
                     if detail.emplacement.temp:
                         ds.save()
                         TemporaryEmplacementAlert.objects.get_or_create(dispo=ds, write_uid=detail.create_uid, create_uid=detail.create_uid, type='Temporaire')
-
+                    else:
+                        ds.save()
                 else:
-                    if not ds:
-                        raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
-                    ds.qte -= detail.qte
-                    ds.nqte += detail.qte
-                    ds.palette = max(math.ceil(ds.qte / pal), 1)
-                if ds.qte > 0:
-                    ds.save()
-                else:
-                    ds.delete()
+                    detail_codes = detail.detail_codes.all()
+                    if detail_codes.exists():
+                        for dc in detail_codes:
+                            dl = DisponibilityLine.objects.filter(code=dc.code).first()
+                            if not dl:
+                                raise ValueError(f"Palette {dc.code} introuvable en stock.")
+                            
+                            ds = dl.disponibility
+                            dl.qte -= dc.qte
+                            ds.qte -= dc.qte
+                            if ml.product.type == 'Produit Fini':
+                                ds.palette = max(ds.palette - 1, 0)
+                            else:
+                                ds.palette = max(ds.palette - dc.palette, 0)
+                            
+                            if dl.qte <= 0:
+                                dl.delete()
+                            else:
+                                dl.status = 'Valide'
+                                dl.save()
+                            
+                            if ds.qte <= 0:
+                                ds.delete()
+                            else:
+                                ds.save()
+                    else:
+                        # Legacy/fallback bulk deduction
+                        ds = Disponibility.objects.filter(product=ml.product, emplacement=detail.emplacement, n_lot=detail.n_lot).first()
+                        if not ds:
+                            raise ValueError(f"{detail.n_lot} - Stock introuvable dans {detail.emplacement.designation} pour le produit {ml.product}.")
+                        ds.qte -= detail.qte
+                        ds.palette = max(ds.palette - detail.palette, 0)
+                        if ds.qte <= 0:
+                            ds.delete()
+                        else:
+                            ds.save()
         return True, 'Stock ajusté avec succès.'
 
 
     def do_after_validation(self, user):
-        if not self.integrate_in_stock():
-            raise ValueError(f"{ml.n_lot} - Échec d\'ajuster le stock.")
+        success, msg = self.integrate_in_stock()
+        if not success:
+            raise ValueError(msg)
         
         if self.is_transfer and not self.is_isolation and self.type == 'Sortie':
             self.create_mirror()
@@ -394,6 +442,10 @@ class LineDetail(BaseModel):
     n_lot = models.CharField(max_length=255, null=True, blank=True)
 
     @property
+    def has_unprinted_codes(self):
+        return self.detail_codes.filter(is_printed=False).exists()
+
+    @property
     def package(self):
         if self.move_line.product.qte_per_cond and self.qte:
             return math.ceil(self.qte / self.move_line.product.qte_per_cond)
@@ -401,8 +453,78 @@ class LineDetail(BaseModel):
         
     def generateCode(self):
         try:
-            self.code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.move_line.n_lot}"
             self.expiry_date = self.move_line.expiry_date
+            self.save()
+            
+            dispo = Disponibility.objects.filter(
+                product=self.move_line.product,
+                emplacement=self.emplacement,
+                n_lot=self.n_lot
+            ).first()
+
+            if not dispo:
+                raise ValueError("Matching stock Disponibility not found.")
+
+            # Get the next sequence number based on existing lines in the disponibility
+            max_dl = dispo.lines.aggregate(models.Max('sequence'))['sequence__max'] or 0
+            next_seq = max_dl + 1
+
+            # If Matière Première, generate only 1 code
+            if self.move_line.product.type == 'Matière Première':
+                unique_code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.n_lot};PAL:{next_seq}"
+                DetailCode.objects.create(
+                    line_detail=self,
+                    code=unique_code,
+                    qte=self.qte,
+                    palette=self.palette if self.palette > 0 else 1
+                )
+                DisponibilityLine.objects.create(
+                    disponibility=dispo,
+                    code=unique_code,
+                    qte=self.qte,
+                    palette=self.palette if self.palette > 0 else 1,
+                    sequence=next_seq,
+                    shift=self.move_line.move.shift
+                )
+                self.code = unique_code
+            else:
+                num_palettes = self.palette if self.palette > 0 else 1
+                qte_per_pal = self.move_line.product.qte_per_pal
+                if not qte_per_pal or qte_per_pal <= 0:
+                    qte_per_pal = self.qte / num_palettes
+
+                distributed_qte = 0.0
+                first_code = None
+
+                for idx in range(num_palettes):
+                    seq_num = next_seq + idx
+                    unique_code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.n_lot};PAL:{seq_num}"
+                    if idx == 0:
+                        first_code = unique_code
+                    
+                    if idx == num_palettes - 1:
+                        palette_qte = max(self.qte - distributed_qte, 0.0)
+                    else:
+                        palette_qte = min(qte_per_pal, max(self.qte - distributed_qte, 0.0))
+
+                    distributed_qte += palette_qte
+
+                    DetailCode.objects.create(
+                        line_detail=self,
+                        code=unique_code,
+                        qte=palette_qte,
+                        palette=1
+                    )
+                    DisponibilityLine.objects.create(
+                        disponibility=dispo,
+                        code=unique_code,
+                        qte=palette_qte,
+                        palette=1,
+                        sequence=seq_num,
+                        shift=self.move_line.move.shift
+                    )
+                self.code = first_code
+
             self.save()
             return True
         except Exception as e:
@@ -414,6 +536,159 @@ class LineDetail(BaseModel):
 
     def __str__(self):
         return f"{self.move_line.product} - {self.qte}"
+
+class DetailCode(BaseModel):
+    line_detail = models.ForeignKey(LineDetail, on_delete=models.CASCADE, related_name='detail_codes')
+    code = models.CharField(max_length=255)
+    qte = models.FloatField()
+    palette = models.PositiveIntegerField(default=1)
+    is_printed = models.BooleanField(default=False)
+    is_scanned = models.BooleanField(default=False)
+
+    @property
+    def sequence(self):
+        try:
+            parts = self.code.split(';')
+            for part in parts:
+                if part.startswith('PAL:'):
+                    return part.split(':')[1]
+        except Exception:
+            pass
+        return '/'
+
+    @property
+    def location_info(self):
+        try:
+            parts = self.code.split(';')
+            emp_id = None
+            pal_seq = '/'
+            for part in parts:
+                if part.startswith('Emplacement:'):
+                    emp_id = int(part.split(':')[1])
+                elif part.startswith('PAL:'):
+                    pal_seq = part.split(':')[1]
+            
+            if emp_id:
+                from account.models import Emplacement
+                emp = Emplacement.objects.filter(id=emp_id).first()
+                if emp:
+                    site_name = emp.warehouse.site.designation
+                    wh_name = emp.warehouse.designation
+                    zone_name = emp.designation
+                    return f"{site_name} - {wh_name} - {zone_name} - N°{pal_seq} / {self.qte} Kg"
+        except Exception:
+            pass
+        return f"{self.code} / {self.qte} Kg"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.code} - {self.qte}"
+
+class DisponibilityLine(BaseModel):
+    disponibility = models.ForeignKey('Disponibility', on_delete=models.CASCADE, related_name='lines')
+    code = models.CharField(max_length=255, unique=True)
+    qte = models.FloatField()
+    nqte = models.FloatField(default=0)
+    palette = models.PositiveIntegerField(default=1)
+    status = models.CharField(
+        max_length=30,
+        default='Valide',
+        choices=[
+            ('Valide', 'Valide'),
+            ('Sortie', 'Sortie'),
+            ('Partialement Sortie', 'Partialement Sortie'),
+            ('Détruit', 'Détruit')
+        ]
+    )
+    sequence = models.IntegerField(default=1)
+    is_printed = models.BooleanField(default=False)
+    shift = models.ForeignKey('account.Shift', on_delete=models.SET_NULL, null=True, blank=True, related_name='dispo_lines')
+
+    def replace_damaged(self):
+        if self.status != 'Valide':
+            raise ValueError("Seules les palettes actives peuvent être remplacées.")
+        
+        import uuid
+        from django.db.models import Sum
+        base_code = self.code
+        if ";REP:" in base_code:
+            base_code = base_code.split(";REP:")[0]
+        
+        new_code = f"{base_code};REP:{uuid.uuid4().hex[:6]}"
+        while DisponibilityLine.objects.filter(code=new_code).exists():
+            new_code = f"{base_code};REP:{uuid.uuid4().hex[:6]}"
+        
+        reserved_qte = DetailCode.objects.filter(
+            code=self.code,
+            line_detail__move_line__move__state__in=['Brouillon', 'Confirmé']
+        ).aggregate(total=Sum('qte'))['total'] or 0.0
+        
+        if reserved_qte > 0:
+            if reserved_qte >= self.qte:
+                old_qte = self.qte
+                self.status = 'Détruit'
+                self.qte = 0.0
+                self.save()
+                
+                DetailCode.objects.filter(code=self.code).update(code=new_code)
+                
+                new_line = DisponibilityLine.objects.create(
+                    disponibility=self.disponibility,
+                    code=new_code,
+                    qte=old_qte,
+                    nqte=self.nqte,
+                    palette=self.palette,
+                    sequence=self.sequence,
+                    status='Valide',
+                    shift=self.shift
+                )
+                return new_line
+            else:
+                # Partially reserved
+                # The reserved part remains with the old code (so the draft move out can deduct it on validation),
+                # and the left (remaining) part is replaced with the new code and becomes 'Valide' in stock.
+                left_qte = self.qte - reserved_qte
+                
+                # Keep the reserved part with the old code as 'Valide'
+                self.status = 'Valide'
+                self.qte = reserved_qte
+                self.save()
+                
+                # Create a new line for the left (remaining) quantity in stock with the new code
+                new_line = DisponibilityLine.objects.create(
+                    disponibility=self.disponibility,
+                    code=new_code,
+                    qte=left_qte,
+                    nqte=self.nqte,
+                    palette=self.palette,
+                    sequence=self.sequence,
+                    status='Valide',
+                    shift=self.shift
+                )
+                return new_line
+        else:
+            # Not reserved (Valide)
+            old_qte = self.qte
+            self.status = 'Détruit'
+            self.qte = 0.0
+            self.save()
+            
+            new_line = DisponibilityLine.objects.create(
+                disponibility=self.disponibility,
+                code=new_code,
+                qte=old_qte,
+                nqte=self.nqte,
+                palette=self.palette,
+                sequence=self.sequence,
+                status='Valide',
+                shift=self.shift
+            )
+            return new_line
+
+    def __str__(self):
+        return f"{self.code} - {self.qte}"
 
 class MoveBL(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='bls')
@@ -457,6 +732,20 @@ class Disponibility(BaseModel):
     production_date = models.DateField(null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
+    @property
+    def sorted_lines(self):
+        from django.db.models import Case, When, Value, IntegerField
+        return self.lines.all().annotate(
+            status_order=Case(
+                When(status='Valide', then=Value(1)),
+                When(status='Partialement Sortie', then=Value(2)),
+                When(status='Sortie', then=Value(3)),
+                When(status='Détruit', then=Value(4)),
+                default=Value(5),
+                output_field=IntegerField(),
+            )
+        ).order_by('status_order', 'sequence', 'id')
+
 class TemporaryEmplacementAlert(BaseModel):
 
     ALERT_TYPE = [('Temporaire', 'Temporaire'), ('Transfer', 'Transfer')]
@@ -470,4 +759,3 @@ class TemporaryEmplacementAlert(BaseModel):
 class ExpiryAlertLog(models.Model):
     dispo = models.ForeignKey(Disponibility, related_name='alerts', on_delete=models.CASCADE)
     sent_at = models.DateField(auto_now_add=True)
-    

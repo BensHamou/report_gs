@@ -95,3 +95,104 @@ class ProductDisponibilitySerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'disponibility']
 
+
+class TabletProductScanSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='designation', read_only=True)
+    image = serializers.ImageField(use_url=True, read_only=True)
+    to_scan = serializers.SerializerMethodField()
+    scanned = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'image', 'to_scan', 'scanned']
+
+    def get_to_scan(self, obj):
+        move = self.context.get('move')
+        emplacement = self.context.get('emplacement')
+        if not move or not emplacement:
+            return []
+        return list(DetailCode.objects.filter(
+            line_detail__move_line__move=move,
+            line_detail__emplacement=emplacement,
+            line_detail__move_line__product=obj,
+            is_scanned=False
+        ).values('id', 'code'))
+
+    def get_scanned(self, obj):
+        move = self.context.get('move')
+        emplacement = self.context.get('emplacement')
+        if not move or not emplacement:
+            return []
+        return list(DetailCode.objects.filter(
+            line_detail__move_line__move=move,
+            line_detail__emplacement=emplacement,
+            line_detail__move_line__product=obj,
+            is_scanned=True
+        ).values('id', 'code'))
+
+
+class TabletEmplacementScanSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Emplacement
+        fields = ['id', 'name', 'products']
+
+    def get_name(self, obj):
+        warehouse_name = obj.warehouse.designation if obj.warehouse else ""
+        return f"{warehouse_name} - {obj.designation}"
+
+    def get_products(self, obj):
+        move = self.context.get('move')
+        if not move:
+            return []
+        
+        product_ids = DetailCode.objects.filter(
+            line_detail__move_line__move=move,
+            line_detail__emplacement=obj
+        ).values_list('line_detail__move_line__product_id', flat=True).distinct()
+        
+        products = Product.objects.filter(id__in=product_ids)
+        return TabletProductScanSerializer(
+            products, many=True,
+            context={'move': move, 'emplacement': obj, 'request': self.context.get('request')}
+        ).data
+
+
+class TabletMoveScanSerializer(serializers.ModelSerializer):
+    bl_str = serializers.ReadOnlyField()
+    site_name = serializers.CharField(source='site.designation', default='/', read_only=True)
+    type = serializers.SerializerMethodField()
+    observation = serializers.SerializerMethodField()
+    emplacements = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Move
+        fields = ['id', 'bl_str', 'date', 'site_name', 'type', 'observation', 'emplacements']
+
+    def get_type(self, obj):
+        if obj.is_transfer and not obj.is_isolation:
+            return "transfer"
+        elif obj.is_transfer and obj.is_isolation:
+            return "isolation"
+        elif not obj.is_transfer and obj.is_isolation:
+            return "consumption"
+        return "normal"
+
+    def get_observation(self, obj):
+        first_line = obj.move_lines.first()
+        return first_line.observation if (first_line and first_line.observation) else "/"
+
+    def get_emplacements(self, obj):
+        emplacement_ids = DetailCode.objects.filter(
+            line_detail__move_line__move=obj
+        ).values_list('line_detail__emplacement_id', flat=True).distinct()
+        
+        emplacements = Emplacement.objects.filter(id__in=emplacement_ids).select_related('warehouse')
+        return TabletEmplacementScanSerializer(
+            emplacements, many=True,
+            context={'move': obj, 'request': self.context.get('request')}
+        ).data
+
+

@@ -95,7 +95,14 @@
                 {% if page %}
                     {% for dispo in page %}
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text">{{ dispo.emplacement.warehouse.site }}</td>
+                        <td class="table-text">
+                            {% if dispo.lines.exists %}
+                                <a href="javascript:void(0);" onclick="$('#lines_for_{{ dispo.id }}').toggle(); $(this).find('i').toggleClass('fa-plus-circle fa-minus-circle');" style="color: #0082cd; text-decoration: none;">
+                                    <i class="fas fa-plus-circle mr-1"></i>
+                                </a>
+                            {% endif %}
+                            {{ dispo.emplacement.warehouse.site }}
+                        </td>
                         <td class="table-text">{{ dispo.emplacement.warehouse.designation }}</td>
                         <td class="table-text">{{ dispo.emplacement.designation }}</td>
                         <td class="table-text">{{ dispo.n_lot|default:'/' }}</td>
@@ -117,6 +124,77 @@
                             </td>
                         {% endif %}
                     </tr>
+                    {% if dispo.lines.exists %}
+                    <tr id="lines_for_{{ dispo.id }}" style="display: none; background-color: #f1f2f6;">
+                        <td colspan="10" style="padding: 15px 15px 15px 50px;">
+                            <div class="p-3" style="border: 1px solid #ccc; border-radius: 8px; background: white;">
+                                <h6 style="color: #133356;">Détails des palettes en stock :</h6>
+                                <table class="table table-sm table-bordered mt-2">
+                                    <thead>
+                                        <tr style="background-color: #eaedf9;">
+                                            <th>Palette N°</th>
+                                            <th>Quantité</th>
+                                            <th>Palette</th>
+                                            <th>Statut</th>
+                                            <th style="width: 15%;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for line in dispo.sorted_lines %}
+                                        <tr>
+                                            <td style="font-family: monospace; font-size: 13px; vertical-align: middle;">Palette N° {{ line.sequence }}</td>
+                                            <td style="vertical-align: middle;">{{ line.qte|floatformat:2|intcomma }} Kg</td>
+                                            <td style="vertical-align: middle;">{{ line.palette }}</td>
+                                            <td style="vertical-align: middle;">
+                                                {% if line.status == 'Détruit' %}
+                                                    <span class="badge bg-danger text-white">Détruit</span>
+                                                {% elif line.qte <= 0 %}
+                                                    <span class="badge bg-secondary text-white">Vidé</span>
+                                                {% else %}
+                                                    <span class="badge bg-success text-white">Valide</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if line.status == 'Valide' and line.qte > 0 %}
+                                                    {% if not line.is_printed %}
+                                                        <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                data-line-detail-id="{{ line.id }}" 
+                                                                data-product-name="{{ dispo.product.designation }}"
+                                                                data-lot-number="{{ dispo.n_lot }}"
+                                                                data-expiry-date="{{ dispo.expiry_date|default:'/' }}"
+                                                                data-production-date="{{ dispo.production_date|default:'/' }}"
+                                                                data-magasin="{{ dispo.emplacement.warehouse.designation }}"
+                                                                data-emplacement="{{ dispo.emplacement.designation }}"
+                                                                data-shift="{{ line.shift|default:'/' }}"
+                                                                data-palettes="1"
+                                                                data-use-dl="1"
+                                                                data-is-bulk="0"
+                                                                data-is-mp="{% if dispo.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                data-from-move-detail="0"
+                                                                data-code="{{ line.code }}"
+                                                                data-sequence="{{ line.sequence }}">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                                {% if user.role == 'Admin' %}
+                                                    {% if line.status == 'Valide' and line.qte > 0 %}
+                                                    <button class="btn btn-sm btn-warning ms-1" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
+                                                        <i class="fas fa-sync"></i> Remplacer
+                                                    </button>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% endfor %}
                     <tr style="color: #5d5d5d; font-weight: bold; border-top: 2px solid #ccc;">
                         <td colspan="5" class="table-text">Totaux:</td>
@@ -257,5 +335,41 @@
         });
     });
 
+    function replaceDamagedPalette(lineId) {
+        swal({
+            title: "Remplacer la palette endommagée ?",
+            text: "Êtes-vous sûr de vouloir invalider ce code QR ? La palette actuelle sera marquée comme Détruite (quantité 0) et une nouvelle palette identique (Valide) sera créée avec un nouveau code.",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: `/stock/replace-palette/${lineId}/`,
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
 </script>
+{% include 'print_modal.html' %}
 {% endblock %}

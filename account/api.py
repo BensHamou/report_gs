@@ -333,13 +333,10 @@ class ValidateMoveOut(APIView):
 class SendWarningEmail(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-
         try:
             subject = f'Tente de scan incorrecte'
-
             html_message = render_to_string('fragment/warning.html', {'user': request.user})
             addresses = request.user.default_site.address.split('&')
             if not addresses:
@@ -350,5 +347,41 @@ class SendWarningEmail(APIView):
             return Response({"detail": "Mail envoyé avec succès."}, status=200)
         except Exception as e:
             return Response({"detail": "Erreur interne du serveur."}, status=500)
-    
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def draft_move_list_api(request):
+    user = request.user
+    if user.role == 'Admin':
+        moves = Move.objects.filter(state='Brouillon', type='Sortie')
+    else:
+        if not user.default_site:
+            return Response({"detail": "L'utilisateur n'a pas de site par défaut défini."}, status=400)
+        moves = Move.objects.filter(state='Brouillon', type='Sortie', site=user.default_site)
+    moves = moves.order_by('-date_modified')
+    serializer = TabletMoveScanSerializer(moves, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+@transaction.atomic
+def save_scan_progress_api(request):
+    move_id = request.data.get('move_id')
+    scanned_ids = request.data.get('scanned_ids', [])
+    if not move_id:
+        return Response({"detail": "move_id est obligatoire."}, status=400)
+    try:
+        move = Move.objects.get(id=move_id)
+    except Move.DoesNotExist:
+        return Response({"detail": "Mouvement introuvable."}, status=404)
+    if not request.user.role == 'Admin' and move.site != request.user.default_site:
+        return Response({"detail": "Vous n'avez pas l'autorisation d'accéder à ce mouvement."}, status=403)
+    if move.state != 'Brouillon':
+        return Response({"detail": "Ce mouvement n'est plus à l'état Brouillon."}, status=400)
+    detail_codes = DetailCode.objects.filter(line_detail__move_line__move=move)
+    detail_codes.filter(id__in=scanned_ids).update(is_scanned=True)
+    detail_codes.exclude(id__in=scanned_ids).update(is_scanned=False)
+    return Response({"success": True, "detail": "Progrès de scan enregistré avec succès."}, status=200)

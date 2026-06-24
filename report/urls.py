@@ -49,7 +49,12 @@ urlpatterns = [
     path('move/cancel/<int:move_id>/', cancelMove, name='cancel_move'),
     path('move/validate/<int:move_id>/', validateMove, name='validate_move'),
     
+    path('move-out/create/', create_move_out_view, name='create_move_out_web'),
+    path('get-available-stock/', get_available_stock, name='get_available_stock'),
+    
     path('generate-qr-code/<int:detail_id>/', generateQRCode, name='generate_qr_code'),
+    path('mark-printed/<int:detail_id>/', mark_printed, name='mark_printed'),
+    path('stock/replace-palette/<int:line_id>/', replace_damaged_palette, name='replace_damaged_palette'),
 
     path('stock/all/', listStockView, name='stocks'),
     path('stock/create/', createStockView, name='create_stock'),

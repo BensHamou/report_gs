@@ -227,7 +227,6 @@ def editProductView(request, id):
     form = ProductForm(instance=product)
     
     if request.method == 'POST':
-        print(request.FILES)
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save(user=request.user)
@@ -719,6 +718,27 @@ def confirmMove(request, move_id):
         if move.state != 'Brouillon':
             return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon pour être confirmé.'})
         
+        if move.type == 'Sortie':
+            unscanned_exists = DetailCode.objects.filter(
+                line_detail__move_line__move=move,
+                is_scanned=False
+            ).exists()
+            if unscanned_exists:
+                if request.user.role == 'Admin':
+                    if request.POST.get('force_scan') == '1':
+                        DetailCode.objects.filter(
+                            line_detail__move_line__move=move,
+                            is_scanned=False
+                        ).update(is_scanned=True)
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'unscanned': True,
+                            'message': 'Certaines palettes n\'ont pas encore été scannées. Voulez-vous forcer la confirmation ?'
+                        })
+                else:
+                    return JsonResponse({'success': False, 'message': 'Impossible de confirmer ce mouvement car certaines palettes n\'ont pas encore été scannées.'})
+        
         try:
             move.check_can_confirm()
         except ValueError as e:
@@ -744,6 +764,27 @@ def validateMove(request, move_id):
         if move.state != 'Confirmé':
             return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Confirmé pour être validé.'})
         
+        if move.type == 'Sortie':
+            unscanned_exists = DetailCode.objects.filter(
+                line_detail__move_line__move=move,
+                is_scanned=False
+            ).exists()
+            if unscanned_exists:
+                if request.user.role == 'Admin':
+                    if request.POST.get('force_scan') == '1':
+                        DetailCode.objects.filter(
+                            line_detail__move_line__move=move,
+                            is_scanned=False
+                        ).update(is_scanned=True)
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'unscanned': True,
+                            'message': 'Certaines palettes n\'ont pas encore été scannées. Voulez-vous forcer la validation ?'
+                        })
+                else:
+                    return JsonResponse({'success': False, 'message': 'Impossible de valider ce mouvement car certaines palettes n\'ont pas encore été scannées.'})
+
         if request.user.role != 'Admin' and not move.is_transfer and not move.is_isolation:
             if hasDraftMoves(move):
                 return JsonResponse({'success': False, 'message': 'Il existe des mouvements en brouillon pour ce site.'})
@@ -899,8 +940,19 @@ def get_emplacements_for_warehouse(request):
 @admin_or_gs_required
 def generateQRCode(request, detail_id):
     try:
-        line_detail = LineDetail.objects.get(id=detail_id)
-        qr_data = line_detail.code
+        use_dc = request.GET.get('use_dc') == '1'
+        use_dl = request.GET.get('use_dl') == '1'
+        
+        if use_dc:
+            dc = DetailCode.objects.get(id=detail_id)
+            qr_data = dc.code
+        elif use_dl:
+            dl = DisponibilityLine.objects.get(id=detail_id)
+            qr_data = dl.code
+        else:
+            line_detail = LineDetail.objects.get(id=detail_id)
+            qr_data = line_detail.code
+            
         qr = qrcode.QRCode(box_size=10, border=4)
         qr.add_data(qr_data)
         qr.make(fit=True)
@@ -910,8 +962,48 @@ def generateQRCode(request, detail_id):
         img.save(response, "PNG")
         return response
 
-    except MoveLine.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Move non trouvé.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erreur : {e}'})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def mark_printed(request, detail_id):
+    use_dc = request.GET.get('use_dc') == '1'
+    use_dl = request.GET.get('use_dl') == '1'
+    if use_dc:
+        dc = get_object_or_404(DetailCode, id=detail_id)
+        dc.is_printed = True
+        dc.save()
+        DisponibilityLine.objects.filter(code=dc.code).update(is_printed=True)
+    elif use_dl:
+        dl = get_object_or_404(DisponibilityLine, id=detail_id)
+        dl.is_printed = True
+        dl.save()
+        DetailCode.objects.filter(code=dl.code).update(is_printed=True)
+    else:
+        line_detail = get_object_or_404(LineDetail, id=detail_id)
+        line_detail.detail_codes.update(is_printed=True)
+        codes = line_detail.detail_codes.values_list('code', flat=True)
+        DisponibilityLine.objects.filter(code__in=codes).update(is_printed=True)
+    return JsonResponse({'success': True})
+
+@login_required(login_url='login')
+@admin_only_required
+def replace_damaged_palette(request, line_id):
+    if request.method == 'POST':
+        try:
+            line = get_object_or_404(DisponibilityLine, id=line_id)
+            new_line = line.replace_damaged()
+            return JsonResponse({
+                'success': True,
+                'message': f"La palette a été remplacée. Nouveau code généré : {new_line.code}",
+                'new_code': new_line.code
+            })
+        except ValueError as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f"Erreur lors du remplacement : {e}"})
+    return JsonResponse({'success': False, 'message': "Méthode non autorisée."})
 
 def handleDetails(request, move_line):
     n_lot = move_line.n_lot
@@ -956,99 +1048,6 @@ def handleDetails(request, move_line):
                 line_detail = LineDetail.objects.create(move_line=move_line, warehouse_id=warehouse_id, emplacement_id=emplacement_id, 
                                                         n_lot=n_lot, qte=float(qte), palette=int(palette), create_uid=request.user, write_uid=request.user)
                 
-def create_warehouses_and_emplacements():
-    """Creates warehouses and emplacements with specific counts for site with ID 2."""
-
-    try:
-        site = Site.objects.get(id=2)
-    except Site.DoesNotExist:
-        print("Site with ID 2 not found.")
-        return
-
-    warehouse_data = {
-        "Magasin A": 40,
-        "Magasin B": 38,
-        "Magasin C": 40,
-        "Magasin D": 44,
-        "Magasin E": 40,
-        "Magasin F": 40,
-    }
-
-    for warehouse_name, emplacement_count in warehouse_data.items():
-        warehouse = Warehouse.objects.create(designation=warehouse_name, site=site)
-        for i in range(1, emplacement_count + 1):
-            emplacement_designation = f"{warehouse_name[8]}{i}"
-            Emplacement.objects.create(
-                designation=emplacement_designation,
-                type='Surface Libre',
-                capacity=100,
-                quarantine=False,
-                temp=False,
-                warehouse=warehouse
-            )
-
-    print("Warehouses and emplacements created successfully.")
-
-def create_rayons():
-    """Creates 'Rayon' type emplacements for site with ID 2."""
-
-    try:
-        site = Site.objects.get(id=2)
-    except Site.DoesNotExist:
-        print("Site with ID 2 not found.")
-        return
-    
-    try:  # Check if warehouse already exists to avoid duplicates
-        warehouse = Warehouse.objects.get(designation="Accessoire et Moule", site=site)
-        print("Warehouse 'Accessoire et Moule' already exists. Skipping creation.")
-    except Warehouse.DoesNotExist:
-        warehouse = Warehouse.objects.create(designation="Accessoire et Moule", site=site)
-        print("Warehouse 'Accessoire et Moule' created.")
-
-    rayon_data = {
-        "Rayon A": 6,
-        "Rayon B": 6,
-        "Rayon C": 6,
-        "Rayon D": 6,
-        "Rayon E": 6,
-        "Rayon F": 6,
-    }
-
-    for rayon_name, emplacement_count in rayon_data.items():
-        for i in range(1, emplacement_count + 1):
-            emplacement_designation = f"{rayon_name[-1]}{i}"  # A1, A2, etc.
-            Emplacement.objects.create(
-                designation=emplacement_designation,
-                type='Rayon', 
-                capacity=100,
-                quarantine=False,
-                temp=False,
-                warehouse=warehouse, # Associate with Accessoire et Moule
-            )
-
-    print("Accessoire et Moule emplacements created successfully.")
-
-def create_emplacements_for_warehouse_9():
-    """Creates emplacements E6-E28 for warehouse with ID 9."""
-    try:
-        warehouse = Warehouse.objects.get(id=9)
-    except Warehouse.DoesNotExist:
-        print("Warehouse with ID 9 not found.")
-        return
-
-    for i in range(6, 29):  # E6 to E28 inclusive
-        emplacement_designation = f"E{i}"
-        Emplacement.objects.create(
-            designation=emplacement_designation,
-            type='Surface Libre',  # Or set the appropriate type
-            capacity=100,
-            quarantine=False,
-            temp=False,
-            warehouse=warehouse
-        )
-
-    print(f"Emplacements E6-E28 created for warehouse {warehouse.designation} (ID 9).")
-
 # STOCK
 
 @login_required(login_url='login')
@@ -1368,5 +1367,230 @@ def cartographieView(request):
         'sites': sites,
         'empty_image': static('img/empty_cartography.png')
         })
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def get_available_stock(request):
+    product_id = request.GET.get('product_id')
+    site_id = request.GET.get('site_id')
+    move_type = request.GET.get('move_type', 'normal')
+    if not product_id or not site_id:
+        return JsonResponse({'success': False, 'message': 'Paramètres manquants.'}, status=400)
+    
+    dispos = Disponibility.objects.filter(
+        product_id=product_id,
+        emplacement__warehouse__site_id=site_id,
+        qte__gt=0
+    ).select_related('emplacement', 'emplacement__warehouse')
+    
+    if move_type == 'normal':
+        dispos = dispos.filter(emplacement__quarantine=False, emplacement__temp=False).order_by('expiry_date', 'n_lot')
+    elif move_type == 'isolation':
+        dispos = dispos.filter(emplacement__quarantine=False)
+    elif move_type == 'consumption':
+        dispos = dispos.filter(emplacement__quarantine=True)
+    elif move_type == 'transfer':
+        dispos = dispos.filter(emplacement__quarantine=False, emplacement__temp=False).order_by('expiry_date', 'n_lot')
+
+    stock_list = []
+    for d in dispos:
+        palettes = []
+        for line in d.sorted_lines:
+            if line.status == 'Valide':
+                palettes.append({
+                    'id': line.id,
+                    'code': line.code,
+                    'qte': line.qte,
+                    'sequence': line.sequence
+                })
+        stock_list.append({
+            'emplacement_id': d.emplacement.id,
+            'warehouse_id': d.emplacement.warehouse.id,
+            'emplacement_name': f"{d.emplacement.warehouse.designation} - {d.emplacement.designation}",
+            'n_lot': d.n_lot,
+            'qte': d.qte,
+            'palette': d.palette,
+            'expiry_date': d.expiry_date.strftime('%Y-%m-%d') if d.expiry_date else None,
+            'palettes': palettes
+        })
+    return JsonResponse({'success': True, 'stock': stock_list})
+
+@login_required(login_url='login')
+@admin_or_gs_required
+def create_move_out_view(request):
+    if request.method == 'POST':
+        try:
+            import json
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                data = request.POST
+
+            with transaction.atomic():
+                site_id = data.get('site')
+                line_id = data.get('line') or None
+                shift_id = data.get('shift') or None
+                gestionaire_id = data.get('gestionaire')
+                date_str = data.get('date')
+                move_type = data.get('move_type', 'normal')
+                observation = data.get('observation', '/')
+                bl_number = data.get('bl_number')
+                btr_number = data.get('btr_number')
+                
+                is_transfer = move_type in ['transfer', 'isolation']
+                is_isolation = move_type in ['isolation', 'consumption']
+                transfer_to_id = data.get('transfer_to') if move_type == 'transfer' else None
+
+                if not (site_id and date_str and gestionaire_id):
+                    return JsonResponse({'success': False, 'message': 'Les champs Site, Date et Gestionaire sont obligatoires.'}, status=200)
+
+                if move_type == 'normal' and not bl_number:
+                    return JsonResponse({'success': False, 'message': 'Le champ N° BL est obligatoire pour les sorties normales.'}, status=200)
+                if move_type == 'transfer' and not btr_number:
+                    return JsonResponse({'success': False, 'message': 'Le champ N° BTR est obligatoire pour les transferts.'}, status=200)
+
+                selected_mode = data.get('mode', 'fifo')
+                if move_type == 'normal' and selected_mode == 'manual' and not request.user.allow_policy:
+                    return JsonResponse({'success': False, 'message': "Vous n'avez pas l'autorisation d'effectuer un prélèvement manuel pour une sortie normale."}, status=200)
+
+                # Validate modulo constraints first:
+                products_list = data.get('products', [])
+                for prod_item in products_list:
+                    product_id = prod_item.get('product_id')
+                    picks = prod_item.get('picks', [])
+                    if not product_id or not picks:
+                        continue
+                    
+                    product = Product.objects.filter(id=product_id).first()
+                    if product and product.qte_per_cond and product.qte_per_cond > 0:
+                        desired_qte = float(prod_item.get('qte_desired', 0))
+                        ratio = desired_qte / product.qte_per_cond
+                        if abs(ratio - round(ratio)) > 1e-4:
+                            return JsonResponse({'success': False, 'message': f'La quantité désirée pour le produit {product.designation} ({desired_qte} Kg) doit être un multiple de {product.qte_per_cond} Kg.'}, status=200)
+
+                        for p in picks:
+                            pick_qte = float(p.get('qte', 0))
+                            pick_ratio = pick_qte / product.qte_per_cond
+                            if abs(pick_ratio - round(pick_ratio)) > 1e-4:
+                                return JsonResponse({'success': False, 'message': f'La quantité de la palette {p.get("code")} ({pick_qte} Kg) doit être un multiple de {product.qte_per_cond} Kg.'}, status=200)
+
+                move = Move.objects.create(
+                    site_id=site_id,
+                    line_id=line_id,
+                    shift_id=shift_id,
+                    gestionaire_id=gestionaire_id,
+                    date=date_str,
+                    type='Sortie',
+                    is_transfer=is_transfer,
+                    is_isolation=is_isolation,
+                    transfer_to_id=transfer_to_id,
+                    state='Brouillon',
+                    create_uid=request.user,
+                    write_uid=request.user
+                )
+
+                if move_type == 'normal' and bl_number:
+                    try:
+                        MoveBL.objects.create(move=move, numero=int(bl_number), is_annexe=False)
+                    except (ValueError, TypeError):
+                        return JsonResponse({'success': False, 'message': 'Le N° BL doit être un nombre entier.'}, status=200)
+                elif move_type == 'transfer' and btr_number:
+                    try:
+                        MoveBL.objects.create(move=move, numero=int(btr_number), is_annexe=False)
+                    except (ValueError, TypeError):
+                        return JsonResponse({'success': False, 'message': 'Le N° BTR doit être un nombre entier.'}, status=200)
+
+                products_list = data.get('products', [])
+                for prod_item in products_list:
+                    product_id = prod_item.get('product_id')
+                    picks = prod_item.get('picks', [])
+                    if not product_id or not picks:
+                        continue
+
+                    ml = MoveLine.objects.create(
+                        move=move,
+                        product_id=product_id,
+                        lot_number='/',
+                        create_uid=request.user,
+                        write_uid=request.user,
+                        observation=observation
+                    )
+
+                    # Group picks by (emplacement_id, warehouse_id, n_lot)
+                    grouped_picks = {}
+                    for pick in picks:
+                        emp_id = pick.get('emplacement_id')
+                        wh_id = pick.get('warehouse_id')
+                        lot = pick.get('n_lot')
+                        key = (emp_id, wh_id, lot)
+                        if key not in grouped_picks:
+                            grouped_picks[key] = []
+                        grouped_picks[key].append(pick)
+
+                    # Create LineDetails and DetailCodes
+                    for key, pick_list in grouped_picks.items():
+                        emp_id, wh_id, lot = key
+                        total_qte = sum(float(p.get('qte', 0)) for p in pick_list)
+                        total_pal = len(pick_list)
+
+                        dispo = Disponibility.objects.filter(product_id=product_id, emplacement_id=emp_id, n_lot=lot).first()
+                        expiry_date = dispo.expiry_date if dispo else None
+
+                        ld = LineDetail.objects.create(
+                            move_line=ml,
+                            warehouse_id=wh_id,
+                            emplacement_id=emp_id,
+                            n_lot=lot,
+                            qte=total_qte,
+                            palette=total_pal,
+                            expiry_date=expiry_date,
+                            create_uid=request.user,
+                            write_uid=request.user
+                        )
+
+                        for p in pick_list:
+                            DetailCode.objects.create(
+                                line_detail=ld,
+                                code=p.get('code'),
+                                qte=float(p.get('qte', 0)),
+                                palette=1
+                            )
+
+                if not move.move_lines.exists():
+                    move.delete()
+                    return JsonResponse({'success': False, 'message': 'Veuillez ajouter au moins un produit valide à sortir.'}, status=200)
+
+                return JsonResponse({'success': True, 'message': 'Mouvement de sortie créé avec succès.', 'new_record': move.id}, status=200)
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erreur lors de la création de la sortie : {str(e)}'}, status=500)
+
+    user = request.user
+    if user.role == 'Admin':
+        sites = Site.objects.all()
+    elif user.default_site:
+        sites = Site.objects.filter(id=user.default_site.id)
+    else:
+        sites = Site.objects.none()
+
+    products = Product.objects.all().order_by('designation')
+    families = Family.objects.filter(for_mp=False).order_by('sequence', 'designation')
+    mp_products = Product.objects.filter(type='Matière Première').order_by('designation')
+    pf_products = Product.objects.filter(type='Produit Fini').order_by('designation')
+    lines = user.lines.all()
+    gestionaires = User.objects.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur')).exclude(is_superuser=True)
+    
+    context = {
+        'sites': sites,
+        'families': families,
+        'mp_products': mp_products,
+        'pf_products': pf_products,
+        'products': products,
+        'lines': lines,
+        'gestionaires': gestionaires,
+        'default_site': user.default_site,
+        'is_admin': user.role == 'Admin'
+    }
+    return render(request, 'move/pf/form_sortie.html', context)
 
 

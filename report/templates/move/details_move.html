@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+<div class="card border-0 mb-4" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
     <div class="row mb-3">
         <div class="col-12">
             <h4 class="mb-4 section-title" style="color: #0082cd;">Information Générale</h4>
@@ -113,7 +113,7 @@
     </div>
 </div>
 
-<div class="row mt-5" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+<div class="card border-0 mt-5 mb-4" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
     <div class="row">
         <div class="col-12">
             <h4 class="mb-2 section-title" style="color: #0082cd;">Lignes de Mouvement</h4>
@@ -121,7 +121,7 @@
     </div>
     {% for line in move.move_lines.all %}
         {% if line.product.type == 'Matière Première' %}
-            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div class="card mb-3 p-3" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff;">
                 <div class="row">
                     <div class="col-12 d-flex justify-content-end">
                         {% if can_edit %}
@@ -192,27 +192,94 @@
                                 <div class="col-lg-1 col-md-1 col-sm-12">
                                     <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                                     <div class="btn-group d-block">
-                                        <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
-                                                data-line-detail-id="{{ detail.id }}" 
-                                                data-product-name="{{ detail.move_line.product.designation }}"
-                                                data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
-                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
-                                                data-magasin="{{ detail.warehouse.designation }}"
-                                                data-emplacement="{{ detail.emplacement.designation }}"
-                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                data-palettes="{{ detail.palette }}">
-                                            <i class="fas fa-print"></i> 
-                                        </button>
+                                        {% if detail.has_unprinted_codes %}
+                                            <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
+                                                    data-line-detail-id="{{ detail.id }}" 
+                                                    data-product-name="{{ detail.move_line.product.designation }}"
+                                                    data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                    data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                    data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                    data-magasin="{{ detail.warehouse.designation }}"
+                                                    data-emplacement="{{ detail.emplacement.designation }}"
+                                                    data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                    data-palettes="{{ detail.palette }}"
+                                                    data-is-bulk="1"
+                                                    data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                    data-from-move-detail="1"
+                                                    data-detail-codes='[{% for dc in detail.detail_codes.all %}{"id": {{ dc.id }}, "code": "{{ dc.code|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                                                 <i class="fas fa-print"></i> 
+                                            </button>
+                                        {% else %}
+                                            <span class="badge bg-success text-white py-2 px-3 mt-1 d-inline-block"><i class="fas fa-check"></i> Imprimé</span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endif %}
                         </div>
+                        {% if detail.detail_codes.exists %}
+                            <div class="row mb-3">
+                                <div class="col-12" style="padding-left: 30px;">
+                                    <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
+                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Code à scanner{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
+                                    </button>
+                                    <div class="mt-2" id="collapseCodes_{{ detail.id }}" style="display: none;">
+                                        <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
+                                            <div class="row">
+                                                {% for dc in detail.detail_codes.all %}
+                                                    <div class="col-lg-6 col-12 d-flex justify-content-between align-items-center mb-2 p-3 border-bottom" style="background: white; border-radius: 4px;">
+                                                        <span style="font-family: monospace; font-size: 13px;">
+                                                            {% if move.type == 'Sortie' %}
+                                                                {{ dc.location_info }}
+                                                            {% else %}
+                                                                Palette N° {{ dc.sequence }}
+                                                            {% endif %}
+                                                        </span>
+                                                        <div>
+                                                            {% if move.type == 'Entré' %}
+                                                                <span class="badge bg-secondary text-white mr-2">{{ dc.qte|intcomma }} Kg</span>
+                                                                {% if not dc.is_printed %}
+                                                                <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                        data-line-detail-id="{{ dc.id }}" 
+                                                                        data-product-name="{{ detail.move_line.product.designation }}"
+                                                                        data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                        data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                        data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                        data-magasin="{{ detail.warehouse.designation }}"
+                                                                        data-emplacement="{{ detail.emplacement.designation }}"
+                                                                        data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                        data-palettes="1"
+                                                                        data-use-dc="1"
+                                                                        data-is-bulk="0"
+                                                                        data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                        data-from-move-detail="1"
+                                                                        data-code="{{ dc.code }}">
+                                                                    <i class="fas fa-print"></i>
+                                                                </button>
+                                                                {% else %}
+                                                                <span class="badge bg-secondary text-white"><i class="fas fa-check"></i> Imprimé</span>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                            {% if move.type == 'Sortie' %}
+                                                                {% if dc.is_scanned %}
+                                                                    <span class="badge bg-success text-white"><i class="fas fa-barcode"></i> Scanné</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-warning text-dark"><i class="fas fa-barcode"></i> Non Scanné</span>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
         {% else %}
-            <div class="row" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <div class="card mb-3 p-3" style="border: 1px solid #c2c2c2; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff;">
                 <div class="row">
                     <div class="col-12 d-flex justify-content-end">
                         {% if can_edit %}
@@ -295,22 +362,89 @@
                                 <div class="col-lg-1 col-md-1 col-sm-12">
                                     <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                                     <div class="btn-group d-block">
-                                        <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
-                                                data-line-detail-id="{{ detail.id }}" 
-                                                data-product-name="{{ detail.move_line.product.designation }}"
-                                                data-lot-number="{{ detail.move_line.n_lot }}"
-                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
-                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
-                                                data-magasin="{{ detail.warehouse.designation }}"
-                                                data-emplacement="{{ detail.emplacement.designation }}"
-                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                data-palettes="{{ detail.palette }}">
-                                            <i class="fas fa-print"></i> 
-                                        </button>
+                                        {% if detail.has_unprinted_codes %}
+                                            <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
+                                                    data-line-detail-id="{{ detail.id }}" 
+                                                    data-product-name="{{ detail.move_line.product.designation }}"
+                                                    data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                    data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                    data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                    data-magasin="{{ detail.warehouse.designation }}"
+                                                    data-emplacement="{{ detail.emplacement.designation }}"
+                                                    data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                    data-palettes="{{ detail.palette }}"
+                                                    data-is-bulk="1"
+                                                    data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                    data-from-move-detail="1"
+                                                    data-detail-codes='[{% for dc in detail.detail_codes.all %}{"id": {{ dc.id }}, "code": "{{ dc.code|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                                                 <i class="fas fa-print"></i> 
+                                            </button>
+                                        {% else %}
+                                            <span class="badge bg-success text-white py-2 px-3 mt-1 d-inline-block"><i class="fas fa-check"></i> Imprimé</span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endif %}
                         </div>
+                        {% if detail.detail_codes.exists %}
+                            <div class="row mb-3">
+                                <div class="col-12" style="padding-left: 30px;">
+                                    <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
+                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Code à scanner{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
+                                    </button>
+                                    <div class="mt-2" id="collapseCodes_{{ detail.id }}" style="display: none;">
+                                        <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
+                                            <div class="row">
+                                                {% for dc in detail.detail_codes.all %}
+                                                    <div class="col-lg-6 col-12 d-flex justify-content-between align-items-center mb-2 p-3 border-bottom" style="background: white; border-radius: 4px;">
+                                                        <span style="font-family: monospace; font-size: 13px;">
+                                                            {% if move.type == 'Sortie' %}
+                                                                {{ dc.location_info }}
+                                                            {% else %}
+                                                                Palette N° {{ dc.sequence }}
+                                                            {% endif %}
+                                                        </span>
+                                                        <div>
+                                                            {% if move.type == 'Entré' %}
+                                                                <span class="badge bg-secondary text-white mr-2">{{ dc.qte|intcomma }} Kg</span>
+                                                                {% if not dc.is_printed %}
+                                                                <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                        data-line-detail-id="{{ dc.id }}" 
+                                                                        data-product-name="{{ detail.move_line.product.designation }}"
+                                                                        data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                        data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                        data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                        data-magasin="{{ detail.warehouse.designation }}"
+                                                                        data-emplacement="{{ detail.emplacement.designation }}"
+                                                                        data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                        data-palettes="1"
+                                                                        data-use-dc="1"
+                                                                        data-is-bulk="0"
+                                                                        data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                        data-from-move-detail="1"
+                                                                        data-code="{{ dc.code }}">
+                                                                    <i class="fas fa-print"></i>
+                                                                </button>
+                                                                {% else %}
+                                                                <span class="badge bg-secondary text-white"><i class="fas fa-check"></i> Imprimé</span>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                            {% if move.type == 'Sortie' %}
+                                                                {% if dc.is_scanned %}
+                                                                    <span class="badge bg-success text-white"><i class="fas fa-barcode"></i> Scanné</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-warning text-dark"><i class="fas fa-barcode"></i> Non Scanné</span>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -340,10 +474,11 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
 
 <script>
-    function confirmMoveLine(moveLineId) {
+    function confirmMoveLine(moveLineId, forceScan = '0') {
+        const isForcing = forceScan === '1';
         swal({
-            title: "Confirmer l'entrée",
-            text: "Êtes-vous sûr de vouloir confirmer cette entrée ?",
+            title: isForcing ? "Forcer la confirmation" : "Confirmer le mouvement",
+            text: isForcing ? "Certaines palettes n'ont pas encore été scannées. Êtes-vous sûr de vouloir forcer la confirmation ? Elles seront marquées comme scannées." : "Êtes-vous sûr de vouloir confirmer ce mouvement ?",
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -357,6 +492,7 @@
                     url: "{% url 'confirm_move' 0 %}".replace('0', moveLineId),
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
+                        force_scan: forceScan
                     },
                     success: function(response) {
                         if (response.success) {
@@ -364,6 +500,8 @@
                             .then(() => {
                                 location.reload();
                             });
+                        } else if (response.unscanned) {
+                            confirmMoveLine(moveLineId, '1');
                         } else {
                             swal("Erreur!", response.message, "error");
                         }
@@ -412,10 +550,11 @@
         });
     }
 
-    function validateMoveLine(moveLineId) {
+    function validateMoveLine(moveLineId, forceScan = '0') {
+        const isForcing = forceScan === '1';
         swal({
-            title: "Valider l'entrée",
-            text: "Êtes-vous sûr de vouloir valider cette entrée ?",
+            title: isForcing ? "Forcer la validation" : "Valider le mouvement",
+            text: isForcing ? "Certaines palettes n'ont pas encore été scannées. Êtes-vous sûr de vouloir forcer la validation ? Elles seront marquées comme scannées." : "Êtes-vous sûr de vouloir valider ce mouvement ?",
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -429,6 +568,7 @@
                     url: "{% url 'validate_move' 0 %}".replace('0', moveLineId),
                     data: {
                         csrfmiddlewaretoken: '{{ csrf_token }}',
+                        force_scan: forceScan
                     },
                     success: function(response) {
                         if (response.success) {
@@ -436,6 +576,8 @@
                             .then(() => {
                                 location.reload();
                             });
+                        } else if (response.unscanned) {
+                            validateMoveLine(moveLineId, '1');
                         } else {
                             swal("Erreur!", response.message, "error");
                         }
@@ -448,26 +590,18 @@
         });
     }
 
-    document.getElementById('printModal').addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const modal = this;
-    
-        modal.querySelector('#modal-product-name').textContent = button.getAttribute('data-product-name');
-        modal.querySelector('#modal-lot-number').textContent = button.getAttribute('data-lot-number');
-        modal.querySelector('#modal-expiry-date').textContent = button.getAttribute('data-expiry-date');
-        modal.querySelector('#modal-production-date').textContent = button.getAttribute('data-production-date');
-        modal.querySelector('#modal-magasin').textContent = button.getAttribute('data-magasin');
-        modal.querySelector('#modal-shift').textContent = button.getAttribute('data-shift');
-        modal.querySelector('#modal-emplacement').textContent = button.getAttribute('data-emplacement');
-    
-        const ticketCount = modal.querySelector('#ticket-count');
-        ticketCount.value = button.getAttribute('data-palettes');
-        ticketCount.max = button.getAttribute('data-palettes');
-    
-        const detailId = button.getAttribute('data-line-detail-id');
-        const qrCodeImg = modal.querySelector('#qr-code-image');
-        qrCodeImg.src = `/generate-qr-code/${detailId}/`;
-    });
+    function toggleCodesCollapse(detailId, btn, count, isSortie) {
+        var element = document.getElementById('collapseCodes_' + detailId);
+        if (element) {
+            if (element.style.display === 'none' || element.style.display === '') {
+                element.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-qrcode"></i> ' + (isSortie ? 'Masquer les codes' : 'Masquer les Palettes') + ' (' + count + ')';
+            } else {
+                element.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-qrcode"></i> ' + (isSortie ? 'Code à scanner' : 'Voir les Palettes') + ' (' + count + ')';
+            }
+        }
+    }
 
 </script>
 
