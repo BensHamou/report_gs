@@ -96,80 +96,17 @@ class ProductDisponibilitySerializer(serializers.ModelSerializer):
         fields = ['id', 'disponibility']
 
 
-class TabletProductScanSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='designation', read_only=True)
-    image = serializers.ImageField(use_url=True, read_only=True)
-    to_scan = serializers.SerializerMethodField()
-    scanned = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'image', 'to_scan', 'scanned']
-
-    def get_to_scan(self, obj):
-        move = self.context.get('move')
-        emplacement = self.context.get('emplacement')
-        if not move or not emplacement:
-            return []
-        return list(DetailCode.objects.filter(
-            line_detail__move_line__move=move,
-            line_detail__emplacement=emplacement,
-            line_detail__move_line__product=obj,
-            is_scanned=False
-        ).values('id', 'code'))
-
-    def get_scanned(self, obj):
-        move = self.context.get('move')
-        emplacement = self.context.get('emplacement')
-        if not move or not emplacement:
-            return []
-        return list(DetailCode.objects.filter(
-            line_detail__move_line__move=move,
-            line_detail__emplacement=emplacement,
-            line_detail__move_line__product=obj,
-            is_scanned=True
-        ).values('id', 'code'))
-
-
-class TabletEmplacementScanSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-    products = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Emplacement
-        fields = ['id', 'name', 'products']
-
-    def get_name(self, obj):
-        warehouse_name = obj.warehouse.designation if obj.warehouse else ""
-        return f"{warehouse_name} - {obj.designation}"
-
-    def get_products(self, obj):
-        move = self.context.get('move')
-        if not move:
-            return []
-        
-        product_ids = DetailCode.objects.filter(
-            line_detail__move_line__move=move,
-            line_detail__emplacement=obj
-        ).values_list('line_detail__move_line__product_id', flat=True).distinct()
-        
-        products = Product.objects.filter(id__in=product_ids)
-        return TabletProductScanSerializer(
-            products, many=True,
-            context={'move': move, 'emplacement': obj, 'request': self.context.get('request')}
-        ).data
-
-
 class TabletMoveScanSerializer(serializers.ModelSerializer):
     bl_str = serializers.ReadOnlyField()
     site_name = serializers.CharField(source='site.designation', default='/', read_only=True)
     type = serializers.SerializerMethodField()
     observation = serializers.SerializerMethodField()
-    emplacements = serializers.SerializerMethodField()
+    to_scan = serializers.SerializerMethodField()
+    scanned = serializers.SerializerMethodField()
 
     class Meta:
         model = Move
-        fields = ['id', 'bl_str', 'date', 'site_name', 'type', 'observation', 'emplacements']
+        fields = ['id', 'bl_str', 'date', 'site_name', 'type', 'observation', 'to_scan', 'scanned']
 
     def get_type(self, obj):
         if obj.is_transfer and not obj.is_isolation:
@@ -184,15 +121,55 @@ class TabletMoveScanSerializer(serializers.ModelSerializer):
         first_line = obj.move_lines.first()
         return first_line.observation if (first_line and first_line.observation) else "/"
 
-    def get_emplacements(self, obj):
-        emplacement_ids = DetailCode.objects.filter(
-            line_detail__move_line__move=obj
-        ).values_list('line_detail__emplacement_id', flat=True).distinct()
-        
-        emplacements = Emplacement.objects.filter(id__in=emplacement_ids).select_related('warehouse')
-        return TabletEmplacementScanSerializer(
-            emplacements, many=True,
-            context={'move': obj, 'request': self.context.get('request')}
-        ).data
+    def _get_scan_data(self, obj, is_scanned):
+        detail_codes = DetailCode.objects.filter(line_detail__move_line__move=obj, is_scanned=is_scanned).select_related(
+            'line_detail__emplacement__warehouse', 'line_detail__move_line__product')
+        emplacements_map = {}
+        for dc in detail_codes:
+            emp = dc.line_detail.emplacement
+            prod = dc.line_detail.move_line.product
+            
+            if emp.id not in emplacements_map:
+                warehouse_name = emp.warehouse.designation if emp.warehouse else ""
+                emplacements_map[emp.id] = {
+                    'id': emp.id,
+                    'name': f"{warehouse_name} - {emp.designation}",
+                    'products': {}
+                }
+            
+            if prod.id not in emplacements_map[emp.id]['products']:
+                image_url = ""
+                if prod.image:
+                    request = self.context.get('request')
+                    if request:
+                        image_url = request.build_absolute_uri(prod.image.url)
+                    else:
+                        image_url = prod.image.url
+                
+                emplacements_map[emp.id]['products'][prod.id] = {
+                    'id': prod.id,
+                    'name': prod.designation,
+                    'image': image_url,
+                    'codes': []
+                }
+            
+            emplacements_map[emp.id]['products'][prod.id]['codes'].append({
+                'id': dc.id,
+                'code': dc.code,
+                'qte_to_scan': dc.qte,
+                'product_qte_per_cond': prod.qte_per_cond or 0.0
+            })
+            
+        result = []
+        for emp_id, emp_data in emplacements_map.items():
+            emp_data['products'] = list(emp_data['products'].values())
+            result.append(emp_data)
+        return result
+
+    def get_to_scan(self, obj):
+        return self._get_scan_data(obj, is_scanned=False)
+
+    def get_scanned(self, obj):
+        return self._get_scan_data(obj, is_scanned=True)
 
 

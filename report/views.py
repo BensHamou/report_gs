@@ -1573,10 +1573,16 @@ def create_move_out_view(request):
     else:
         sites = Site.objects.none()
 
-    products = Product.objects.all().order_by('designation')
     families = Family.objects.filter(for_mp=False).order_by('sequence', 'designation')
     mp_products = Product.objects.filter(type='Matière Première').order_by('designation')
-    pf_products = Product.objects.filter(type='Produit Fini').order_by('designation')
+    pf_products = Product.objects.filter(type='Produit Fini').select_related('family').order_by('designation')
+    for p in pf_products:
+        p.image_exists = False
+        if p.image:
+            try:
+                p.image_exists = os.path.exists(p.image.path)
+            except ValueError:
+                pass
     lines = user.lines.all()
     gestionaires = User.objects.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur')).exclude(is_superuser=True)
     
@@ -1585,7 +1591,6 @@ def create_move_out_view(request):
         'families': families,
         'mp_products': mp_products,
         'pf_products': pf_products,
-        'products': products,
         'lines': lines,
         'gestionaires': gestionaires,
         'default_site': user.default_site,

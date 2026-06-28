@@ -207,6 +207,108 @@
         margin-left: 0;
         margin-right: 0;
     }
+    /* Premium card design */
+    .suggestion-card, .to-scan-card {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
+    .suggestion-card:hover, .to-scan-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .card-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 10px;
+        font-size: 20px;
+        margin-right: 18px;
+        flex-shrink: 0;
+    }
+    .to-scan-card .card-icon-wrapper {
+        background: #ecfdf5;
+        color: #059669;
+    }
+    .card-badges-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-grow: 1;
+        align-items: center;
+    }
+    .card-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 550;
+        letter-spacing: 0.2px;
+    }
+    .card-badge i {
+        font-size: 11px;
+    }
+    .card-badge-lot {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .card-badge-wh {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #dcfce7;
+    }
+    .card-badge-emp {
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #dbeafe;
+    }
+    .card-badge-expiry {
+        background: #fffbeb;
+        color: #92400e;
+        border: 1px solid #fef3c7;
+    }
+    .card-right-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-shrink: 0;
+        margin-left: 15px;
+    }
+    .card-qte-badge {
+        background: #f8fafc;
+        color: #0f172a;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .card-qte-value {
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .card-actions {
+        display: flex;
+        align-items: center;
+    }
 </style>
 {% endblock %}
 
@@ -357,7 +459,7 @@
             <div class="product-grid mb-4">
                 <div class="row" id="product-list-container">
                     {% for p in pf_products %}
-                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="{{ p.id }}" data-family-id="{{ p.family.id }}" data-designation="{{ p.designation|lower }}" onclick="addProductToCart({{ p.id }}, '{{ p.designation|escapejs }}', {{ p.qte_per_pal|default:1.0 }}, '{% if p.image %}{{ p.image.url }}{% endif %}', {{ p.qte_per_cond|default:0.0 }})">
+                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="{{ p.id }}" data-family-id="{{ p.family.id }}" data-designation="{{ p.designation|lower }}" onclick="addProductToCart({{ p.id }}, '{{ p.designation|escapejs }}', '{{ p.qte_per_pal|default:1.0 }}', '{% if p.image_exists %}{{ p.image.url }}{% else %}{% static 'img/pf.png' %}{% endif %}', '{{ p.qte_per_cond|default:0.0 }}', '{{ p.packing.unit|default:'Kg' }}')">
                             <div class="p-2 product-card-inner" style="cursor: pointer; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; transition: transform 0.2s, border-color 0.2s;">
                                 <img src="{% if not p.image %}{% static 'img/pf.png' %}{% else %}{{ p.image.url }}{% endif %}" 
                                      onerror="this.onerror=null; this.src='{% static 'img/pf.png' %}';"
@@ -374,80 +476,36 @@
     </div>
 
     <div class="wizard-step" id="step-2-mp">
+        <!-- Hidden options template for dynamic MP cards select2 -->
+        <select id="mp-products-options-template" style="display: none;">
+            <option value="">-- Choisir Matiere Premiere --</option>
+            {% for p in mp_products %}
+                <option value="{{ p.id }}" data-qte-per-pal="{{ p.qte_per_pal|default:1.0 }}" data-qte-per-cond="{{ p.qte_per_cond|default:0.0 }}" data-unit="{{ p.packing.unit|default:'Kg' }}">{{ p.designation }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- Header Info Banner showing Type and Mode -->
+        <div class="card p-3 shadow-sm mb-3 bg-light border-0" id="step-info-banner-mp" style="border-radius: 8px;">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white" id="info-badge-type-mp" style="font-size: 14px; padding: 8px 12px;">Type: -</span>
+                    <span class="badge bg-info text-white" id="info-badge-mode-mp" style="font-size: 14px; padding: 8px 12px;">Mode: -</span>
+                </div>
+                <div class="text-muted" style="font-size: 13px;">
+                    <i class="fas fa-info-circle me-1"></i> Configurez vos matieres premieres et selectionnez les lots a sortir.
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+            <button type="button" class="btn btn-primary btn-sm" onclick="addMpCard()"><i class="fas fa-plus me-2"></i>Ajouter une Matiere Premiere</button>
+        </div>
+
+        <div id="mp-configs-container">
+        </div>
+        
         <div class="card p-4 shadow-sm" style="border-radius: 8px;">
-            <h5 class="mb-4" style="color: #133356;"><i class="fas fa-cubes me-2"></i>Matière Première à Sortir</h5>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="mp_product" class="form-label font-weight-bold d-block">Sélectionner la Matière Première</label>
-                    <div class="w-100">
-                        <select id="mp_product" class="form-select select2" style="width: 100%;" onchange="onMpProductSelected(this.value)">
-                            <option value="">-- Choisir Matière Première --</option>
-                            {% for p in mp_products %}
-                                <option value="{{ p.id }}" data-qte-per-pal="{{ p.qte_per_pal|default:1.0 }}" data-qte-per-cond="{{ p.qte_per_cond|default:0.0 }}">{{ p.designation }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label font-weight-bold">Quantité Disponible en Stock</label>
-                    <div class="form-control bg-light" id="mp_avail_qte" style="height: 40px; font-weight: bold; color: var(--secondary);">0.0 Kg</div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="mp_qte_desired" class="form-label font-weight-bold">Quantité à Sortir (Kg)</label>
-                    <input type="number" step="any" id="mp_qte_desired" class="form-control" placeholder="Entrez la quantité" oninput="onMpQteInput(this.value)" onblur="validateMpQteModulo(this)">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="mp_palette_desired" class="form-label font-weight-bold">Palettes correspondantes</label>
-                    <input type="number" id="mp_palette_desired" class="form-control" placeholder="Nombre de palettes" oninput="onMpPaletteInput(this.value)">
-                </div>
-            </div>
-            
-            <div id="mp-config-section" class="mt-4" style="display: none;">
-                <div class="suggestions-section" id="mp-suggestions-block">
-                    <h6 class="font-weight-bold" style="color: var(--primary);">Suggestions de Stock (Sélectionner manuellement) :</h6>
-                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                        <table class="table table-sm table-bordered mt-2">
-                            <thead>
-                                <tr style="background-color: #eaedf9;">
-                                    <th>Emplacement</th>
-                                    <th>Palette N°</th>
-                                    <th>Lot</th>
-                                    <th>Expiration</th>
-                                    <th>Qte Dispo</th>
-                                    <th style="width: 12%; text-align: center;">Choisir</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mp-suggestions-tbody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="to-scan-section mt-4">
-                    <h6 class="font-weight-bold text-success">Liste des Palettes à Scanner :</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mt-2">
-                            <thead>
-                                <tr style="background-color: #e2f0d9;">
-                                    <th>Emplacement</th>
-                                    <th>Palette N°</th>
-                                    <th>Lot</th>
-                                    <th>Quantité</th>
-                                    <th style="width: 10%; text-align: center;">Retirer</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mp-to-scan-tbody">
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-end mt-2">
-                        <strong class="text-dark">Total Sélectionné: <span id="mp-total-picked">0.0</span> / <span id="mp-desired-val">0.0</span> Kg</strong>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="d-flex justify-content-between mt-5">
+            <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-secondary" onclick="backToStep(1)"><i class="fas fa-arrow-left me-2"></i>Retour</button>
                 <button type="button" class="btn btn-success" id="submit-mp" onclick="submitMoveOut('MP')"><i class="fas fa-save me-2"></i>Sauvegarder la Sortie</button>
             </div>
@@ -455,6 +513,19 @@
     </div>
 
     <div class="wizard-step" id="step-3-pf">
+        <!-- Header Info Banner showing Type and Mode -->
+        <div class="card p-3 shadow-sm mb-3 bg-light border-0" id="step-info-banner-pf" style="border-radius: 8px;">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white" id="info-badge-type-pf" style="font-size: 14px; padding: 8px 12px;">Type: -</span>
+                    <span class="badge bg-info text-white" id="info-badge-mode-pf" style="font-size: 14px; padding: 8px 12px;">Mode: -</span>
+                </div>
+                <div class="text-muted" style="font-size: 13px;">
+                    <i class="fas fa-info-circle me-1"></i> Selectionnez les quantites et scannez les palettes correspondantes.
+                </div>
+            </div>
+        </div>
+
         <div id="product-configs-container">
         </div>
         
@@ -475,6 +546,58 @@
     let selectedMode = '';
     let productStock = {};
     let picks = {}; 
+    
+    let mpCards = [];
+    let mpCardIdCounter = 0;
+    
+    function filterSuggestionsLocal(inputEl, productId, type) {
+        const containerId = type === 'PF' ? `pf-suggestions-list-${productId}` : `mp-suggestions-list-${productId}`;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const sectionId = type === 'PF' ? `pf-suggestions-section-${productId}` : `mp-suggestions-block-${productId}`;
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+        
+        const filterLot = section.querySelector('.filter-lot').value.toLowerCase().trim();
+        const filterMag = section.querySelector('.filter-magasin').value.toLowerCase().trim();
+        const filterEmp = section.querySelector('.filter-emplacement').value.toLowerCase().trim();
+        
+        const cards = container.querySelectorAll('.suggestion-card');
+        cards.forEach(card => {
+            const lot = (card.dataset.lot || '').toLowerCase();
+            const mag = (card.dataset.magasin || '').toLowerCase();
+            const emp = (card.dataset.emplacement || '').toLowerCase();
+            
+            const matchLot = !filterLot || lot.includes(filterLot);
+            const matchMag = !filterMag || mag.includes(filterMag);
+            const matchEmp = !filterEmp || emp.includes(filterEmp);
+            
+            if (matchLot && matchMag && matchEmp) {
+                card.style.setProperty('display', 'flex', 'important');
+            } else {
+                card.style.setProperty('display', 'none', 'important');
+            }
+        });
+    } 
+
+    function updateStepInfoBanners() {
+        const moveTypeSelect = document.getElementById('move_type');
+        const modeSelect = document.getElementById('mode');
+        
+        let typeText = moveTypeSelect && moveTypeSelect.selectedIndex >= 0 ? moveTypeSelect.options[moveTypeSelect.selectedIndex].text : '';
+        let modeText = modeSelect && modeSelect.selectedIndex >= 0 ? modeSelect.options[modeSelect.selectedIndex].text : '';
+        
+        const typeBadgeMp = document.getElementById('info-badge-type-mp');
+        const modeBadgeMp = document.getElementById('info-badge-mode-mp');
+        if (typeBadgeMp) typeBadgeMp.textContent = `Type: ${typeText}`;
+        if (modeBadgeMp) modeBadgeMp.textContent = `Mode: ${modeText}`;
+        
+        const typeBadgePf = document.getElementById('info-badge-type-pf');
+        const modeBadgePf = document.getElementById('info-badge-mode-pf');
+        if (typeBadgePf) typeBadgePf.textContent = `Type: ${typeText}`;
+        if (modeBadgePf) modeBadgePf.textContent = `Mode: ${modeText}`;
+    }
 
     const allSites = [
         {% for site in sites %}
@@ -637,7 +760,10 @@
         } else {
             document.getElementById('step-node-3').style.display = 'none';
             document.getElementById('step-2-mp').classList.add('active');
-            onMpProductSelected(document.getElementById('mp_product').value);
+            if (mpCards.length === 0) {
+                addMpCard();
+            }
+            updateStepInfoBanners();
         }
         step = 2;
     }
@@ -665,12 +791,19 @@
         });
     }
 
-    function addProductToCart(id, name, qtePerPal, imageUrl, qtePerCond) {
+    function addProductToCart(id, name, qtePerPal, imageUrl, qtePerCond, unit) {
         if (cart.some(p => p.id === id)) {
             removeProductFromCart(id);
             return;
         }
-        cart.push({ id, designation: name, qte_per_pal: qtePerPal, image_url: imageUrl, qte_per_cond: qtePerCond || 0 });
+        cart.push({ 
+            id, 
+            designation: name, 
+            qte_per_pal: parseFloat(String(qtePerPal).replace(',', '.')), 
+            image_url: imageUrl, 
+            qte_per_cond: parseFloat(String(qtePerCond).replace(',', '.')) || 0, 
+            unit: unit || 'Kg' 
+        });
         renderCartTags();
     }
 
@@ -732,6 +865,7 @@
         
         renderProductConfigs();
         document.getElementById('step-3-pf').classList.add('active');
+        updateStepInfoBanners();
         step = 3;
     }
 
@@ -795,44 +929,31 @@
                     
                     <div id="pf-picklist-block-${product.id}" style="display: none;" class="mt-4 border-top pt-3">
                         <div id="pf-suggestions-section-${product.id}" class="suggestions-section mb-4" style="display: none;">
-                            <h6 class="font-weight-bold text-primary"><i class="fas fa-lightbulb me-2"></i>Suggestions de Stock (Sélectionner manuellement) :</h6>
-                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered mt-2">
-                                    <thead>
-                                        <tr style="background-color: #eaedf9;">
-                                            <th>Emplacement</th>
-                                            <th>Palette N°</th>
-                                            <th>Lot</th>
-                                            <th>Expiration</th>
-                                            <th>Qte Dispo</th>
-                                            <th style="width: 12%; text-align: center;">Choisir</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pf-suggestions-tbody-${product.id}">
-                                    </tbody>
-                                </table>
+                            <h6 class="font-weight-bold text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Suggestions de Stock (Sélectionner manuellement) :</h6>
+                            
+                            <!-- Local Filters -->
+                            <div class="row g-2 mb-3 suggestions-filters align-items-center">
+                                <div class="col-md-4 col-sm-12">
+                                    <input type="text" class="form-control form-control-sm filter-lot" placeholder="Filtrer par lot..." oninput="filterSuggestionsLocal(this, '${product.id}', 'PF')">
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    <input type="text" class="form-control form-control-sm filter-magasin" placeholder="Filtrer par magasin..." oninput="filterSuggestionsLocal(this, '${product.id}', 'PF')">
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    <input type="text" class="form-control form-control-sm filter-emplacement" placeholder="Filtrer par emplacement..." oninput="filterSuggestionsLocal(this, '${product.id}', 'PF')">
+                                </div>
+                            </div>
+                            
+                            <div class="suggestions-list-container" id="pf-suggestions-list-${product.id}" style="max-height: 300px; overflow-y: auto;">
                             </div>
                         </div>
                         
-                        <div class="to-scan-section">
-                            <h6 class="font-weight-bold text-success"><i class="fas fa-barcode me-2"></i>Liste des Palettes à Scanner :</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered mt-2">
-                                    <thead>
-                                        <tr style="background-color: #e2f0d9;">
-                                            <th>Emplacement</th>
-                                            <th>Palette N°</th>
-                                            <th>Lot</th>
-                                            <th>Quantité</th>
-                                            <th style="width: 10%; text-align: center;">Retirer</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="pf-to-scan-tbody-${product.id}">
-                                    </tbody>
-                                </table>
+                        <div class="to-scan-section mt-4">
+                            <h6 class="font-weight-bold text-success mb-3"><i class="fas fa-barcode me-2"></i>Liste des Palettes à Scanner :</h6>
+                            <div class="to-scan-list-container" id="pf-to-scan-list-${product.id}">
                             </div>
-                            <div class="d-flex justify-content-end mt-2">
-                                <strong class="text-dark">Total Sélectionné: <span id="pf-total-picked-${product.id}">0.0</span> / <span id="pf-desired-val-${product.id}">0.0</span> Kg</strong>
+                            <div class="d-flex justify-content-end mt-3">
+                                <strong class="text-dark" style="font-size: 15px;">Total Sélectionné: <span id="pf-total-picked-${product.id}" class="text-primary font-weight-bold">0.0</span> / <span id="pf-desired-val-${product.id}">0.0</span> Kg</strong>
                             </div>
                         </div>
                     </div>
@@ -853,68 +974,183 @@
         });
     }
 
-    function onMpProductSelected(productId) {
+    function addMpCard() {
+        mpCardIdCounter++;
+        const cardId = `card-${mpCardIdCounter}`;
+        mpCards.push({ cardId: cardId, productId: '' });
+        
+        const container = document.getElementById('mp-configs-container');
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card p-4 shadow-sm mb-4 mp-config-card';
+        cardDiv.id = `mp-config-card-${cardId}`;
+        cardDiv.style.borderRadius = '8px';
+        cardDiv.style.border = '1px solid #e0e0e0';
+        
+        const selectHtml = document.getElementById('mp-products-options-template').innerHTML;
+        
+        cardDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="font-weight-bold text-secondary mb-0"><i class="fas fa-cube me-2"></i>Matiere Premiere</h5>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeMpCard('${cardId}')"><i class="fas fa-trash-alt me-1"></i>Supprimer</button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label font-weight-bold">Selectionner la Matiere Premiere</label>
+                    <select class="form-select select2-mp" id="mp_product_${cardId}" style="width: 100%;" onchange="onMpCardProductSelected('${cardId}', this.value)">
+                        ${selectHtml}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label font-weight-bold">Quantite Disponible en Stock</label>
+                    <div class="form-control bg-light mp-avail-qte" id="mp_avail_qte_${cardId}" style="height: 40px; font-weight: bold; color: var(--secondary);">0.0 Kg</div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label font-weight-bold">Quantite a Sortir (<span class="mp-unit-label-${cardId}">Kg</span>)</label>
+                    <input type="number" step="any" class="form-control mp-qte-desired" id="mp_qte_desired_${cardId}" placeholder="Entrez la quantite" oninput="onMpCardQteInput('${cardId}', this.value)" onblur="validateMpCardQteModulo('${cardId}', this)">
+                </div>
+            </div>
+            
+            <div id="mp-config-section-${cardId}" class="mt-4" style="display: none;">
+                <div class="suggestions-section mb-4" id="mp-suggestions-block-${cardId}">
+                    <h6 class="font-weight-bold mb-3 text-primary"><i class="fas fa-lightbulb me-2"></i>Suggestions de Stock (Selectionner manuellement) :</h6>
+                    
+                    <!-- Local Filters -->
+                    <div class="row g-2 mb-3 suggestions-filters align-items-center">
+                        <div class="col-md-4 col-sm-12">
+                            <input type="text" class="form-control form-control-sm filter-lot" placeholder="Filtrer par lot..." oninput="filterSuggestionsLocal(this, '${cardId}', 'MP')">
+                        </div>
+                        <div class="col-md-4 col-sm-12">
+                            <input type="text" class="form-control form-control-sm filter-magasin" placeholder="Filtrer par magasin..." oninput="filterSuggestionsLocal(this, '${cardId}', 'MP')">
+                        </div>
+                        <div class="col-md-4 col-sm-12">
+                            <input type="text" class="form-control form-control-sm filter-emplacement" placeholder="Filtrer par emplacement..." oninput="filterSuggestionsLocal(this, '${cardId}', 'MP')">
+                        </div>
+                    </div>
+                    
+                    <div class="suggestions-list-container" id="mp-suggestions-list-${cardId}" style="max-height: 300px; overflow-y: auto;">
+                    </div>
+                </div>
+                
+                <div class="to-scan-section mt-4">
+                    <h6 class="font-weight-bold text-success mb-3"><i class="fas fa-barcode me-2"></i>Liste des Palettes a Scanner :</h6>
+                    <div class="to-scan-list-container" id="mp-to-scan-list-${cardId}">
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <strong class="text-dark" style="font-size: 15px;">Total Selectionne: <span id="mp-total-picked-${cardId}" class="text-primary font-weight-bold">0.0</span> / <span id="mp-desired-val-${cardId}">0.0</span> <span class="mp-unit-label-${cardId}">Kg</span></strong>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(cardDiv);
+        
+        $(`#mp_product_${cardId}`).select2({
+            theme: 'bootstrap-5',
+            allowClear: true
+        });
+    }
+
+    function removeMpCard(cardId) {
+        const cardDiv = document.getElementById(`mp-config-card-${cardId}`);
+        if (cardDiv) cardDiv.remove();
+        delete picks[cardId];
+        mpCards = mpCards.filter(c => c.cardId !== cardId);
+    }
+
+    function onMpCardProductSelected(cardId, productId) {
         if (!productId) {
-            document.getElementById('mp_avail_qte').textContent = '0.0 Kg';
-            document.getElementById('mp-config-section').style.display = 'none';
+            document.getElementById(`mp_avail_qte_${cardId}`).textContent = '0.0 Kg';
+            document.getElementById(`mp-config-section-${cardId}`).style.display = 'none';
             return;
         }
         
-        const qtePerPal = parseFloat(document.getElementById('mp_product').selectedOptions[0].dataset.qtePerPal) || 1.0;
-        document.getElementById('mp-config-section').style.display = 'block';
+        const selectedOption = document.getElementById(`mp_product_${cardId}`).selectedOptions[0];
+        const unit = selectedOption.dataset.unit || 'Kg';
+        
+        document.querySelectorAll(`.mp-unit-label-${cardId}`).forEach(el => el.textContent = unit);
         
         fetch(`{% url "get_available_stock" %}?product_id=${productId}&site_id=${selectedSite}&move_type=${selectedMoveType}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     productStock[productId] = data.stock;
-                    picks[productId] = [];
+                    picks[cardId] = [];
+                    
+                    const card = mpCards.find(c => c.cardId === cardId);
+                    if (card) card.productId = productId;
                     
                     let totalQte = 0;
                     data.stock.forEach(item => {
                         totalQte += parseFloat(item.qte);
                     });
-                    document.getElementById('mp_avail_qte').textContent = `${totalQte.toFixed(2)} Kg`;
+                    document.getElementById(`mp_avail_qte_${cardId}`).textContent = `${totalQte.toFixed(2)} ${unit}`;
                     
-                    // Reset inputs
-                    document.getElementById('mp_qte_desired').value = '';
-                    document.getElementById('mp_palette_desired').value = '';
-                    document.getElementById('mp-total-picked').textContent = '0.0';
-                    document.getElementById('mp-desired-val').textContent = '0.0';
-                    document.getElementById('mp-to-scan-tbody').innerHTML = '';
+                    document.getElementById(`mp_qte_desired_${cardId}`).value = '';
+                    document.getElementById(`mp_palette_desired_${cardId}`).value = '';
+                    document.getElementById(`mp-total-picked-${cardId}`).textContent = '0.0';
+                    document.getElementById(`mp-desired-val-${cardId}`).textContent = '0.0';
                     
-                    renderMpSuggestions(productId);
+                    const toScanList = document.getElementById(`mp-to-scan-list-${cardId}`);
+                    if (toScanList) toScanList.innerHTML = '';
+                    
+                    renderMpSuggestions(productId, cardId);
                 }
             });
     }
 
-    function onMpQteInput(val) {
+    function onMpCardQteInput(cardId, val) {
         const qte = parseFloat(val) || 0;
-        const qtePerPal = parseFloat(document.getElementById('mp_product').selectedOptions[0].dataset.qtePerPal) || 1.0;
-        document.getElementById('mp_palette_desired').value = Math.ceil(qte / qtePerPal);
-        document.getElementById('mp-desired-val').textContent = qte.toFixed(2);
+        const select = document.getElementById(`mp_product_${cardId}`);
+        if (!select) return;
+        const qtePerPal = parseFloat(select.selectedOptions[0].dataset.qtePerPal) || 1.0;
         
-        const productId = document.getElementById('mp_product').value;
+        document.getElementById(`mp_palette_desired_${cardId}`).value = Math.ceil(qte / qtePerPal);
+        document.getElementById(`mp-desired-val-${cardId}`).textContent = qte.toFixed(2);
+        
+        const configSec = document.getElementById(`mp-config-section-${cardId}`);
+        if (configSec) configSec.style.display = qte > 0 ? 'block' : 'none';
+        
+        const card = mpCards.find(c => c.cardId === cardId);
+        if (!card || !card.productId) return;
+        
         if (selectedMode === 'fifo') {
-            autoSelectFifoPalettes(productId, qte, 'MP');
+            autoSelectFifoPalettes(card.productId, qte, 'MP', cardId);
         } else {
-            updatePicksTotal(productId, 'MP');
+            document.getElementById(`mp-suggestions-block-${cardId}`).style.display = 'block';
+            updatePicksTotal(card.productId, 'MP', cardId);
         }
     }
 
-    function onMpPaletteInput(val) {
+    function onMpCardPaletteInput(cardId, val) {
         const pal = parseInt(val) || 0;
-        const qtePerPal = parseFloat(document.getElementById('mp_product').selectedOptions[0].dataset.qtePerPal) || 1.0;
+        const select = document.getElementById(`mp_product_${cardId}`);
+        if (!select) return;
+        const qtePerPal = parseFloat(select.selectedOptions[0].dataset.qtePerPal) || 1.0;
         const qte = pal * qtePerPal;
-        document.getElementById('mp_qte_desired').value = qte.toFixed(2);
-        document.getElementById('mp-desired-val').textContent = qte.toFixed(2);
         
-        const productId = document.getElementById('mp_product').value;
+        document.getElementById(`mp_qte_desired_${cardId}`).value = qte.toFixed(2);
+        document.getElementById(`mp-desired-val-${cardId}`).textContent = qte.toFixed(2);
+        
+        const configSec = document.getElementById(`mp-config-section-${cardId}`);
+        if (configSec) configSec.style.display = qte > 0 ? 'block' : 'none';
+        
+        const card = mpCards.find(c => c.cardId === cardId);
+        if (!card || !card.productId) return;
+        
         if (selectedMode === 'fifo') {
-            autoSelectFifoPalettes(productId, qte, 'MP');
+            autoSelectFifoPalettes(card.productId, qte, 'MP', cardId);
         } else {
-            updatePicksTotal(productId, 'MP');
+            document.getElementById(`mp-suggestions-block-${cardId}`).style.display = 'block';
+            updatePicksTotal(card.productId, 'MP', cardId);
         }
+    }
+
+    function validateMpCardQteModulo(cardId, inputEl) {
+        const mpSelect = document.getElementById(`mp_product_${cardId}`);
+        const selectedOption = mpSelect ? mpSelect.selectedOptions[0] : null;
+        const qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
+        validateInputModulo(inputEl, qtePerCond);
     }
 
     function fetchAvailableStockForProduct(productId, qtePerPal) {
@@ -949,7 +1185,6 @@
             });
     }
 
-    // Configurations handlers for PF
     function onPfInputPalette(productId, val) {
         const pal = parseInt(val) || 0;
         const product = cart.find(p => p.id === productId);
@@ -984,7 +1219,370 @@
         }
     }
 
-    function autoSelectFifoPalettes(productId, desiredQte, type) {
+    function renderPfSuggestions(productId) {
+        const container = document.getElementById(`pf-suggestions-list-${productId}`);
+        if (!container) return;
+        container.innerHTML = '';
+        const stock = productStock[productId] || [];
+        
+        if (selectedMode === 'fifo') {
+            document.getElementById(`pf-suggestions-section-${productId}`).style.display = 'none';
+            return;
+        }
+        document.getElementById(`pf-suggestions-section-${productId}`).style.display = 'block';
+        
+        if (stock.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted p-3">Aucune suggestion disponible en stock.</div>';
+            return;
+        }
+
+        const product = cart.find(p => p.id === productId);
+        const unit = product ? (product.unit || 'Kg') : 'Kg';
+        const qtePerPal = product ? (parseFloat(product.qte_per_pal) || 1.0) : 1.0;
+        
+        stock.forEach(item => {
+            item.palettes.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+                card.id = `pf-suggestion-card-${p.id}`;
+                
+                const nameParts = item.emplacement_name.split(' - ');
+                const whName = nameParts[0] || '';
+                const empName = nameParts[1] || '';
+                
+                card.dataset.magasin = whName;
+                card.dataset.emplacement = empName;
+                card.dataset.lot = item.n_lot || '';
+                
+                card.innerHTML = `
+                    <div class="card-icon-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="card-badges-wrapper">
+                        <span class="card-badge card-badge-lot"><i class="fas fa-barcode"></i> Lot: ${item.n_lot}</span>
+                        <span class="card-badge card-badge-wh"><i class="fas fa-warehouse"></i> Mag: ${whName}</span>
+                        <span class="card-badge card-badge-emp"><i class="fas fa-map-pin"></i> Emp: ${empName}</span>
+                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${p.sequence}</span>
+                        ${item.expiry_date ? `<span class="card-badge card-badge-expiry"><i class="fas fa-calendar-alt"></i> Exp: ${item.expiry_date}</span>` : ''}
+                    </div>
+                    <div class="card-right-wrapper">
+                        <div class="card-qte-badge">
+                            Quantite: <span class="card-qte-value">${p.qte.toFixed(2)}</span> / ${qtePerPal} ${unit}
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-outline-primary" type="button" onclick="pickPaletteManually(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'PF', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
+                                <i class="fas fa-plus me-1"></i> Choisir
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning ms-1" type="button" onclick="pickPalettePartial(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'PF', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
+                                <i class="fas fa-edit me-1"></i> Partiel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        });
+    }
+
+    function renderMpSuggestions(productId, cardId) {
+        const container = document.getElementById(`mp-suggestions-list-${cardId}`);
+        if (!container) return;
+        container.innerHTML = '';
+        const stock = productStock[productId] || [];
+        
+        if (selectedMode === 'fifo') {
+            document.getElementById(`mp-suggestions-block-${cardId}`).style.display = 'none';
+            return;
+        }
+        document.getElementById(`mp-suggestions-block-${cardId}`).style.display = 'block';
+        
+        if (stock.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted p-3">Aucune suggestion disponible en stock.</div>';
+            return;
+        }
+
+        const select = document.getElementById(`mp_product_${cardId}`);
+        const selectedOption = select ? select.selectedOptions[0] : null;
+        const unit = selectedOption ? (selectedOption.dataset.unit || 'Kg') : 'Kg';
+        const qtePerPal = selectedOption ? (parseFloat(selectedOption.dataset.qtePerPal) || 1.0) : 1.0;
+        
+        stock.forEach(item => {
+            item.palettes.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+                card.id = `mp-suggestion-card-${p.id}`;
+                
+                const nameParts = item.emplacement_name.split(' - ');
+                const whName = nameParts[0] || '';
+                const empName = nameParts[1] || '';
+                
+                card.dataset.magasin = whName;
+                card.dataset.emplacement = empName;
+                card.dataset.lot = item.n_lot || '';
+                
+                card.innerHTML = `
+                    <div class="card-icon-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="card-badges-wrapper">
+                        <span class="card-badge card-badge-lot"><i class="fas fa-barcode"></i> Lot: ${item.n_lot}</span>
+                        <span class="card-badge card-badge-wh"><i class="fas fa-warehouse"></i> Mag: ${whName}</span>
+                        <span class="card-badge card-badge-emp"><i class="fas fa-map-pin"></i> Emp: ${empName}</span>
+                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${p.sequence}</span>
+                        ${item.expiry_date ? `<span class="card-badge card-badge-expiry"><i class="fas fa-calendar-alt"></i> Exp: ${item.expiry_date}</span>` : ''}
+                    </div>
+                    <div class="card-right-wrapper">
+                        <div class="card-qte-badge">
+                            Quantite: <span class="card-qte-value">${p.qte.toFixed(2)}</span> ${unit}
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-outline-primary" type="button" onclick="pickPaletteManually(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'MP', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence}, '${cardId}')">
+                                <i class="fas fa-plus me-1"></i> Choisir
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning ms-1" type="button" onclick="pickPalettePartial(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'MP', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence}, '${cardId}')">
+                                <i class="fas fa-edit me-1"></i> Partiel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        });
+    }
+
+    function pickPaletteManually(productId, paletteId, code, qte, empId, whId, lot, type, empName, sequence, cardId) {
+        const key = type === 'PF' ? productId : cardId;
+        if (!picks[key]) picks[key] = [];
+        
+        if (picks[key].some(p => p.id === paletteId)) {
+            swal("Info", "Cette palette est deja selectionnee.", "info");
+            return;
+        }
+
+        let desiredQte = 0;
+        if (type === 'MP') {
+            desiredQte = parseFloat(document.getElementById(`mp_qte_desired_${cardId}`).value) || 0;
+        } else {
+            const desiredInput = document.getElementById(`pf-qte-${productId}`);
+            desiredQte = desiredInput ? parseFloat(desiredInput.value) || 0 : 0;
+        }
+
+        let currentPickedTotal = picks[key].reduce((sum, item) => sum + parseFloat(item.qte), 0);
+        let remainingNeeded = desiredQte - currentPickedTotal;
+
+        let defaultPickQte = qte;
+        if (remainingNeeded > 0 && remainingNeeded < qte) {
+            defaultPickQte = remainingNeeded;
+        }
+        
+        picks[key].push({
+            id: paletteId,
+            code: code,
+            qte: defaultPickQte,
+            max_qte: qte,
+            emplacement_id: empId,
+            emplacement_name: empName,
+            warehouse_id: whId,
+            n_lot: lot,
+            sequence: sequence
+        });
+        
+        const card = document.getElementById(`${type.toLowerCase()}-suggestion-card-${paletteId}`);
+        if (card) {
+            card.style.opacity = '0.5';
+            card.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        }
+        
+        renderToScanList(productId, type, cardId);
+    }
+
+    function pickPalettePartial(productId, paletteId, code, maxQte, empId, whId, lot, type, empName, sequence, cardId) {
+        const key = type === 'PF' ? productId : cardId;
+        if (!picks[key]) picks[key] = [];
+        
+        if (picks[key].some(p => p.id === paletteId)) {
+            swal("Info", "Cette palette est deja selectionnee.", "info");
+            return;
+        }
+
+        let qtePerCond = 0;
+        if (type === 'MP') {
+            const mpSelect = document.getElementById(`mp_product_${cardId}`);
+            const selectedOption = mpSelect ? mpSelect.selectedOptions[0] : null;
+            qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
+        } else {
+            const product = cart.find(p => p.id === productId);
+            qtePerCond = product ? product.qte_per_cond || 0 : 0;
+        }
+
+        swal({
+            title: "Prelevement Partiel",
+            text: `Entrez la quantite a prelever (Max: ${maxQte} Kg${qtePerCond > 0 ? `, multiple de ${qtePerCond} Kg` : ''}) :`,
+            content: {
+                element: "input",
+                attributes: {
+                    type: "number",
+                    step: "any",
+                    min: "0.01",
+                    max: maxQte.toString(),
+                    value: maxQte.toString()
+                }
+            },
+            buttons: {
+                cancel: "Annuler",
+                confirm: "Confirmer"
+            }
+        }).then((value) => {
+            if (value === null) return;
+            const val = parseFloat(value);
+            if (isNaN(val) || val <= 0 || val > maxQte) {
+                swal("Erreur", `Veuillez entrer une quantite valide entre 0 et ${maxQte} Kg.`, "error");
+                return;
+            }
+
+            if (qtePerCond > 0 && !isModuloValid(val, qtePerCond)) {
+                swal("Erreur", `La quantite doit etre un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
+                return;
+            }
+
+            picks[key].push({
+                id: paletteId,
+                code: code,
+                qte: val,
+                max_qte: maxQte,
+                emplacement_id: empId,
+                emplacement_name: empName,
+                warehouse_id: whId,
+                n_lot: lot,
+                sequence: sequence
+            });
+
+            const card = document.getElementById(`${type.toLowerCase()}-suggestion-card-${paletteId}`);
+            if (card) {
+                card.style.opacity = '0.5';
+                card.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            }
+
+            renderToScanList(productId, type, cardId);
+        });
+    }
+
+    function removePick(productId, paletteId, type, cardId) {
+        const key = type === 'PF' ? productId : cardId;
+        picks[key] = picks[key].filter(p => p.id !== paletteId);
+        
+        const card = document.getElementById(`${type.toLowerCase()}-suggestion-card-${paletteId}`);
+        if (card) {
+            card.style.opacity = '1';
+            card.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        
+        renderToScanList(productId, type, cardId);
+    }
+
+    function updatePickQuantity(key, paletteId, val, type, cardId) {
+        let qte = parseFloat(val) || 0;
+        const item = picks[key].find(p => p.id === paletteId);
+        if (item) {
+            const maxQ = parseFloat(item.max_qte) || item.qte;
+            if (qte > maxQ) {
+                qte = maxQ;
+                const inputEl = document.querySelector(`.pick-qte-input-${paletteId}`);
+                if (inputEl) inputEl.value = qte.toFixed(2);
+            }
+            item.qte = qte;
+            const productId = type === 'PF' ? key : null;
+            updatePicksTotal(productId, type, cardId);
+        }
+    }
+
+    function renderToScanList(productId, type, cardId) {
+        const containerId = type === 'PF' ? `pf-to-scan-list-${productId}` : `mp-to-scan-list-${cardId}`;
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const key = type === 'PF' ? productId : cardId;
+        const list = picks[key] || [];
+        if (list.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted p-3">Aucune palette dans la liste a scanner.</div>';
+            updatePicksTotal(productId, type, cardId);
+            return;
+        }
+
+        let qtePerCond = 0;
+        let unit = 'Kg';
+        if (type === 'MP') {
+            const mpSelect = document.getElementById(`mp_product_${cardId}`);
+            const selectedOption = mpSelect ? mpSelect.selectedOptions[0] : null;
+            qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
+            unit = selectedOption ? (selectedOption.dataset.unit || 'Kg') : 'Kg';
+        } else {
+            const product = cart.find(p => p.id === productId);
+            qtePerCond = product ? product.qte_per_cond || 0 : 0;
+            unit = product ? (product.unit || 'Kg') : 'Kg';
+        }
+        
+        list.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'to-scan-card';
+            card.id = `${type === 'PF' ? 'pf' : 'mp'}-to-scan-card-${p.id}`;
+            
+            const nameParts = p.emplacement_name.split(' - ');
+            const whName = nameParts[0] || '';
+            const empName = nameParts[1] || '';
+            
+            card.innerHTML = `
+                <div class="card-icon-wrapper">
+                    <i class="fas fa-barcode"></i>
+                </div>
+                <div class="card-badges-wrapper">
+                    <span class="card-badge card-badge-lot"><i class="fas fa-barcode"></i> Lot: ${p.n_lot}</span>
+                    <span class="card-badge card-badge-wh"><i class="fas fa-warehouse"></i> Mag: ${whName}</span>
+                    <span class="card-badge card-badge-emp"><i class="fas fa-map-pin"></i> Emp: ${empName}</span>
+                    <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${p.sequence}</span>
+                </div>
+                <div class="card-right-wrapper">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted" style="font-size: 13px;">Qte:</span>
+                        <input type="number" step="any" min="0" max="${p.max_qte || p.qte}" 
+                               class="form-control form-control-sm pick-qte-input-${p.id}" 
+                               value="${p.qte.toFixed(2)}" 
+                               style="width: 100px; height: 32px; font-size: 13px; text-align: right;"
+                               ${selectedMode === 'fifo' ? 'readonly style="background-color: #e9ecef; pointer-events: none;"' : ''}
+                               oninput="updatePickQuantity('${key}', ${p.id}, this.value, '${type}', '${cardId}')"
+                               onblur="validateInputModulo(this, ${qtePerCond})">
+                        <span class="text-muted" style="font-size: 13px;">/ ${(p.max_qte || p.qte).toFixed(2)} ${unit}</span>
+                    </div>
+                    <div class="card-actions">
+                        ${selectedMode === 'manual' ? `
+                        <button class="btn btn-sm btn-danger" type="button" onclick="removePick(${productId}, ${p.id}, '${type}', '${cardId}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        ` : '<span class="text-muted">-</span>'}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        
+        updatePicksTotal(productId, type, cardId);
+    }
+
+    function updatePicksTotal(productId, type, cardId) {
+        const key = type === 'PF' ? productId : cardId;
+        const list = picks[key] || [];
+        let total = 0;
+        list.forEach(p => {
+            total += parseFloat(p.qte);
+        });
+        
+        const totalSpanId = type === 'PF' ? `pf-total-picked-${productId}` : `mp-total-picked-${cardId}`;
+        const span = document.getElementById(totalSpanId);
+        if (span) span.textContent = total.toFixed(2);
+    }
+
+    function autoSelectFifoPalettes(productId, desiredQte, type, cardId) {
         let stock = productStock[productId] || [];
         
         let allPalettes = [];
@@ -1029,10 +1627,12 @@
             accumulated += pickQte;
         }
         
-        picks[productId] = selected;
+        const key = type === 'PF' ? productId : cardId;
+        picks[key] = selected;
         
-        renderToScanList(productId, type);
+        renderToScanList(productId, type, cardId);
     }
+
     function isModuloValid(qte, qtePerCond) {
         if (!qtePerCond || qtePerCond <= 0) return true;
         const ratio = qte / qtePerCond;
@@ -1044,284 +1644,11 @@
         const val = parseFloat(inputEl.value) || 0;
         if (!isModuloValid(val, qtePerCond)) {
             inputEl.classList.add('is-invalid');
-            inputEl.title = `La quantité doit être un multiple de ${qtePerCond} Kg`;
+            inputEl.title = `La quantite doit etre un multiple de ${qtePerCond} Kg`;
         } else {
             inputEl.classList.remove('is-invalid');
             inputEl.removeAttribute('title');
         }
-    }
-
-    function validateMpQteModulo(inputEl) {
-        const mpSelect = document.getElementById('mp_product');
-        const selectedOption = mpSelect.selectedOptions[0];
-        const qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
-        validateInputModulo(inputEl, qtePerCond);
-    }
-
-    function renderPfSuggestions(productId) {
-        const tbody = document.getElementById(`pf-suggestions-tbody-${productId}`);
-        tbody.innerHTML = '';
-        const stock = productStock[productId] || [];
-        
-        stock.forEach(item => {
-            item.palettes.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.id = `pf-suggestion-row-${p.id}`;
-                tr.innerHTML = `
-                    <td style="vertical-align: middle;">${item.emplacement_name}</td>
-                    <td style="vertical-align: middle;">Palette N° ${p.sequence}</td>
-                    <td style="vertical-align: middle;">${item.n_lot}</td>
-                    <td style="vertical-align: middle;">${item.expiry_date || '/'}</td>
-                    <td style="vertical-align: middle;">${p.qte.toFixed(2)} Kg</td>
-                    <td class="text-center">
-                        <button class="btn btn-xs btn-outline-primary" type="button" onclick="pickPaletteManually(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'PF', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
-                            <i class="fas fa-plus"></i> Choisir
-                        </button>
-                        <button class="btn btn-xs btn-outline-warning ms-1" type="button" onclick="pickPalettePartial(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'PF', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
-                            <i class="fas fa-edit"></i> Partiel
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        });
-    }
-
-    function renderMpSuggestions(productId) {
-        const tbody = document.getElementById('mp-suggestions-tbody');
-        tbody.innerHTML = '';
-        const stock = productStock[productId] || [];
-        
-        if (selectedMode === 'fifo') {
-            document.getElementById('mp-suggestions-block').style.display = 'none';
-            return;
-        }
-        document.getElementById('mp-suggestions-block').style.display = 'block';
-        
-        stock.forEach(item => {
-            item.palettes.forEach(p => {
-                const tr = document.createElement('tr');
-                tr.id = `mp-suggestion-row-${p.id}`;
-                tr.innerHTML = `
-                    <td style="vertical-align: middle;">${item.emplacement_name}</td>
-                    <td style="vertical-align: middle;">Palette N° ${p.sequence}</td>
-                    <td style="vertical-align: middle;">${item.n_lot}</td>
-                    <td style="vertical-align: middle;">${item.expiry_date || '/'}</td>
-                    <td style="vertical-align: middle;">${p.qte.toFixed(2)} Kg</td>
-                    <td class="text-center">
-                        <button class="btn btn-xs btn-outline-primary" type="button" onclick="pickPaletteManually(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'MP', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
-                            <i class="fas fa-plus"></i> Choisir
-                        </button>
-                        <button class="btn btn-xs btn-outline-warning ms-1" type="button" onclick="pickPalettePartial(${productId}, ${p.id}, '${p.code}', ${p.qte}, ${item.emplacement_id}, ${item.warehouse_id}, '${item.n_lot}', 'MP', '${item.emplacement_name.replace(/'/g, "\\'")}', ${p.sequence})">
-                            <i class="fas fa-edit"></i> Partiel
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        });
-    }
-
-    function pickPaletteManually(productId, paletteId, code, qte, empId, whId, lot, type, empName, sequence) {
-        if (picks[productId].some(p => p.id === paletteId)) {
-            swal("Info", "Cette palette est déjà sélectionnée.", "info");
-            return;
-        }
-
-        // Calculate remaining desired quantity
-        let desiredQte = 0;
-        if (type === 'MP') {
-            desiredQte = parseFloat(document.getElementById('mp_qte_desired').value) || 0;
-        } else {
-            const desiredInput = document.getElementById(`pf-qte-${productId}`);
-            desiredQte = desiredInput ? parseFloat(desiredInput.value) || 0 : 0;
-        }
-
-        let currentPickedTotal = picks[productId].reduce((sum, item) => sum + parseFloat(item.qte), 0);
-        let remainingNeeded = desiredQte - currentPickedTotal;
-
-        let defaultPickQte = qte;
-        if (remainingNeeded > 0 && remainingNeeded < qte) {
-            defaultPickQte = remainingNeeded;
-        }
-        
-        picks[productId].push({
-            id: paletteId,
-            code: code,
-            qte: defaultPickQte,
-            max_qte: qte,
-            emplacement_id: empId,
-            emplacement_name: empName,
-            warehouse_id: whId,
-            n_lot: lot,
-            sequence: sequence
-        });
-        
-        const row = document.getElementById(`${type.toLowerCase()}-suggestion-row-${paletteId}`);
-        if (row) {
-            row.style.opacity = '0.5';
-            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-        }
-        
-        renderToScanList(productId, type);
-    }
-
-    function pickPalettePartial(productId, paletteId, code, maxQte, empId, whId, lot, type, empName, sequence) {
-        if (picks[productId].some(p => p.id === paletteId)) {
-            swal("Info", "Cette palette est déjà sélectionnée.", "info");
-            return;
-        }
-
-        // Get packaging modulo constraint
-        let qtePerCond = 0;
-        if (type === 'MP') {
-            qtePerCond = parseFloat(document.getElementById('mp_product').selectedOptions[0].dataset.qtePerCond) || 0;
-        } else {
-            const product = cart.find(p => p.id === productId);
-            qtePerCond = product ? product.qte_per_cond || 0 : 0;
-        }
-
-        swal({
-            title: "Prélèvement Partiel",
-            text: `Entrez la quantité à prélever (Max: ${maxQte} Kg${qtePerCond > 0 ? `, multiple de ${qtePerCond} Kg` : ''}) :`,
-            content: {
-                element: "input",
-                attributes: {
-                    placeholder: "Quantité en Kg",
-                    type: "number",
-                    step: "any",
-                    min: "0.01",
-                    max: maxQte
-                },
-            },
-            buttons: {
-                cancel: "Annuler",
-                confirm: "Valider"
-            }
-        }).then((value) => {
-            if (value === null) return;
-            const val = parseFloat(value);
-            if (isNaN(val) || val <= 0 || val > maxQte) {
-                swal("Erreur", `Veuillez entrer une quantité valide entre 0 et ${maxQte} Kg.`, "error");
-                return;
-            }
-
-            if (qtePerCond > 0 && !isModuloValid(val, qtePerCond)) {
-                swal("Erreur", `La quantité doit être un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
-                return;
-            }
-
-            picks[productId].push({
-                id: paletteId,
-                code: code,
-                qte: val,
-                max_qte: maxQte,
-                emplacement_id: empId,
-                emplacement_name: empName,
-                warehouse_id: whId,
-                n_lot: lot,
-                sequence: sequence
-            });
-
-            const row = document.getElementById(`${type.toLowerCase()}-suggestion-row-${paletteId}`);
-            if (row) {
-                row.style.opacity = '0.5';
-                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-            }
-
-            renderToScanList(productId, type);
-        });
-    }
-
-    function removePick(productId, paletteId, type) {
-        picks[productId] = picks[productId].filter(p => p.id !== paletteId);
-        
-        const row = document.getElementById(`${type.toLowerCase()}-suggestion-row-${paletteId}`);
-        if (row) {
-            row.style.opacity = '1';
-            row.querySelectorAll('button').forEach(btn => btn.disabled = false);
-        }
-        
-        renderToScanList(productId, type);
-    }
-
-    function updatePickQuantity(productId, paletteId, val, type) {
-        let qte = parseFloat(val) || 0;
-        const item = picks[productId].find(p => p.id === paletteId);
-        if (item) {
-            const maxQ = parseFloat(item.max_qte) || item.qte;
-            if (qte > maxQ) {
-                qte = maxQ;
-                const inputEl = document.querySelector(`.pick-qte-input-${paletteId}`);
-                if (inputEl) inputEl.value = qte.toFixed(2);
-            }
-            item.qte = qte;
-            updatePicksTotal(productId, type);
-        }
-    }
-
-    function renderToScanList(productId, type) {
-        const tbodyId = type === 'PF' ? `pf-to-scan-tbody-${productId}` : 'mp-to-scan-tbody';
-        const tbody = document.getElementById(tbodyId);
-        tbody.innerHTML = '';
-        
-        const list = picks[productId] || [];
-        if (list.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Aucune palette dans la liste à scanner.</td></tr>';
-            updatePicksTotal(productId, type);
-            return;
-        }
-
-        let qtePerCond = 0;
-        if (type === 'MP') {
-            const mpSelect = document.getElementById('mp_product');
-            const selectedOption = mpSelect.selectedOptions[0];
-            qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
-        } else {
-            const product = cart.find(p => p.id === productId);
-            qtePerCond = product ? product.qte_per_cond || 0 : 0;
-        }
-        
-        list.forEach(p => {
-            console.log(p);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="vertical-align: middle;">${p.emplacement_name}</td>
-                <td style="vertical-align: middle;">Palette N° ${p.sequence}</td>
-                <td style="vertical-align: middle;">${p.n_lot}</td>
-                <td style="vertical-align: middle; width: 120px;">
-                    <input type="number" step="any" min="0" max="${p.max_qte || p.qte}" 
-                           class="form-control form-control-sm pick-qte-input-${p.id}" 
-                           value="${p.qte.toFixed(2)}" 
-                           style="height: 30px; font-size: 13px;"
-                           ${selectedMode === 'fifo' ? 'readonly style="background-color: #e9ecef; pointer-events: none;"' : ''}
-                           oninput="updatePickQuantity(${productId}, ${p.id}, this.value, '${type}')"
-                           onblur="validateInputModulo(this, ${qtePerCond})">
-                </td>
-                <td class="text-center">
-                    ${selectedMode === 'manual' ? `
-                    <button class="btn btn-sm btn-danger" type="button" onclick="removePick(${productId}, ${p.id}, '${type}')" style="padding: 2px 6px;">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    ` : '<span class="text-muted">-</span>'}
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-        
-        updatePicksTotal(productId, type);
-    }
-
-    function updatePicksTotal(productId, type) {
-        const list = picks[productId] || [];
-        let total = 0;
-        list.forEach(p => {
-            total += parseFloat(p.qte);
-        });
-        
-        const totalSpanId = type === 'PF' ? `pf-total-picked-${productId}` : 'mp-total-picked';
-        const span = document.getElementById(totalSpanId);
-        if (span) span.textContent = total.toFixed(2);
     }
 
     function submitMoveOut(category) {
@@ -1347,48 +1674,69 @@
         let productsPayload = [];
         
         if (category === 'MP') {
-            const productId = document.getElementById('mp_product').value;
-            if (!productId) {
-                swal("Erreur", "Veuillez sélectionner un produit matière première.", "error");
-                return;
-            }
-            const desiredQte = parseFloat(document.getElementById('mp_qte_desired').value) || 0;
-            if (desiredQte <= 0) {
-                swal("Erreur", "Veuillez entrer une quantité valide à sortir.", "error");
-                return;
-            }
-
-            const qtePerCond = parseFloat(document.getElementById('mp_product').selectedOptions[0].dataset.qtePerCond) || 0;
-            if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond)) {
-                swal("Erreur", `La quantité désirée (${desiredQte} Kg) doit être un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
-                return;
-            }
-
-            const pickedList = picks[productId] || [];
-            const totalPicked = pickedList.reduce((acc, p) => acc + parseFloat(p.qte), 0);
-            
-            if (selectedMode === 'manual' && Math.abs(totalPicked - desiredQte) > 0.01) {
-                swal("Erreur", `La quantité sélectionnée (${totalPicked.toFixed(2)} Kg) ne correspond pas à la quantité désirée (${desiredQte.toFixed(2)} Kg).`, "error");
+            if (mpCards.length === 0) {
+                swal("Erreur", "Veuillez ajouter au moins une matiere premiere.", "error");
                 return;
             }
             
-            if (pickedList.length === 0) {
-                swal("Erreur", "Aucune palette n'a été sélectionnée pour la sortie.", "error");
-                return;
-            }
-
-            for (let p of pickedList) {
-                if (qtePerCond > 0 && !isModuloValid(p.qte, qtePerCond)) {
-                    swal("Erreur", `La quantité de la palette ${p.code} (${p.qte} Kg) doit être un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
+            let valid = true;
+            mpCards.forEach(card => {
+                const productId = card.productId;
+                if (!productId) {
+                    valid = false;
+                    swal("Erreur", "Veuillez selectionner un produit matiere premiere sur toutes les cartes.", "error");
                     return;
                 }
-            }
-            
-            productsPayload.push({
-                product_id: parseInt(productId),
-                qte_desired: desiredQte,
-                picks: pickedList
+                
+                const desiredQte = parseFloat(document.getElementById(`mp_qte_desired_${card.cardId}`).value) || 0;
+                if (desiredQte <= 0) {
+                    valid = false;
+                    document.getElementById(`mp_qte_desired_${card.cardId}`).classList.add('is-invalid');
+                    swal("Erreur", "Veuillez entrer une quantite valide a sortir.", "error");
+                    return;
+                } else {
+                    document.getElementById(`mp_qte_desired_${card.cardId}`).classList.remove('is-invalid');
+                }
+
+                const select = document.getElementById(`mp_product_${card.cardId}`);
+                const qtePerCond = select ? parseFloat(select.selectedOptions[0].dataset.qtePerCond) || 0 : 0;
+                if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond)) {
+                    valid = false;
+                    swal("Erreur", `La quantite desiree (${desiredQte} Kg) doit etre un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
+                    return;
+                }
+
+                const pickedList = picks[card.cardId] || [];
+                const totalPicked = pickedList.reduce((acc, p) => acc + parseFloat(p.qte), 0);
+                
+                if (selectedMode === 'manual' && Math.abs(totalPicked - desiredQte) > 0.01) {
+                    valid = false;
+                    swal("Erreur", `La quantite selectionnee (${totalPicked.toFixed(2)}) ne correspond pas a la quantite desiree (${desiredQte.toFixed(2)}).`, "error");
+                    return;
+                }
+                
+                if (pickedList.length === 0) {
+                    valid = false;
+                    swal("Erreur", "Aucune palette n'a ete selectionnee pour la sortie.", "error");
+                    return;
+                }
+
+                for (let p of pickedList) {
+                    if (qtePerCond > 0 && !isModuloValid(p.qte, qtePerCond)) {
+                        valid = false;
+                        swal("Erreur", `La quantite de la palette ${p.code} (${p.qte}) doit etre un multiple de ${qtePerCond} (conditionnement).`, "error");
+                        return;
+                    }
+                }
+                
+                productsPayload.push({
+                    product_id: parseInt(productId),
+                    qte_desired: desiredQte,
+                    picks: pickedList
+                });
             });
+            
+            if (!valid) return;
             
         } else {
             // PF
@@ -1405,7 +1753,7 @@
                 const qtePerCond = product.qte_per_cond || 0;
                 if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond)) {
                     valid = false;
-                    swal("Erreur", `Pour le produit ${product.designation}, la quantité désirée (${desiredQte} Kg) doit être un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
+                    swal("Erreur", `Pour le produit ${product.designation}, la quantite desiree (${desiredQte} Kg) doit etre un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
                 }
                 
                 const pickedList = picks[product.id] || [];
@@ -1413,18 +1761,18 @@
                 
                 if (selectedMode === 'manual' && Math.abs(totalPicked - desiredQte) > 0.01) {
                     valid = false;
-                    swal("Erreur", `Pour le produit ${product.designation}, la quantité sélectionnée (${totalPicked.toFixed(2)} Kg) ne correspond pas à la quantité désirée (${desiredQte.toFixed(2)} Kg).`, "error");
+                    swal("Erreur", `Pour le produit ${product.designation}, la quantite selectionnee (${totalPicked.toFixed(2)}) ne correspond pas a la quantite desiree (${desiredQte.toFixed(2)}).`, "error");
                 }
                 
                 if (pickedList.length === 0) {
                     valid = false;
-                    swal("Erreur", `Veuillez sélectionner des palettes pour le produit ${product.designation}.`, "error");
+                    swal("Erreur", `Veuillez selectionner des palettes pour le produit ${product.designation}.`, "error");
                 }
 
                 for (let p of pickedList) {
                     if (qtePerCond > 0 && !isModuloValid(p.qte, qtePerCond)) {
                         valid = false;
-                        swal("Erreur", `Pour le produit ${product.designation}, la quantité de la palette ${p.code} (${p.qte} Kg) doit être un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
+                        swal("Erreur", `Pour le produit ${product.designation}, la quantite de la palette ${p.code} (${p.qte}) doit etre un multiple de ${qtePerCond} (conditionnement).`, "error");
                     }
                 }
                 
@@ -1452,8 +1800,8 @@
         };
         
         swal({
-            title: "Confirmer la création",
-            text: "Êtes-vous sûr de vouloir enregistrer cette sortie de stock ?",
+            title: "Confirmer la creation",
+            text: "Etes-vous sur de vouloir enregistrer cette sortie de stock ?",
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -1472,7 +1820,7 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            swal("Succès!", response.message, "success").then(function() {
+                            swal("Succes!", response.message, "success").then(function() {
                                 window.location.href = "{% url 'move_detail' 0 %}".replace('0', response.new_record);
                             });
                         } else {
@@ -1480,7 +1828,7 @@
                         }
                     },
                     error: function() {
-                        swal("Erreur", "Une erreur s'est produite lors de la création.", "error");
+                        swal("Erreur", "Une erreur s'est produite lors de la creation.", "error");
                     }
                 });
             }
