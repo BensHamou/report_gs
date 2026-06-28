@@ -1,3 +1,4 @@
+from django.template.defaultfilters import date
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from .models import Disponibility, TemporaryEmplacementAlert, Family, Product, MoveLine, ExpiryAlertLog
@@ -39,7 +40,7 @@ def send_alert(alert):
 
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html") 
-    email.send()    
+    email.send()
 
 def mirror_email(mirror):
     if not mirror:
@@ -83,6 +84,9 @@ def site_state_pf(include_qrt=False):
                 total_qte = round(sum(item['total_qte'] for item in family_disponibilities), 2)
 
                 family_data.append({'family': family, 'disponibilities': family_disponibilities, 'total_palette': total_palette,'total_qte': total_qte})
+                
+        if not family_data:
+            continue
 
         html_message = render_to_string('fragment/pf_state.html', {'site': site, 'today': today,'family_data': family_data, 'global': False})
 
@@ -125,6 +129,9 @@ def global_state_pf(include_qrt=False):
     
     print(addresses, subject)
 
+    if not family_data:
+        return
+
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
     email.attach_alternative(html_message, "text/html")
     email.send()
@@ -147,6 +154,9 @@ def site_state_mp(include_qrt=False):
             total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
 
             data.append({'disponibilities': disponibilities,'total_qte': total_qte})
+            
+        if not data:
+            continue
 
         html_message = render_to_string('fragment/mp_state.html', {'site': site, 'today': today, 'datas': data, 'global': False})
 
@@ -173,6 +183,9 @@ def global_state_mp(include_qrt=False):
     if disponibilities:
         total_qte = round(sum(item['total_qte'] for item in disponibilities), 2)
         data.append({'disponibilities': disponibilities,'total_qte': total_qte})
+
+    if not data:
+        return
 
     html_message = render_to_string('fragment/mp_state.html', {'site': '/', 'today': today, 'datas': data, 'global': True})
 
@@ -251,6 +264,8 @@ def check_min_max():
         send_btr_recommendations(prepare_items(by_site_mp))
 
 def send_site_alert(recipients, subject, message, alert_data):
+    if not alert_data:
+        return
     today = timezone.now().date()
     html = render_to_string('fragment/minmax_alert.html', {'alert_data': alert_data, 'message': message, 'today': today})
     email = EmailMultiAlternatives(subject, None, 'Puma Stock', recipients)
