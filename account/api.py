@@ -383,5 +383,4 @@ def save_scan_progress_api(request):
         return Response({"detail": "Ce mouvement n'est plus à l'état Brouillon."}, status=400)
     detail_codes = DetailCode.objects.filter(line_detail__move_line__move=move)
     detail_codes.filter(id__in=scanned_ids).update(is_scanned=True)
-    detail_codes.exclude(id__in=scanned_ids).update(is_scanned=False)
     return Response({"success": True, "detail": "Progrès de scan enregistré avec succès."}, status=200)
