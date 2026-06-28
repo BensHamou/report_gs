@@ -156,8 +156,8 @@ class TabletMoveScanSerializer(serializers.ModelSerializer):
             emplacements_map[emp.id]['products'][prod.id]['codes'].append({
                 'id': dc.id,
                 'code': dc.code,
-                'qte_to_scan': dc.qte,
-                'qte_per_cond': dc.qte / prod.qte_per_cond if prod.qte_per_cond else 0
+                'qte_to_scan': f'{dc.qte} {prod.packing.unit}',
+                'qte_per_cond': f'{dc.qte / prod.qte_per_cond} {prod.packing.designation}' if prod.qte_per_cond else f'{dc.qte} {prod.packing.unit}'
             })
             
         result = []
