@@ -157,7 +157,7 @@ class TabletMoveScanSerializer(serializers.ModelSerializer):
                 'id': dc.id,
                 'code': dc.code,
                 'qte_to_scan': dc.qte,
-                'product_qte_per_cond': prod.qte_per_cond or 0.0
+                'qte_per_cond': dc.qte / prod.qte_per_cond if prod.qte_per_cond else 0
             })
             
         result = []
