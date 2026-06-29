@@ -226,46 +226,53 @@
                                         <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
                                             <div class="row">
                                                 {% for dc in detail.detail_codes.all %}
-                                                    <div class="col-lg-6 col-12 d-flex justify-content-between align-items-center mb-2 p-3 border-bottom" style="background: white; border-radius: 4px;">
-                                                        <span style="font-family: monospace; font-size: 13px;">
-                                                            {% if move.type == 'Sortie' %}
-                                                                {{ dc.location_info }}
-                                                            {% else %}
-                                                                Palette N° {{ dc.sequence }}
-                                                            {% endif %}
-                                                        </span>
-                                                        <div>
-                                                            {% if move.type == 'Entré' %}
-                                                                <span class="badge bg-secondary text-white mr-2">{{ dc.qte|intcomma }} Kg</span>
-                                                                {% if not dc.is_printed %}
-                                                                <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
-                                                                        data-line-detail-id="{{ dc.id }}" 
-                                                                        data-product-name="{{ detail.move_line.product.designation }}"
-                                                                        data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
-                                                                        data-expiry-date="{{ detail.expiry_date|default:'/' }}"
-                                                                        data-production-date="{{ detail.move_line.move.date|default:'/' }}"
-                                                                        data-magasin="{{ detail.warehouse.designation }}"
-                                                                        data-emplacement="{{ detail.emplacement.designation }}"
-                                                                        data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                                        data-palettes="1"
-                                                                        data-use-dc="1"
-                                                                        data-is-bulk="0"
-                                                                        data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
-                                                                        data-from-move-detail="1"
-                                                                        data-code="{{ dc.code }}">
-                                                                    <i class="fas fa-print"></i>
-                                                                </button>
-                                                                {% else %}
-                                                                <span class="badge bg-secondary text-white"><i class="fas fa-check"></i> Imprimé</span>
+                                                    <div class="col-lg-6 col-12">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2 p-3" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                                            <div class="d-flex align-items-center">
+                                                                <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                                                    <i class="fas fa-qrcode"></i>
+                                                                </div>
+                                                                <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
+                                                                    {% if move.type == 'Sortie' %}
+                                                                        {{ dc.location_info }}
+                                                                    {% else %}
+                                                                        Palette N° {{ dc.sequence }}
+                                                                    {% endif %}
+                                                                </span>
+                                                            </div>
+                                                            <div class="ms-auto">
+                                                                {% if move.type == 'Entré' %}
+                                                                    <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
+                                                                    {% if not dc.is_printed %}
+                                                                    <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                            data-line-detail-id="{{ dc.id }}" 
+                                                                            data-product-name="{{ detail.move_line.product.designation }}"
+                                                                            data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                            data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                            data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                            data-magasin="{{ detail.warehouse.designation }}"
+                                                                            data-emplacement="{{ detail.emplacement.designation }}"
+                                                                            data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                            data-palettes="1"
+                                                                            data-use-dc="1"
+                                                                            data-is-bulk="0"
+                                                                            data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                            data-from-move-detail="1"
+                                                                            data-code="{{ dc.code }}">
+                                                                        <i class="fas fa-print"></i>
+                                                                    </button>
+                                                                    {% else %}
+                                                                    <span class="badge bg-secondary text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                    {% endif %}
                                                                 {% endif %}
-                                                            {% endif %}
-                                                            {% if move.type == 'Sortie' %}
-                                                                {% if dc.is_scanned %}
-                                                                    <span class="badge bg-success text-white"><i class="fas fa-barcode"></i> Scanné</span>
-                                                                {% else %}
-                                                                    <span class="badge bg-warning text-dark"><i class="fas fa-barcode"></i> Non Scanné</span>
+                                                                {% if move.type == 'Sortie' %}
+                                                                    {% if dc.is_scanned %}
+                                                                        <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-warning text-dark" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-hourglass-half me-1"></i> En attente</span>
+                                                                    {% endif %}
                                                                 {% endif %}
-                                                            {% endif %}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 {% endfor %}
@@ -396,46 +403,53 @@
                                         <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
                                             <div class="row">
                                                 {% for dc in detail.detail_codes.all %}
-                                                    <div class="col-lg-6 col-12 d-flex justify-content-between align-items-center mb-2 p-3 border-bottom" style="background: white; border-radius: 4px;">
-                                                        <span style="font-family: monospace; font-size: 13px;">
-                                                            {% if move.type == 'Sortie' %}
-                                                                {{ dc.location_info }}
-                                                            {% else %}
-                                                                Palette N° {{ dc.sequence }}
-                                                            {% endif %}
-                                                        </span>
-                                                        <div>
-                                                            {% if move.type == 'Entré' %}
-                                                                <span class="badge bg-secondary text-white mr-2">{{ dc.qte|intcomma }} Kg</span>
-                                                                {% if not dc.is_printed %}
-                                                                <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
-                                                                        data-line-detail-id="{{ dc.id }}" 
-                                                                        data-product-name="{{ detail.move_line.product.designation }}"
-                                                                        data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
-                                                                        data-expiry-date="{{ detail.expiry_date|default:'/' }}"
-                                                                        data-production-date="{{ detail.move_line.move.date|default:'/' }}"
-                                                                        data-magasin="{{ detail.warehouse.designation }}"
-                                                                        data-emplacement="{{ detail.emplacement.designation }}"
-                                                                        data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                                        data-palettes="1"
-                                                                        data-use-dc="1"
-                                                                        data-is-bulk="0"
-                                                                        data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
-                                                                        data-from-move-detail="1"
-                                                                        data-code="{{ dc.code }}">
-                                                                    <i class="fas fa-print"></i>
-                                                                </button>
-                                                                {% else %}
-                                                                <span class="badge bg-secondary text-white"><i class="fas fa-check"></i> Imprimé</span>
+                                                    <div class="col-lg-6 col-12">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2 p-3" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                                                            <div class="d-flex align-items-center">
+                                                                <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                                                    <i class="fas fa-qrcode"></i>
+                                                                </div>
+                                                                <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
+                                                                    {% if move.type == 'Sortie' %}
+                                                                        {{ dc.location_info }}
+                                                                    {% else %}
+                                                                        Palette N° {{ dc.sequence }}
+                                                                    {% endif %}
+                                                                </span>
+                                                            </div>
+                                                            <div class="ms-auto">
+                                                                {% if move.type == 'Entré' %}
+                                                                    <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
+                                                                    {% if not dc.is_printed %}
+                                                                    <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                            data-line-detail-id="{{ dc.id }}" 
+                                                                            data-product-name="{{ detail.move_line.product.designation }}"
+                                                                            data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                            data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                            data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                            data-magasin="{{ detail.warehouse.designation }}"
+                                                                            data-emplacement="{{ detail.emplacement.designation }}"
+                                                                            data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                            data-palettes="1"
+                                                                            data-use-dc="1"
+                                                                            data-is-bulk="0"
+                                                                            data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                            data-from-move-detail="1"
+                                                                            data-code="{{ dc.code }}">
+                                                                        <i class="fas fa-print"></i>
+                                                                    </button>
+                                                                    {% else %}
+                                                                    <span class="badge bg-secondary text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                    {% endif %}
                                                                 {% endif %}
-                                                            {% endif %}
-                                                            {% if move.type == 'Sortie' %}
-                                                                {% if dc.is_scanned %}
-                                                                    <span class="badge bg-success text-white"><i class="fas fa-barcode"></i> Scanné</span>
-                                                                {% else %}
-                                                                    <span class="badge bg-warning text-dark"><i class="fas fa-barcode"></i> Non Scanné</span>
+                                                                {% if move.type == 'Sortie' %}
+                                                                    {% if dc.is_scanned %}
+                                                                        <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-warning text-dark" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-hourglass-half me-1"></i> En attente</span>
+                                                                    {% endif %}
                                                                 {% endif %}
-                                                            {% endif %}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 {% endfor %}
@@ -606,3 +620,49 @@
 </script>
 
 {% endblock %}
+
+<style>
+    .suggestion-card {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .card-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 10px;
+        font-size: 20px;
+        margin-right: 18px;
+        flex-shrink: 0;
+    }
+    .card-badges-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-grow: 1;
+        align-items: center;
+    }
+    .custom-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+</style>
+

@@ -4,6 +4,50 @@
 {% block title %}
     Stocks
 {% endblock %}
+<style>
+    .suggestion-card {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .card-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 10px;
+        font-size: 20px;
+        margin-right: 18px;
+        flex-shrink: 0;
+    }
+    .card-badges-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-grow: 1;
+        align-items: center;
+    }
+    .custom-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+</style>
 
 {% block content %}
 <div class="row mb-3">
@@ -129,68 +173,61 @@
                         <td colspan="10" style="padding: 15px 15px 15px 50px;">
                             <div class="p-3" style="border: 1px solid #ccc; border-radius: 8px; background: white;">
                                 <h6 style="color: #133356;">Détails des palettes en stock :</h6>
-                                <table class="table table-sm table-bordered mt-2">
-                                    <thead>
-                                        <tr style="background-color: #eaedf9;">
-                                            <th>Palette N°</th>
-                                            <th>Quantité</th>
-                                            <th>Palette</th>
-                                            <th>Statut</th>
-                                            <th style="width: 15%;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for line in dispo.sorted_lines %}
-                                        <tr>
-                                            <td style="font-family: monospace; font-size: 13px; vertical-align: middle;">Palette N° {{ line.sequence }}</td>
-                                            <td style="vertical-align: middle;">{{ line.qte|floatformat:2|intcomma }} Kg</td>
-                                            <td style="vertical-align: middle;">{{ line.palette }}</td>
-                                            <td style="vertical-align: middle;">
-                                                {% if line.status == 'Détruit' %}
-                                                    <span class="badge bg-danger text-white">Détruit</span>
-                                                {% elif line.qte <= 0 %}
-                                                    <span class="badge bg-secondary text-white">Vidé</span>
-                                                {% else %}
-                                                    <span class="badge bg-success text-white">Valide</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if line.status == 'Valide' and line.qte > 0 %}
-                                                    {% if not line.is_printed %}
-                                                        <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
-                                                                data-line-detail-id="{{ line.id }}" 
-                                                                data-product-name="{{ dispo.product.designation }}"
-                                                                data-lot-number="{{ dispo.n_lot }}"
-                                                                data-expiry-date="{{ dispo.expiry_date|default:'/' }}"
-                                                                data-production-date="{{ dispo.production_date|default:'/' }}"
-                                                                data-magasin="{{ dispo.emplacement.warehouse.designation }}"
-                                                                data-emplacement="{{ dispo.emplacement.designation }}"
-                                                                data-shift="{{ line.shift|default:'/' }}"
-                                                                data-palettes="1"
-                                                                data-use-dl="1"
-                                                                data-is-bulk="0"
-                                                                data-is-mp="{% if dispo.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
-                                                                data-from-move-detail="0"
-                                                                data-code="{{ line.code }}"
-                                                                data-sequence="{{ line.sequence }}">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
+                                <div class="row mt-3">
+                                    {% for line in dispo.sorted_lines %}
+                                        <div class="col-lg-6 col-12">
+                                            <div class="suggestion-card" style="margin-bottom: 10px; padding: 12px 15px;">
+                                                <div class="card-icon-wrapper" style="width: 36px; height: 36px; font-size: 16px; margin-right: 12px;">
+                                                    <i class="fas fa-pallet"></i>
+                                                </div>
+                                                <div class="card-badges-wrapper">
+                                                    <span class="custom-badge bg-light text-dark border" style="font-family: monospace; font-size: 12px;">
+                                                        Palette N° {{ line.sequence }}
+                                                    </span>
+                                                    {% if line.status == 'Détruit' %}
+                                                        <span class="custom-badge bg-danger text-white">Détruit</span>
+                                                    {% elif line.qte <= 0 %}
+                                                        <span class="custom-badge bg-secondary text-white">Vidé</span>
+                                                    {% else %}
+                                                        <span class="custom-badge bg-success text-white">Valide</span>
                                                     {% endif %}
-                                                {% else %}
-                                                    <span class="text-muted">-</span>
-                                                {% endif %}
-                                                {% if user.role == 'Admin' %}
+                                                </div>
+                                                <div class="ms-auto text-end d-flex align-items-center">
+                                                    <span class="badge bg-secondary text-white me-2" style="font-size: 12px;">{{ line.qte|floatformat:2|intcomma }} Kg</span>
                                                     {% if line.status == 'Valide' and line.qte > 0 %}
-                                                    <button class="btn btn-sm btn-warning ms-1" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
-                                                        <i class="fas fa-sync"></i> Remplacer
-                                                    </button>
+                                                        {% if not line.is_printed %}
+                                                            <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                    data-line-detail-id="{{ line.id }}" 
+                                                                    data-product-name="{{ dispo.product.designation }}"
+                                                                    data-lot-number="{{ dispo.n_lot }}"
+                                                                    data-expiry-date="{{ dispo.expiry_date|default:'/' }}"
+                                                                    data-production-date="{{ dispo.production_date|default:'/' }}"
+                                                                    data-magasin="{{ dispo.emplacement.warehouse.designation }}"
+                                                                    data-emplacement="{{ dispo.emplacement.designation }}"
+                                                                    data-shift="{{ line.shift|default:'/' }}"
+                                                                    data-palettes="1"
+                                                                    data-use-dl="1"
+                                                                    data-is-bulk="0"
+                                                                    data-is-mp="{% if dispo.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                    data-from-move-detail="0"
+                                                                    data-code="{{ line.code }}"
+                                                                    data-sequence="{{ line.sequence }}">
+                                                                <i class="fas fa-print"></i>
+                                                            </button>
+                                                        {% endif %}
+                                                        {% if user.role == 'Admin' %}
+                                                        <button class="btn btn-sm btn-warning ms-1" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
+                                                            <i class="fas fa-sync"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
                                                     {% endif %}
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -372,4 +409,48 @@
     }
 </script>
 {% include 'print_modal.html' %}
+<style>
+    .suggestion-card {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .card-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 10px;
+        font-size: 20px;
+        margin-right: 18px;
+        flex-shrink: 0;
+    }
+    .card-badges-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-grow: 1;
+        align-items: center;
+    }
+    .custom-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+</style>
 {% endblock %}

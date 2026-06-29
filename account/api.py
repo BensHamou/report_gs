@@ -337,7 +337,7 @@ class SendWarningEmail(APIView):
     def post(self, request, *args, **kwargs):
         try:
             subject = f'Tente de scan incorrecte'
-            html_message = render_to_string('fragment/warning.html', {'user': request.user})
+            html_message = render_to_string('warning.html', {'user': request.user})
             addresses = request.user.default_site.address.split('&')
             if not addresses:
                 addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
@@ -346,6 +346,7 @@ class SendWarningEmail(APIView):
             email.send()   
             return Response({"detail": "Mail envoyé avec succès."}, status=200)
         except Exception as e:
+            print(e)
             return Response({"detail": "Erreur interne du serveur."}, status=500)
 
 @api_view(['GET'])

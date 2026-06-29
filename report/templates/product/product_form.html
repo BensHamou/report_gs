@@ -197,6 +197,49 @@
         display: none; 
     }
     
+    /* Premium card design */
+    .suggestion-card {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: all 0.2s ease-in-out;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
+    }
+    .card-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 10px;
+        font-size: 20px;
+        margin-right: 18px;
+        flex-shrink: 0;
+    }
+    .card-badges-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        flex-grow: 1;
+        align-items: center;
+    }
+    .custom-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
 </style>
 
 {% if product and product.disponibilities.all %}
@@ -206,32 +249,30 @@
                 <h4 class="mb-4 page-title" style="color: #0082cd;">Disponibilités</h4>
             </div>
         </div>
-        <table class="table table-borderless">
-            <thead>
-                <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
-                    <th class="table-header">N° Lot</th>
-                    <th class="table-header">Magazin</th>
-                    <th class="table-header">Emplacement</th>
-                    <th class="table-header">Quantité</th>
-                    <th class="table-header">Palette</th>
-                    <th class="table-header">Produit le</th>
-                    <th class="table-header">Expire le</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for disponibility in product.disponibilities.all %}
-                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text">{{ disponibility.n_lot }}</td>
-                        <td class="table-text">{{ disponibility.emplacement.warehouse.designation }}</td>
-                        <td class="table-text">{{ disponibility.emplacement.designation }}</td>
-                        <td class="table-text">{{ disponibility.qte }} {{ product.packing.unit|default:'Kg' }}</td>
-                        <td class="table-text">{{ disponibility.palette }}</td>
-                        <td class="table-text">{{ disponibility.production_date|date:'d M Y'|default:'/' }}</td>
-                        <td class="table-text">{{ disponibility.expiry_date|date:'d M Y' }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="disponibility-cards-container">
+            {% for disponibility in product.disponibilities.all %}
+                <div class="suggestion-card">
+                    <div class="card-icon-wrapper">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="card-badges-wrapper">
+                        <span class="custom-badge bg-light text-dark border"><i class="fas fa-barcode"></i> Lot: {{ disponibility.n_lot }}</span>
+                        <span class="custom-badge bg-success text-white"><i class="fas fa-warehouse"></i> Mag: {{ disponibility.emplacement.warehouse.designation }}</span>
+                        <span class="custom-badge bg-primary text-white"><i class="fas fa-map-pin"></i> Emp: {{ disponibility.emplacement.designation }}</span>
+                        <span class="custom-badge bg-dark text-white"><i class="fas fa-layer-group"></i> Pal: {{ disponibility.palette }}</span>
+                        <span class="custom-badge bg-warning text-dark"><i class="far fa-calendar-alt"></i> Exp: {{ disponibility.expiry_date|date:'Y-m-d' }}</span>
+                        <span class="custom-badge bg-info text-white"><i class="fas fa-industry"></i> Prod: {{ disponibility.production_date|date:'Y-m-d'|default:'/' }}</span>
+                    </div>
+                    <div class="ms-auto fw-bold" style="font-size: 14px;">
+                        <span class="text-muted" style="font-size:12px; font-weight:normal;">Quantité: </span>
+                        <span class="text-primary">{{ disponibility.qte|floatformat:2 }}</span>
+                        <span class="text-muted" style="font-size: 13px;">{{ product.packing.unit|default:'Kg' }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-info">Aucune disponibilité pour ce produit.</div>
+            {% endfor %}
+        </div>
     </div>
 {% endif %}
 
