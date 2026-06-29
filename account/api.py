@@ -344,14 +344,10 @@ class SendWarningEmail(APIView):
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
             email.attach_alternative(html_message, "text/html") 
             email.send()
-            print(addresses)
-            print('HEEEERE *********** 2')
-            print(html_message)
-            print(subject)
             return Response({"detail": "Mail envoyé avec succès."}, status=200)
         except Exception as e:
             print(e)
-            return Response({"detail": "Erreur interne du serveur."}, status=500)
+            return Response({"detail": f"Erreur interne du serveur - {e}."}, status=500)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
