@@ -338,7 +338,7 @@ class SendWarningEmail(APIView):
         try:
             subject = f'Tente de scan incorrecte'
             html_message = render_to_string('warning.html', {'user': request.user})
-            addresses = request.user.default_site.address.split('&')
+            addresses = request.user.default_site.email.split('&')
             if not addresses:
                 addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
