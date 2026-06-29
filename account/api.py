@@ -343,7 +343,11 @@ class SendWarningEmail(APIView):
                 addresses = ['mohammed.senoussaoui@grupopuma-dz.com']
             email = EmailMultiAlternatives(subject, None, 'Puma Stock', addresses)
             email.attach_alternative(html_message, "text/html") 
-            email.send()   
+            email.send()
+            print(addresses)
+            print('HEEEERE *********** 2')
+            print(html_message)
+            print(subject)
             return Response({"detail": "Mail envoyé avec succès."}, status=200)
         except Exception as e:
             print(e)
