@@ -449,7 +449,10 @@
                     {% for family in families %}
                         <div class="family-card" data-family-id="{{ family.id }}" onclick="filterProductsByFamily({{ family.id }}, this)">
                             {% if family.image %}
-                                <img src="{{ family.image.url }}" alt="{{ family.designation }}" style="max-width: 120px; max-height: 120px;">
+                                <img src="{{ family.image.url }}" 
+                                     onerror="this.onerror=null; this.outerHTML='<i class=\'fas fa-boxes fa-2x mb-2\' style=\'color: #aaa;\'></i>';"
+                                     alt="{{ family.designation }}" 
+                                     style="max-width: 120px; max-height: 120px;">
                             {% else %}
                                 <i class="fas fa-boxes fa-2x mb-2" style="color: #aaa;"></i>
                             {% endif %}
@@ -463,7 +466,7 @@
             <div class="product-grid mb-4">
                 <div class="row" id="product-list-container">
                     {% for p in pf_products %}
-                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="{{ p.id }}" data-family-id="{{ p.family.id }}" data-designation="{{ p.designation|lower }}" onclick="addProductToCart({{ p.id }}, '{{ p.designation|escapejs }}', '{{ p.qte_per_pal|default:1.0 }}', '{% if p.image_exists %}{{ p.image.url }}{% else %}{% static 'img/pf.png' %}{% endif %}', '{{ p.qte_per_cond|default:0.0 }}', '{{ p.packing.unit|default:'Kg' }}')">
+                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="{{ p.id }}" data-family-id="{{ p.family.id }}" data-designation="{{ p.designation|lower }}" onclick="addProductToCart({{ p.id }}, '{{ p.designation|escapejs }}', '{{ p.qte_per_pal|default:1.0 }}', '{% if p.image %}{{ p.image.url }}{% else %}{% static 'img/pf.png' %}{% endif %}', '{{ p.qte_per_cond|default:0.0 }}', '{{ p.packing.unit|default:'Kg' }}')">
                             <div class="p-2 product-card-inner" style="cursor: pointer; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; transition: transform 0.2s, border-color 0.2s;">
                                 <img src="{% if not p.image %}{% static 'img/pf.png' %}{% else %}{{ p.image.url }}{% endif %}" 
                                      onerror="this.onerror=null; this.src='{% static 'img/pf.png' %}';"

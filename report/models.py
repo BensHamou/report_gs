@@ -468,12 +468,25 @@ class LineDetail(BaseModel):
             if not dispo:
                 raise ValueError("Matching stock Disponibility not found.")
 
-            # Get the next sequence number based on existing lines in the disponibility
             max_dl = dispo.lines.aggregate(models.Max('sequence'))['sequence__max'] or 0
             next_seq = max_dl + 1
 
-            # If Matière Première, generate only 1 code
-            if self.move_line.product.type == 'Matière Première':
+            if self.move_line.mirror and self.move_line.mirror.detail_codes.count() == (self.palette if self.palette > 0 else 1):
+                first_code = None
+                idx = 0
+                for original_dc in self.move_line.mirror.detail_codes.all():
+                    seq_num = next_seq + idx
+                    unique_code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.n_lot};PAL:{seq_num}"
+                    if idx == 0:
+                        first_code = unique_code
+
+                    DetailCode.objects.create(line_detail=self, code=unique_code, qte=original_dc.qte, palette=1)
+                    DisponibilityLine.objects.create(disponibility=dispo, code=unique_code, qte=original_dc.qte, 
+                                                     palette=1, sequence=seq_num, shift=self.move_line.move.shift)
+                    idx += 1
+                self.code = first_code
+
+            elif self.move_line.product.type == 'Matière Première':
                 unique_code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.n_lot};PAL:{next_seq}"
                 DetailCode.objects.create(
                     line_detail=self,

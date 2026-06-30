@@ -1453,7 +1453,6 @@ def create_move_out_view(request):
                 if move_type == 'normal' and selected_mode == 'manual' and not request.user.allow_policy:
                     return JsonResponse({'success': False, 'message': "Vous n'avez pas l'autorisation d'effectuer un prélèvement manuel pour une sortie normale."}, status=200)
 
-                # Validate modulo constraints first:
                 products_list = data.get('products', [])
                 for prod_item in products_list:
                     product_id = prod_item.get('product_id')
@@ -1516,7 +1515,6 @@ def create_move_out_view(request):
                         observation=observation
                     )
 
-                    # Group picks by (emplacement_id, warehouse_id, n_lot)
                     grouped_picks = {}
                     for pick in picks:
                         emp_id = pick.get('emplacement_id')
@@ -1527,7 +1525,6 @@ def create_move_out_view(request):
                             grouped_picks[key] = []
                         grouped_picks[key].append(pick)
 
-                    # Create LineDetails and DetailCodes
                     for key, pick_list in grouped_picks.items():
                         emp_id, wh_id, lot = key
                         total_qte = sum(float(p.get('qte', 0)) for p in pick_list)
@@ -1574,15 +1571,8 @@ def create_move_out_view(request):
         sites = Site.objects.none()
 
     families = Family.objects.filter(for_mp=False).order_by('sequence', 'designation')
-    mp_products = Product.objects.filter(type='Matière Première').order_by('designation')
-    pf_products = Product.objects.filter(type='Produit Fini').select_related('family').order_by('designation')
-    for p in pf_products:
-        p.image_exists = False
-        if p.image:
-            try:
-                p.image_exists = os.path.exists(p.image.path)
-            except ValueError:
-                pass
+    mp_products = Product.objects.filter(type='Matière Première').select_related('packing').order_by('designation')
+    pf_products = Product.objects.filter(type='Produit Fini').select_related('family', 'packing').order_by('designation')
     lines = user.lines.all()
     gestionaires = User.objects.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur')).exclude(is_superuser=True)
     
