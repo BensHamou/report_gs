@@ -1091,7 +1091,6 @@
                     document.getElementById(`mp_avail_qte_${cardId}`).textContent = `${totalQte.toFixed(2)} ${unit}`;
                     
                     document.getElementById(`mp_qte_desired_${cardId}`).value = '';
-                    document.getElementById(`mp_palette_desired_${cardId}`).value = '';
                     document.getElementById(`mp-total-picked-${cardId}`).textContent = '0.0';
                     document.getElementById(`mp-desired-val-${cardId}`).textContent = '0.0';
                     
@@ -1109,7 +1108,6 @@
         if (!select) return;
         const qtePerPal = parseFloat(select.selectedOptions[0].dataset.qtePerPal) || 1.0;
         
-        document.getElementById(`mp_palette_desired_${cardId}`).value = Math.ceil(qte / qtePerPal);
         document.getElementById(`mp-desired-val-${cardId}`).textContent = qte.toFixed(2);
         
         const configSec = document.getElementById(`mp-config-section-${cardId}`);

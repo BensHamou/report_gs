@@ -182,7 +182,11 @@
                                                 </div>
                                                 <div class="card-badges-wrapper">
                                                     <span class="custom-badge bg-light text-dark border" style="font-family: monospace; font-size: 12px;">
-                                                        Palette N° {{ line.sequence }}
+                                                        {% if dispo.product.type == 'Matière Première' %}
+                                                            Code {{ line.sequence }}
+                                                        {% else %}
+                                                            Palette N° {{ line.sequence }}
+                                                        {% endif %}
                                                     </span>
                                                     {% if line.status == 'Détruit' %}
                                                         <span class="custom-badge bg-danger text-white">Détruit</span>
@@ -195,7 +199,7 @@
                                                 <div class="ms-auto text-end d-flex align-items-center">
                                                     <span class="badge bg-secondary text-white me-2" style="font-size: 12px;">{{ line.qte|floatformat:2|intcomma }} Kg</span>
                                                     {% if line.status == 'Valide' and line.qte > 0 %}
-                                                        {% if not line.is_printed %}
+                                                        {% if not line.is_printed or dispo.product.type == 'Matière Première' %}
                                                             <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
                                                                     data-line-detail-id="{{ line.id }}" 
                                                                     data-product-name="{{ dispo.product.designation }}"
@@ -205,7 +209,7 @@
                                                                     data-magasin="{{ dispo.emplacement.warehouse.designation }}"
                                                                     data-emplacement="{{ dispo.emplacement.designation }}"
                                                                     data-shift="{{ line.shift|default:'/' }}"
-                                                                    data-palettes="1"
+                                                                    data-palettes="{% if dispo.product.type == 'Matière Première' %}{{ line.package }}{% else %}1{% endif %}"
                                                                     data-use-dl="1"
                                                                     data-is-bulk="0"
                                                                     data-is-mp="{% if dispo.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
@@ -215,7 +219,7 @@
                                                                 <i class="fas fa-print"></i>
                                                             </button>
                                                         {% endif %}
-                                                        {% if user.role == 'Admin' %}
+                                                        {% if user.role == 'Admin' and dispo.product.type != 'Matière Première' %}
                                                         <button class="btn btn-sm btn-warning ms-1" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
                                                             <i class="fas fa-sync"></i>
                                                         </button>

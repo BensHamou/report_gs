@@ -17,7 +17,7 @@
                     <div class="col-md-6 text-left">
                         <p class="text-muted m-0">Produit:</p>
                         <strong class="text-dark" id="modal-product-name"></strong>
-                        <p class="text-muted m-0 mt-2">N° Palette:</p>
+                        <p class="text-muted m-0 mt-2" id="modal-palette-label">N° Palette:</p>
                         <strong class="text-dark" id="modal-palette-sequence"></strong>
                     </div>
                     <div class="col-md-6 text-left">
@@ -94,8 +94,17 @@
         }
         modal.querySelector('#modal-palette-sequence').textContent = sequence;
 
-        const isBulk = button.getAttribute('data-is-bulk') === '1';
         const isMp = button.getAttribute('data-is-mp') === '1';
+        
+        if (isMp) {
+            modal.querySelector('#modal-palette-label').style.display = 'none';
+            modal.querySelector('#modal-palette-sequence').style.display = 'none';
+        } else {
+            modal.querySelector('#modal-palette-label').style.display = 'block';
+            modal.querySelector('#modal-palette-sequence').style.display = 'block';
+        }
+
+        const isBulk = button.getAttribute('data-is-bulk') === '1';
         const fromMoveDetail = button.getAttribute('data-from-move-detail') === '1';
     
         const ticketCountContainer = modal.querySelector('#ticket-count-container');
@@ -108,7 +117,7 @@
         modal.setAttribute('data-current-use-dc', button.getAttribute('data-use-dc') || '0');
         modal.setAttribute('data-current-use-dl', button.getAttribute('data-use-dl') || '0');
     
-        if (isBulk) {
+        if (isBulk && !isMp) {
             ticketCountContainer.style.display = 'none';
             ticketCountInput.value = 1;
             ticketCountInput.disabled = true;
@@ -118,6 +127,9 @@
             if (isMp) {
                 ticketCountInput.disabled = false;
                 ticketCountInput.value = button.getAttribute('data-palettes') || 1;
+                if (isBulk) {
+                    modal.setAttribute('data-current-detail-codes', button.getAttribute('data-detail-codes') || '[]');
+                }
             } else {
                 ticketCountInput.disabled = true;
                 ticketCountInput.value = 1;
@@ -164,7 +176,7 @@
         
         let itemsToPrint = [];
         
-        if (isBulk) {
+        if (isBulk && !isMp) {
             const codesStr = modal.getAttribute('data-current-detail-codes') || '[]';
             try {
                 const codes = JSON.parse(codesStr);
@@ -240,7 +252,7 @@
                     <div style="margin: 1cm;">
                         <div class="label">
                             <img src="${base64Image}" alt="QR Code">
-                            <div class="product-name">${item.productName} (Palette N° ${item.sequence})</div>
+                            <div class="product-name">${item.productName} ${isMp ? '' : `(Palette N° ${item.sequence})`}</div>
                         </div>
                     </div>`;
                     
@@ -248,7 +260,7 @@
                     <div style="page-break-after: always; width: 142mm; height: 208mm; display: flex; flex-direction: column; justify-content: flex-start; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 2mm 0;">
                         <div class="fixed-header" style="font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; padding: 6px 12px; width: 100%; box-sizing: border-box; border: 2px solid #000; border-bottom: none; background-color: #f5f5f5;">
                             <span>grupopuma Algérie</span>
-                            <span>Palette N° ${item.sequence}</span>
+                            <span>${isMp ? '' : `Palette N° ${item.sequence}`}</span>
                         </div>
                         <table style="width: 100%; height: calc(100% - 35px); border-collapse: collapse; border: 2px solid #000; border-top: none; box-sizing: border-box;">
                             <tr style="height: 25%;">

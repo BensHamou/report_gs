@@ -192,7 +192,7 @@
                                 <div class="col-lg-1 col-md-1 col-sm-12">
                                     <label for="actions_{{ forloop.counter0 }}" class="form-label">&nbsp;</label>
                                     <div class="btn-group d-block">
-                                        {% if detail.has_unprinted_codes %}
+                                        {% if detail.move_line.product.type == 'Matière Première' %}
                                             <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
                                                     data-line-detail-id="{{ detail.id }}" 
                                                     data-product-name="{{ detail.move_line.product.designation }}"
@@ -202,21 +202,41 @@
                                                     data-magasin="{{ detail.warehouse.designation }}"
                                                     data-emplacement="{{ detail.emplacement.designation }}"
                                                     data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                    data-palettes="{{ detail.palette }}"
+                                                    data-palettes="{{ detail.package }}"
                                                     data-is-bulk="1"
-                                                    data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                    data-is-mp="1"
                                                     data-from-move-detail="1"
                                                     data-detail-codes='[{% for dc in detail.detail_codes.all %}{"id": {{ dc.id }}, "code": "{{ dc.code|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                                                  <i class="fas fa-print"></i> 
                                             </button>
                                         {% else %}
-                                            <span class="badge bg-success text-white py-2 px-3 mt-1 d-inline-block"><i class="fas fa-check"></i> Imprimé</span>
+                                            {% if detail.has_unprinted_codes %}
+                                                <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal" 
+                                                        data-line-detail-id="{{ detail.id }}" 
+                                                        data-product-name="{{ detail.move_line.product.designation }}"
+                                                        data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                        data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                        data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                        data-magasin="{{ detail.warehouse.designation }}"
+                                                        data-emplacement="{{ detail.emplacement.designation }}"
+                                                        data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                        data-palettes="{{ detail.palette }}"
+                                                        data-is-bulk="1"
+                                                        data-is-mp="0"
+                                                        data-from-move-detail="1"
+                                                        data-detail-codes='[{% for dc in detail.detail_codes.all %}{"id": {{ dc.id }}, "code": "{{ dc.code|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                                                     <i class="fas fa-print"></i> 
+                                                </button>
+                                            {% else %}
+                                                <span class="badge bg-success text-white py-2 px-3 mt-1 d-inline-block"><i class="fas fa-check"></i> Imprimé</span>
+                                            {% endif %}
                                         {% endif %}
                                     </div>
                                 </div>
                             {% endif %}
                         </div>
                         {% if detail.detail_codes.exists %}
+                            {% if detail.move_line.product.type != 'Matière Première' or move.type == 'Sortie' %}
                             <div class="row mb-3">
                                 <div class="col-12" style="padding-left: 30px;">
                                     <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
@@ -243,26 +263,50 @@
                                                             <div class="ms-auto">
                                                                 {% if move.type == 'Entré' %}
                                                                     <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
-                                                                    {% if not dc.is_printed %}
-                                                                    <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
-                                                                            data-line-detail-id="{{ dc.id }}" 
-                                                                            data-product-name="{{ detail.move_line.product.designation }}"
-                                                                            data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
-                                                                            data-expiry-date="{{ detail.expiry_date|default:'/' }}"
-                                                                            data-production-date="{{ detail.move_line.move.date|default:'/' }}"
-                                                                            data-magasin="{{ detail.warehouse.designation }}"
-                                                                            data-emplacement="{{ detail.emplacement.designation }}"
-                                                                            data-shift="{{ detail.move_line.move.shift|default:'/' }}"
-                                                                            data-palettes="1"
-                                                                            data-use-dc="1"
-                                                                            data-is-bulk="0"
-                                                                            data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
-                                                                            data-from-move-detail="1"
-                                                                            data-code="{{ dc.code }}">
-                                                                        <i class="fas fa-print"></i>
-                                                                    </button>
+                                                                    {% if detail.move_line.product.type == 'Matière Première' %}
+                                                                        <span class="badge bg-info text-white me-2" style="font-size: 12px; font-weight: 600; padding: 6px 10px;">{{ dc.package }} Codes</span>
+                                                                        {% if dc.is_printed %}
+                                                                            <span class="badge bg-secondary text-white me-2" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                        {% endif %}
+                                                                        <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                                data-line-detail-id="{{ dc.id }}" 
+                                                                                data-product-name="{{ detail.move_line.product.designation }}"
+                                                                                data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                                data-magasin="{{ detail.warehouse.designation }}"
+                                                                                data-emplacement="{{ detail.emplacement.designation }}"
+                                                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                                data-palettes="{{ dc.package }}"
+                                                                                data-use-dc="1"
+                                                                                data-is-bulk="0"
+                                                                                data-is-mp="1"
+                                                                                data-from-move-detail="1"
+                                                                                data-code="{{ dc.code }}">
+                                                                            <i class="fas fa-print"></i>
+                                                                        </button>
                                                                     {% else %}
-                                                                    <span class="badge bg-secondary text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                        {% if not dc.is_printed %}
+                                                                        <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                                data-line-detail-id="{{ dc.id }}" 
+                                                                                data-product-name="{{ detail.move_line.product.designation }}"
+                                                                                data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                                data-magasin="{{ detail.warehouse.designation }}"
+                                                                                data-emplacement="{{ detail.emplacement.designation }}"
+                                                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                                data-palettes="1"
+                                                                                data-use-dc="1"
+                                                                                data-is-bulk="0"
+                                                                                data-is-mp="0"
+                                                                                data-from-move-detail="1"
+                                                                                data-code="{{ dc.code }}">
+                                                                            <i class="fas fa-print"></i>
+                                                                        </button>
+                                                                        {% else %}
+                                                                        <span class="badge bg-secondary text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                        {% endif %}
                                                                     {% endif %}
                                                                 {% endif %}
                                                                 {% if move.type == 'Sortie' %}
@@ -281,6 +325,7 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -394,6 +439,7 @@
                             {% endif %}
                         </div>
                         {% if detail.detail_codes.exists %}
+                            {% if detail.move_line.product.type != 'Matière Première' or move.type == 'Sortie' %}
                             <div class="row mb-3">
                                 <div class="col-12" style="padding-left: 30px;">
                                     <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
@@ -420,6 +466,29 @@
                                                             <div class="ms-auto">
                                                                 {% if move.type == 'Entré' %}
                                                                     <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
+                                                                    {% if detail.move_line.product.type == 'Matière Première' %}
+                                                                        <span class="badge bg-info text-white me-2" style="font-size: 12px; font-weight: 600; padding: 6px 10px;">{{ dc.package }} Codes</span>
+                                                                        {% if dc.is_printed %}
+                                                                            <span class="badge bg-secondary text-white me-2" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                        {% endif %}
+                                                                        <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                                                                data-line-detail-id="{{ dc.id }}" 
+                                                                                data-product-name="{{ detail.move_line.product.designation }}"
+                                                                                data-lot-number="{{ detail.n_lot|default:detail.move_line.n_lot }}"
+                                                                                data-expiry-date="{{ detail.expiry_date|default:'/' }}"
+                                                                                data-production-date="{{ detail.move_line.move.date|default:'/' }}"
+                                                                                data-magasin="{{ detail.warehouse.designation }}"
+                                                                                data-emplacement="{{ detail.emplacement.designation }}"
+                                                                                data-shift="{{ detail.move_line.move.shift|default:'/' }}"
+                                                                                data-palettes="{{ dc.package }}"
+                                                                                data-use-dc="1"
+                                                                                data-is-bulk="0"
+                                                                                data-is-mp="1"
+                                                                                data-from-move-detail="1"
+                                                                                data-code="{{ dc.code }}">
+                                                                            <i class="fas fa-print"></i>
+                                                                        </button>
+                                                                    {% else %}
                                                                     {% if not dc.is_printed %}
                                                                     <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
                                                                             data-line-detail-id="{{ dc.id }}" 
@@ -433,13 +502,14 @@
                                                                             data-palettes="1"
                                                                             data-use-dc="1"
                                                                             data-is-bulk="0"
-                                                                            data-is-mp="{% if detail.move_line.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                                                            data-is-mp="0"
                                                                             data-from-move-detail="1"
                                                                             data-code="{{ dc.code }}">
                                                                         <i class="fas fa-print"></i>
                                                                     </button>
                                                                     {% else %}
                                                                     <span class="badge bg-secondary text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check"></i> Imprimé</span>
+                                                                    {% endif %}
                                                                     {% endif %}
                                                                 {% endif %}
                                                                 {% if move.type == 'Sortie' %}
@@ -458,6 +528,7 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
                 </div>

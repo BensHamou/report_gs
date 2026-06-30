@@ -548,6 +548,14 @@ class DetailCode(BaseModel):
     is_printed = models.BooleanField(default=False)
     is_scanned = models.BooleanField(default=False)
 
+
+    @property
+    def package(self):
+        import math
+        if self.line_detail.move_line.product.qte_per_cond and self.qte:
+            return math.ceil(self.qte / self.line_detail.move_line.product.qte_per_cond)
+        return 0
+
     @property
     def sequence(self):
         try:
@@ -608,6 +616,13 @@ class DisponibilityLine(BaseModel):
     sequence = models.IntegerField(default=1)
     is_printed = models.BooleanField(default=False)
     shift = models.ForeignKey('account.Shift', on_delete=models.SET_NULL, null=True, blank=True, related_name='dispo_lines')
+
+    @property
+    def package(self):
+        import math
+        if self.disponibility.product.qte_per_cond and self.qte:
+            return math.ceil(self.qte / self.disponibility.product.qte_per_cond)
+        return 0
 
     def replace_damaged(self):
         if self.status != 'Valide':
