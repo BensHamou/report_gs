@@ -1562,6 +1562,30 @@ def create_move_out_view(request):
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors de la création de la sortie : {str(e)}'}, status=500)
 
+    if request.GET.get('fetch_products') == '1':
+        mp_products = Product.objects.filter(type='Matière Première').select_related('packing').order_by('designation')
+        pf_products = Product.objects.filter(type='Produit Fini').select_related('family', 'packing').order_by('designation')
+        
+        pf_data = [{
+            'id': p.id,
+            'family_id': p.family_id,
+            'designation': p.designation,
+            'qte_per_pal': p.qte_per_pal or 1.0,
+            'image_url': p.image.url if p.image else '',
+            'qte_per_cond': p.qte_per_cond or 0.0,
+            'unit': p.packing.unit if p.packing else 'Kg'
+        } for p in pf_products]
+        
+        mp_data = [{
+            'id': p.id,
+            'designation': p.designation,
+            'qte_per_pal': p.qte_per_pal or 1.0,
+            'qte_per_cond': p.qte_per_cond or 0.0,
+            'unit': p.packing.unit if p.packing else 'Kg'
+        } for p in mp_products]
+
+        return JsonResponse({'pf_products': pf_data, 'mp_products': mp_data})
+
     user = request.user
     if user.role == 'Admin':
         sites = Site.objects.all()
@@ -1571,16 +1595,14 @@ def create_move_out_view(request):
         sites = Site.objects.none()
 
     families = Family.objects.filter(for_mp=False).order_by('sequence', 'designation')
-    mp_products = Product.objects.filter(type='Matière Première').select_related('packing').order_by('designation')
-    pf_products = Product.objects.filter(type='Produit Fini').select_related('family', 'packing').order_by('designation')
     lines = user.lines.all()
     gestionaires = User.objects.filter(Q(role='Gestionaire') | Q(role='Admin') | Q(role='Validateur')).exclude(is_superuser=True)
     
     context = {
         'sites': sites,
         'families': families,
-        'mp_products': mp_products,
-        'pf_products': pf_products,
+        'mp_products': [],
+        'pf_products': [],
         'lines': lines,
         'gestionaires': gestionaires,
         'default_site': user.default_site,

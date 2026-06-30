@@ -413,7 +413,7 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end mt-4">
-                <button type="button" class="btn btn-primary" onclick="goToStep2()"><i class="fas fa-arrow-right me-2"></i>Suivant</button>
+                <button type="button" id="btn-suivant-1" class="btn btn-primary" onclick="goToStep2()"><i class="fas fa-arrow-right me-2"></i>Suivant</button>
             </div>
         </div>
     </div>
@@ -465,18 +465,7 @@
             <label class="form-label font-weight-bold">Produits Disponibles</label>
             <div class="product-grid mb-4">
                 <div class="row" id="product-list-container">
-                    {% for p in pf_products %}
-                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="{{ p.id }}" data-family-id="{{ p.family.id }}" data-designation="{{ p.designation|lower }}" onclick="addProductToCart({{ p.id }}, '{{ p.designation|escapejs }}', '{{ p.qte_per_pal|default:1.0 }}', '{% if p.image %}{{ p.image.url }}{% else %}{% static 'img/pf.png' %}{% endif %}', '{{ p.qte_per_cond|default:0.0 }}', '{{ p.packing.unit|default:'Kg' }}')">
-                            <div class="p-2 product-card-inner" style="cursor: pointer; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; transition: transform 0.2s, border-color 0.2s;">
-                                <img src="{% if not p.image %}{% static 'img/pf.png' %}{% else %}{{ p.image.url }}{% endif %}" 
-                                     onerror="this.onerror=null; this.src='{% static 'img/pf.png' %}';"
-                                     alt="{{ p.designation }}" 
-                                     class="img-fluid"
-                                     style="height: 120px; width: 120px; max-width: 120px; max-height: 120px; object-fit: cover; border-radius: 8px;">
-                                <p class="mt-2 text-truncate font-weight-bold mb-0 product-designation" style="color: #133356; font-size: 14px;" title="{{ p.designation }}">{{ p.designation }}</p>
-                            </div>
-                        </div>
-                    {% endfor %}
+                    <!-- Products will be loaded here via JS -->
                 </div>
             </div>
         </div>
@@ -486,9 +475,7 @@
         <!-- Hidden options template for dynamic MP cards select2 -->
         <select id="mp-products-options-template" style="display: none;">
             <option value="">-- Choisir Matiere Premiere --</option>
-            {% for p in mp_products %}
-                <option value="{{ p.id }}" data-qte-per-pal="{{ p.qte_per_pal|default:1.0 }}" data-qte-per-cond="{{ p.qte_per_cond|default:0.0 }}" data-unit="{{ p.packing.unit|default:'Kg' }}">{{ p.designation }}</option>
-            {% endfor %}
+            <!-- MP options will be loaded here via JS -->
         </select>
 
         <!-- Header Info Banner showing Type and Mode -->
@@ -700,12 +687,55 @@
         updateTargetSites();
         
         document.getElementById('move_type').addEventListener('change', handleMoveTypeChange);
-        handleMoveTypeChange(); // Initialize once on load
+        handleMoveTypeChange();
 
         const searchInput = document.getElementById('productSearchInput');
         if (searchInput) {
             searchInput.addEventListener('input', filterProducts);
         }
+        
+        const submitBtn = document.getElementById('btn-suivant-1');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Chargement des produits...';
+        }
+
+        fetch("?fetch_products=1")
+            .then(res => res.json())
+            .then(data => {
+                const pfContainer = document.getElementById('product-list-container');
+                let pfHtml = '';
+                const fallbackImg = "{% static 'img/pf.png' %}";
+                data.pf_products.forEach(p => {
+                    const imgUrl = p.image_url ? p.image_url : fallbackImg;
+                    const cleanDesig = p.designation.replace(/'/g, "\\'");
+                    pfHtml += `
+                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="${p.id}" data-family-id="${p.family_id}" data-designation="${p.designation.toLowerCase()}" onclick="addProductToCart(${p.id}, '${cleanDesig}', '${p.qte_per_pal}', '${imgUrl}', '${p.qte_per_cond}', '${p.unit}')">
+                            <div class="p-2 product-card-inner" style="cursor: pointer; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; transition: transform 0.2s, border-color 0.2s;">
+                                <img src="${imgUrl}" 
+                                     onerror="this.onerror=null; this.src='${fallbackImg}';"
+                                     alt="${p.designation}" 
+                                     class="img-fluid"
+                                     style="height: 120px; width: 120px; max-width: 120px; max-height: 120px; object-fit: cover; border-radius: 8px;">
+                                <p class="mt-2 text-truncate font-weight-bold mb-0 product-designation" style="color: #133356; font-size: 14px;" title="${p.designation}">${p.designation}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                pfContainer.innerHTML = pfHtml;
+
+                const mpTemplate = document.getElementById('mp-products-options-template');
+                let mpHtml = '<option value="">-- Choisir Matiere Premiere --</option>';
+                data.mp_products.forEach(p => {
+                    mpHtml += `<option value="${p.id}" data-qte-per-pal="${p.qte_per_pal}" data-qte-per-cond="${p.qte_per_cond}" data-unit="${p.unit}">${p.designation}</option>`;
+                });
+                mpTemplate.innerHTML = mpHtml;
+
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Suivant';
+                }
+            });
     });
 
     function backToStep(targetStep) {
