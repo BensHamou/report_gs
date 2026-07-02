@@ -1,0 +1,203 @@
+{% extends "main.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    Modifier Ligne de Sortie
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'move_detail' move_line.move.id %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Détails Mouvement</p>
+    </a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+    </div>
+    <div class="col-6">
+        <h4 class="mb-4 page-title" style="color: #0082cd;">Modifier Ligne de Sortie</h4>
+    </div>
+    <div class="col-6 d-flex justify-content-end">
+        <button type="button" id="submit-form" class="btn btn-primary" style="background-color: #1d71b8;">
+            <i class="fas fa-save me-2"></i> Sauvegarder
+        </button>
+    </div>
+</div>
+
+<div class="row" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
+    <form method="POST" id="edit_move_out_line-form">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12 mb-4">
+                <div class="row">
+                    <div class="col-lg-6 col-12 mb-3">
+                        <label class="form-label text-muted">Produit</label>
+                        <p class="custom-text-box bg-white p-2 border rounded" style="font-size: 1.1em;">{{ move_line.product.designation }}</p>
+                    </div>
+                    
+                    <div class="col-lg-6 col-12 mb-3">
+                        <label for="initial_qte" class="form-label">Quantité demandée ({{ move_line.product.packing.unit|default:"Kg" }})</label>
+                        <input type="number" step="any" name="initial_qte" id="initial_qte" value="{{ move_line.initial_qte|stringformat:'.2f' }}" class="form-control" style="background-color: #ffffff; padding-left: 20px;" required>
+                    </div>
+                    
+                    <div class="col-lg-12 col-12 mb-3">
+                        <label for="observation" class="form-label">Observation</label>
+                        <textarea name="observation" rows="3" id="observation" class="form-control" style="background-color: #ffffff; padding-left: 20px; width: 100%">{{ move_line.observation|default:'/' }}</textarea>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <h5 style="color: #2e8b57; border-left: 4px solid #2e8b57; padding-left: 10px;" class="mb-3">
+                            <i class="fas fa-barcode"></i> Liste des Palettes Scannées :
+                        </h5>
+                        
+                        {% for ld in move_line.details.all %}
+                            {% for dc in ld.detail_codes.all %}
+                            <div class="palette-row bg-white rounded shadow-sm mb-3 d-flex align-items-center justify-content-between p-3 border-start border-success border-4" id="dc-row-{{ dc.id }}">
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <div class="bg-success text-white px-3 py-2 rounded">
+                                        <i class="fas fa-barcode"></i>
+                                    </div>
+                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                        <i class="fas fa-bars"></i> Lot: {{ dc.line_detail.n_lot|default:'/' }}
+                                    </div>
+                                    <div class="badge bg-success text-white px-3 py-2">
+                                        <i class="fas fa-warehouse"></i> Mag: {{ dc.line_detail.warehouse.designation }}
+                                    </div>
+                                    <div class="badge bg-primary text-white px-3 py-2">
+                                        <i class="fas fa-map-marker-alt"></i> Emp: {{ dc.line_detail.emplacement.designation }}
+                                    </div>
+                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                        <i class="fas fa-layer-group"></i> Pal: {{ dc.sequence|default:'1' }}
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                                    <span class="text-muted fw-bold me-2">Qte:</span>
+                                    <div class="input-group" style="width: 120px;">
+                                        <input type="number" 
+                                               step="{% if move_line.product.qte_per_cond %}{{ move_line.product.qte_per_cond|stringformat:'.2f' }}{% else %}any{% endif %}" 
+                                               {% if move_line.product.qte_per_pal %}max="{{ move_line.product.qte_per_pal|stringformat:'.2f' }}"{% endif %}
+                                               class="form-control text-end bg-light dc-qte-input" 
+                                               data-id="{{ dc.id }}" 
+                                               value="{{ dc.qte|stringformat:'.2f' }}" 
+                                               min="0.1">
+                                    </div>
+                                    <span class="text-muted fw-bold mx-2">/ {{ dc.qte|stringformat:'.2f' }} {{ move_line.product.packing.unit|default:"Kg" }}</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeDetailCode({{ dc.id }})">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% empty %}
+                            <p class="text-muted fst-italic ms-3">Aucune palette n'a encore été scannée pour cette ligne.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+let deletedCodes = [];
+
+function removeDetailCode(dcId) {
+    if (typeof swal !== 'undefined') {
+        swal({
+            title: "Êtes-vous sûr?",
+            text: "Cette palette sera retirée de la ligne de sortie.",
+            icon: "warning",
+            buttons: ["Annuler", "Oui, retirer!"],
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                deletedCodes.push(dcId);
+                $('#dc-row-' + dcId).fadeOut(300, function() { $(this).remove(); });
+            }
+        });
+    } else {
+        if (confirm("Êtes-vous sûr? Cette palette sera retirée de la ligne de sortie.")) {
+            deletedCodes.push(dcId);
+            $('#dc-row-' + dcId).fadeOut(300, function() { $(this).remove(); });
+        }
+    }
+}
+
+$(document).ready(function() {
+    $('#submit-form').click(function(e) {
+        e.preventDefault();
+        
+        const initial_qte = parseFloat($('#initial_qte').val());
+        if (isNaN(initial_qte) || initial_qte <= 0) {
+            if (typeof swal !== 'undefined') {
+                swal("Erreur", "Veuillez entrer une quantité valide supérieure à 0.", "error");
+            } else {
+                alert("Veuillez entrer une quantité valide supérieure à 0.");
+            }
+            return;
+        }
+        
+        let modifiedQuantities = {};
+        $('.dc-qte-input').each(function() {
+            let id = $(this).data('id');
+            let qte = $(this).val();
+            // only include if it hasn't been deleted
+            if (!deletedCodes.includes(id)) {
+                modifiedQuantities[id] = qte;
+            }
+        });
+        
+        let formData = {
+            'initial_qte': initial_qte,
+            'observation': $('#observation').val(),
+            'deleted_codes': JSON.stringify(deletedCodes),
+            'modified_quantities': JSON.stringify(modifiedQuantities)
+        };
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Enregistrement...');
+
+        $.ajax({
+            type: "POST",
+            url: "{% url 'edit_move_out_line' move_line.id %}",
+            data: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof swal !== 'undefined') {
+                        swal("Succès!", response.message, "success").then(function() {
+                            window.location.href = "{% url 'move_detail' 0 %}".replace('0', response.move_id);
+                        });
+                    } else {
+                        alert(response.message);
+                        window.location.href = "{% url 'move_detail' 0 %}".replace('0', response.move_id);
+                    }
+                } else {
+                    if (typeof swal !== 'undefined') swal("Erreur", response.message, "error");
+                    else alert(response.message);
+                    
+                    $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Sauvegarder');
+                }
+            },
+            error: function(xhr, status, error) {
+                if (typeof swal !== 'undefined') swal("Erreur Serveur", "Une erreur s'est produite lors de l'enregistrement.", "error");
+                else alert("Une erreur s'est produite lors de l'enregistrement.");
+                
+                console.error(xhr.responseText);
+                $btn.prop('disabled', false).html('<i class="fas fa-save me-2"></i> Sauvegarder');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

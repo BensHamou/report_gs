@@ -25,7 +25,7 @@
         <h4 class="mb-4 page-title" style="color: #0082cd;">Détails de mouvement</h4>
     </div>
     <div class="col-6">
-        <p style="font-size: 18px; color: #133356;">Voir les informations ({{ move.display_type }} - {{ move.state }})</p>
+        <p style="font-size: 18px; color: #133356;">Voir les informations ({{ move.display_type }} - {{ move.state }} {{ move.scan_status|default:'' }})</p>
     </div>
     <div class="col-6 d-flex justify-content-end">
         <button type="button" class="btn btn-primary ml-lg-3 mt-lg-0 mt-2" data-bs-toggle="modal" data-bs-target="#validationsModal" style="background-color: #1d71b8;">
@@ -73,11 +73,12 @@
                 {% if move.type == 'Sortie' and not move.is_transfer %}
                     <div class="col-lg-3 col-md-6 col-12 mb-2">
                         <label for="bl_str" class="form-label" 
-                        {% if user.role == 'Admin' %}
+                        {% if move.state == 'Brouillon' or move.state == 'Confirmé' %}
                             onclick="window.location=constructUrl('{% url 'edit_move_bl' move.id %}')"
                             style="cursor: pointer; color: blue;"
+                            title="Modifier le N° BL"
                         {% endif %}
-                        >N° BL</label>
+                        >N° BL {% if move.state == 'Brouillon' or move.state == 'Confirmé' %}<i class="fas fa-edit ms-1" style="font-size: 0.85em; color: #1d71b8;"></i>{% endif %}</label>
                         <p class="custom-text-box">{{ move.bl_str|default:'/' }}</p>
                     </div>
                 {% endif %}
@@ -125,7 +126,9 @@
                 <div class="row">
                     <div class="col-12 d-flex justify-content-end">
                         {% if can_edit %}
-                            <button type="button" class="btn" onclick="window.location=constructUrl('{% url 'edit_move_line_mp' line.id %}')" style="background-color: transparent; color: #1d71b8;">
+                            <button type="button" class="btn" 
+                                onclick="window.location=constructUrl('{% if move.type == 'Sortie' %}{% url 'edit_move_out_line' line.id %}{% else %}{% url 'edit_move_line_mp' line.id %}{% endif %}')" 
+                                style="background-color: transparent; color: #1d71b8;">
                                 <i class="fas fa-edit d-inline"></i>
                             </button>
                         {% endif %}
@@ -144,7 +147,11 @@
                             </div>
                             <div class="col-lg-{% if line.product.qte_per_pal == 1 %}12{% else %}6{% endif %} col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
-                                <p class="custom-text-box">{{ line.qte|default:'1'|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                <p class="custom-text-box">
+                                    {{ line.qte|default_if_none:'1'|intcomma }} 
+                                    {% if move.type == 'Sortie' %} / {{ line.initial_qte|intcomma }} {% endif %}
+                                    {{ line.product.packing.unit|default:"Kg" }}
+                                </p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
@@ -240,26 +247,45 @@
                             <div class="row mb-3">
                                 <div class="col-12" style="padding-left: 30px;">
                                     <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
-                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Code à scanner{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
+                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Codes scannés{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
                                     </button>
                                     <div class="mt-2" id="collapseCodes_{{ detail.id }}" style="display: none;">
                                         <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
                                             <div class="row">
                                                 {% for dc in detail.detail_codes.all %}
-                                                    <div class="col-lg-6 col-12">
+                                                    <div class="{% if move.type == 'Sortie' %}col-12{% else %}col-lg-6 col-12{% endif %}">
                                                         <div class="d-flex align-items-center justify-content-between mb-2 p-3" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                                                            <div class="d-flex align-items-center">
-                                                                <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                                                                    <i class="fas fa-qrcode"></i>
+                                                            {% if move.type == 'Sortie' %}
+                                                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                                                    <div class="bg-success text-white rounded" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                                                        <i class="fas fa-qrcode"></i>
+                                                                    </div>
+                                                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                                                        <i class="fas fa-bars"></i> Lot: {{ dc.line_detail.n_lot|default:'/' }}
+                                                                    </div>
+                                                                    <div class="badge bg-success text-white px-3 py-2">
+                                                                        <i class="fas fa-warehouse"></i> {{ dc.line_detail.warehouse.designation }}
+                                                                    </div>
+                                                                    <div class="badge bg-primary text-white px-3 py-2">
+                                                                        <i class="fas fa-map-marker-alt"></i> {{ dc.line_detail.emplacement.designation }}
+                                                                    </div>
+                                                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                                                        <i class="fas fa-layer-group"></i> Pal: {{ dc.sequence|default:'1' }}
+                                                                    </div>
+                                                                    <div class="badge bg-light text-dark border px-3 py-2 ms-2">
+                                                                        <i class="fas fa-weight-hanging"></i> {{ dc.qte|stringformat:".1f" }} {{ detail.move_line.product.packing.unit|default:"Kg" }}
+                                                                    </div>
                                                                 </div>
-                                                                <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
-                                                                    {% if move.type == 'Sortie' %}
-                                                                        {{ dc.location_info }}
-                                                                    {% else %}
+                                                            {% else %}
+                                                                <div class="d-flex align-items-center">
+                                                                    <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                                                        <i class="fas fa-qrcode"></i>
+                                                                    </div>
+                                                                    <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
                                                                         Palette N° {{ dc.sequence }}
-                                                                    {% endif %}
-                                                                </span>
-                                                            </div>
+                                                                    </span>
+                                                                </div>
+                                                            {% endif %}
                                                             <div class="ms-auto">
                                                                 {% if move.type == 'Entré' %}
                                                                     <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
@@ -310,11 +336,7 @@
                                                                     {% endif %}
                                                                 {% endif %}
                                                                 {% if move.type == 'Sortie' %}
-                                                                    {% if dc.is_scanned %}
-                                                                        <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
-                                                                    {% else %}
-                                                                        <span class="badge bg-warning text-dark" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-hourglass-half me-1"></i> En attente</span>
-                                                                    {% endif %}
+                                                                    <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
                                                                 {% endif %}
                                                             </div>
                                                         </div>
@@ -335,7 +357,9 @@
                 <div class="row">
                     <div class="col-12 d-flex justify-content-end">
                         {% if can_edit %}
-                            <button type="button" class="btn" onclick="window.location=constructUrl('{% url 'edit_move_line_pf' line.id %}')" style="background-color: transparent; color: #1d71b8;">
+                            <button type="button" class="btn" 
+                                onclick="window.location=constructUrl('{% if move.type == 'Sortie' %}{% url 'edit_move_out_line' line.id %}{% else %}{% url 'edit_move_line_pf' line.id %}{% endif %}')" 
+                                style="background-color: transparent; color: #1d71b8;">
                                 <i class="fas fa-edit d-inline"></i>
                             </button>
                         {% endif %}
@@ -354,7 +378,11 @@
                             {% endif %}
                             <div class="col-lg-{% if line.product.qte_per_pal == 1 %}12{% else %}6{% endif %} col-12 mb-2">
                                 <label for="qte" class="form-label">Quantité</label>
-                                <p class="custom-text-box">{{ line.qte|intcomma }} {{ line.product.packing.unit|default:"Kg" }}</p>
+                                <p class="custom-text-box">
+                                    {{ line.qte|intcomma }} 
+                                    {% if move.type == 'Sortie' %} / {{ line.initial_qte|intcomma }} {% endif %}
+                                    {{ line.product.packing.unit|default:"Kg" }}
+                                </p>
                             </div>
                             <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
@@ -443,26 +471,45 @@
                             <div class="row mb-3">
                                 <div class="col-12" style="padding-left: 30px;">
                                     <button class="btn btn-sm btn-outline-info collapse-toggle-btn" type="button" onclick="toggleCodesCollapse('{{ detail.id }}', this, {{ detail.detail_codes.count }}, {% if move.type == 'Sortie' %}true{% else %}false{% endif %})">
-                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Code à scanner{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
+                                        <i class="fas fa-qrcode"></i> {% if move.type == 'Sortie' %}Codes scannés{% else %}Voir les Palettes{% endif %} ({{ detail.detail_codes.count }})
                                     </button>
                                     <div class="mt-2" id="collapseCodes_{{ detail.id }}" style="display: none;">
                                         <div class="card card-body p-4" style="background-color: #f1f2f6; border-radius: 8px; padding: 20px;">
                                             <div class="row">
                                                 {% for dc in detail.detail_codes.all %}
-                                                    <div class="col-lg-6 col-12">
+                                                    <div class="{% if move.type == 'Sortie' %}col-12{% else %}col-lg-6 col-12{% endif %}">
                                                         <div class="d-flex align-items-center justify-content-between mb-2 p-3" style="background: #ffffff; border: 1px solid #e9ecef; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                                                            <div class="d-flex align-items-center">
-                                                                <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
-                                                                    <i class="fas fa-qrcode"></i>
+                                                            {% if move.type == 'Sortie' %}
+                                                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                                                    <div class="bg-success text-white rounded" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                                                                        <i class="fas fa-qrcode"></i>
+                                                                    </div>
+                                                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                                                        <i class="fas fa-bars"></i> Lot: {{ dc.line_detail.n_lot|default:'/' }}
+                                                                    </div>
+                                                                    <div class="badge bg-success text-white px-3 py-2">
+                                                                        <i class="fas fa-warehouse"></i> {{ dc.line_detail.warehouse.designation }}
+                                                                    </div>
+                                                                    <div class="badge bg-primary text-white px-3 py-2">
+                                                                        <i class="fas fa-map-marker-alt"></i> {{ dc.line_detail.emplacement.designation }}
+                                                                    </div>
+                                                                    <div class="badge bg-light text-secondary border px-3 py-2">
+                                                                        <i class="fas fa-layer-group"></i> Pal: {{ dc.sequence|default:'1' }}
+                                                                    </div>
+                                                                    <div class="badge bg-light text-dark border px-3 py-2 ms-2">
+                                                                        <i class="fas fa-weight-hanging"></i> {{ dc.qte|stringformat:".1f" }} {{ detail.move_line.product.packing.unit|default:"Kg" }}
+                                                                    </div>
                                                                 </div>
-                                                                <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
-                                                                    {% if move.type == 'Sortie' %}
-                                                                        {{ dc.location_info }}
-                                                                    {% else %}
+                                                            {% else %}
+                                                                <div class="d-flex align-items-center">
+                                                                    <div style="width: 38px; height: 38px; background: #f1f5f9; color: #475569; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                                                        <i class="fas fa-qrcode"></i>
+                                                                    </div>
+                                                                    <span style="font-family: monospace; font-size: 14px; font-weight: 600; color: #334155;">
                                                                         Palette N° {{ dc.sequence }}
-                                                                    {% endif %}
-                                                                </span>
-                                                            </div>
+                                                                    </span>
+                                                                </div>
+                                                            {% endif %}
                                                             <div class="ms-auto">
                                                                 {% if move.type == 'Entré' %}
                                                                     <span class="badge bg-light text-dark border me-2" style="font-size: 13px; font-weight: 600; padding: 6px 10px;">{{ dc.qte|intcomma }} Kg</span>
@@ -513,11 +560,7 @@
                                                                     {% endif %}
                                                                 {% endif %}
                                                                 {% if move.type == 'Sortie' %}
-                                                                    {% if dc.is_scanned %}
-                                                                        <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
-                                                                    {% else %}
-                                                                        <span class="badge bg-warning text-dark" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-hourglass-half me-1"></i> En attente</span>
-                                                                    {% endif %}
+                                                                    <span class="badge bg-success text-white" style="font-size: 12px; padding: 6px 10px;"><i class="fas fa-check me-1"></i> Scanné</span>
                                                                 {% endif %}
                                                             </div>
                                                         </div>

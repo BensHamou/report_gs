@@ -688,16 +688,16 @@ def move_detail(request, move_id):
     move = get_object_or_404(Move, id=move_id)
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
-        can_edit = move.type == 'Entré'
+        can_edit = move.type == 'Entré' or move.state == 'Brouillon'
         can_cancel = move.state in ['Brouillon', 'Confirmé']
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
     elif request.user.role == 'Gestionaire' and move.gestionaire == request.user:
-        can_edit = move.state == 'Brouillon' and move.type == 'Entré'
+        can_edit = move.state == 'Brouillon'
         can_cancel = move.state == 'Brouillon' and (move.type == 'Sotrie' or not move.is_transfer)
         can_confirm = move.state == 'Brouillon'
     elif request.user.role == 'Validateur' and move.site == request.user.default_site:
-        can_edit = move.state == 'Brouillon' and move.type == 'Entré'
+        can_edit = move.state == 'Brouillon'
         can_confirm = move.state == 'Brouillon'
         can_validate = move.state == 'Confirmé'
         can_cancel = move.state == 'Brouillon'
@@ -719,25 +719,9 @@ def confirmMove(request, move_id):
             return JsonResponse({'success': False, 'message': 'Le mouvement doit être à l\'état Brouillon pour être confirmé.'})
         
         if move.type == 'Sortie':
-            unscanned_exists = DetailCode.objects.filter(
-                line_detail__move_line__move=move,
-                is_scanned=False
-            ).exists()
-            if unscanned_exists:
-                if request.user.role == 'Admin':
-                    if request.POST.get('force_scan') == '1':
-                        DetailCode.objects.filter(
-                            line_detail__move_line__move=move,
-                            is_scanned=False
-                        ).update(is_scanned=True)
-                    else:
-                        return JsonResponse({
-                            'success': False,
-                            'unscanned': True,
-                            'message': 'Certaines palettes n\'ont pas encore été scannées. Voulez-vous forcer la confirmation ?'
-                        })
-                else:
-                    return JsonResponse({'success': False, 'message': 'Impossible de confirmer ce mouvement car certaines palettes n\'ont pas encore été scannées.'})
+            for ml in move.move_lines.all():
+                if abs(ml.qte - ml.initial_qte) > 0.01:
+                    return JsonResponse({'success': False, 'message': f'La quantité scannée ({ml.qte}) pour le produit {ml.product.designation} ne correspond pas à la quantité demandée ({ml.initial_qte}).'})
         
         try:
             move.check_can_confirm()
@@ -1370,6 +1354,86 @@ def cartographieView(request):
 
 @login_required(login_url='login')
 @admin_or_gs_required
+def edit_move_out_line_view(request, move_line_id):
+    import json
+    from django.db import models
+    move_line = get_object_or_404(MoveLine, id=move_line_id)
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                initial_qte = request.POST.get('initial_qte')
+                observation = request.POST.get('observation', '/')
+                deleted_codes_str = request.POST.get('deleted_codes', '[]')
+                modified_quantities_str = request.POST.get('modified_quantities', '{}')
+                
+                if initial_qte:
+                    initial_qte_float = float(initial_qte)
+                    if initial_qte_float <= 0:
+                        return JsonResponse({'success': False, 'message': 'La quantité doit être supérieure à 0.'}, status=200)
+                    move_line.initial_qte = initial_qte_float
+                
+                move_line.observation = observation
+                move_line.save()
+                
+                # Parse JSON
+                try:
+                    deleted_codes = json.loads(deleted_codes_str)
+                    modified_quantities = json.loads(modified_quantities_str)
+                except json.JSONDecodeError:
+                    return JsonResponse({'success': False, 'message': 'Données de palettes invalides.'}, status=400)
+                
+                # Delete removed codes
+                if deleted_codes:
+                    dcs = DetailCode.objects.filter(id__in=deleted_codes, line_detail__move_line=move_line)
+                    line_details = set(dc.line_detail for dc in dcs)
+                    dcs.delete()
+                    
+                    for ld in line_details:
+                        total = ld.detail_codes.aggregate(total=models.Sum('qte'))['total'] or 0
+                        pal = ld.detail_codes.count()
+                        if pal == 0:
+                            ld.delete()
+                        else:
+                            ld.qte = total
+                            ld.palette = pal
+                            ld.save()
+                
+                # Process quantity updates
+                for dc_id_str, new_qte in modified_quantities.items():
+                    dc = DetailCode.objects.filter(id=int(dc_id_str), line_detail__move_line=move_line).first()
+                    if dc:
+                        new_qte_float = float(new_qte)
+                        if new_qte_float > 0 and dc.qte != new_qte_float:
+                            product = move_line.product
+                            if product.qte_per_pal and new_qte_float > product.qte_per_pal:
+                                return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) dépasse la limite de {product.qte_per_pal} par palette."}, status=200)
+                            
+                            if product.qte_per_cond:
+                                remainder = new_qte_float % product.qte_per_cond
+                                if remainder > 1e-5 and (product.qte_per_cond - remainder) > 1e-5:
+                                    return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) n'est pas un multiple de {product.qte_per_cond}."}, status=200)
+
+                            dc.qte = new_qte_float
+                            dc.save()
+                            
+                            # Update parent LineDetail
+                            ld = dc.line_detail
+                            total = ld.detail_codes.aggregate(total=models.Sum('qte'))['total'] or 0
+                            ld.qte = total
+                            ld.save()
+                
+                # MoveLine's qte is a property that calculates itself automatically,
+                # so we only need to save the initial_qte and observation changes.
+                move_line.save()
+                
+                return JsonResponse({'success': True, 'message': 'Ligne mise à jour avec succès.', 'move_id': move_line.move.id}, status=200)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Erreur lors du traitement: {str(e)}'}, status=500)
+            
+    return render(request, 'move/edit_move_out_line.html', {'move_line': move_line})
+
+@login_required(login_url='login')
+@admin_or_gs_required
 def get_available_stock(request):
     product_id = request.GET.get('product_id')
     site_id = request.GET.get('site_id')
@@ -1436,7 +1500,9 @@ def create_move_out_view(request):
                 observation = data.get('observation', '/')
                 bl_number = data.get('bl_number')
                 btr_number = data.get('btr_number')
+                category = data.get('category', 'PF')
                 
+                is_mp = (category == 'MP')
                 is_transfer = move_type in ['transfer', 'isolation']
                 is_isolation = move_type in ['isolation', 'consumption']
                 transfer_to_id = data.get('transfer_to') if move_type == 'transfer' else None
@@ -1444,34 +1510,14 @@ def create_move_out_view(request):
                 if not (site_id and date_str and gestionaire_id):
                     return JsonResponse({'success': False, 'message': 'Les champs Site, Date et Gestionaire sont obligatoires.'}, status=200)
 
-                if move_type == 'normal' and not bl_number:
+                if move_type == 'normal' and not bl_number and not is_mp:
                     return JsonResponse({'success': False, 'message': 'Le champ N° BL est obligatoire pour les sorties normales.'}, status=200)
                 if move_type == 'transfer' and not btr_number:
                     return JsonResponse({'success': False, 'message': 'Le champ N° BTR est obligatoire pour les transferts.'}, status=200)
 
-                selected_mode = data.get('mode', 'fifo')
-                if move_type == 'normal' and selected_mode == 'manual' and not request.user.allow_policy:
-                    return JsonResponse({'success': False, 'message': "Vous n'avez pas l'autorisation d'effectuer un prélèvement manuel pour une sortie normale."}, status=200)
-
                 products_list = data.get('products', [])
-                for prod_item in products_list:
-                    product_id = prod_item.get('product_id')
-                    picks = prod_item.get('picks', [])
-                    if not product_id or not picks:
-                        continue
-                    
-                    product = Product.objects.filter(id=product_id).first()
-                    if product and product.qte_per_cond and product.qte_per_cond > 0:
-                        desired_qte = float(prod_item.get('qte_desired', 0))
-                        ratio = desired_qte / product.qte_per_cond
-                        if abs(ratio - round(ratio)) > 1e-4:
-                            return JsonResponse({'success': False, 'message': f'La quantité désirée pour le produit {product.designation} ({desired_qte} Kg) doit être un multiple de {product.qte_per_cond} Kg.'}, status=200)
-
-                        for p in picks:
-                            pick_qte = float(p.get('qte', 0))
-                            pick_ratio = pick_qte / product.qte_per_cond
-                            if abs(pick_ratio - round(pick_ratio)) > 1e-4:
-                                return JsonResponse({'success': False, 'message': f'La quantité de la palette {p.get("code")} ({pick_qte} Kg) doit être un multiple de {product.qte_per_cond} Kg.'}, status=200)
+                if not products_list:
+                    return JsonResponse({'success': False, 'message': 'Veuillez ajouter au moins un produit à sortir.'}, status=200)
 
                 move = Move.objects.create(
                     site_id=site_id,
@@ -1482,82 +1528,56 @@ def create_move_out_view(request):
                     type='Sortie',
                     is_transfer=is_transfer,
                     is_isolation=is_isolation,
+                    is_mp=is_mp,
                     transfer_to_id=transfer_to_id,
                     state='Brouillon',
                     create_uid=request.user,
                     write_uid=request.user
                 )
 
-                if move_type == 'normal' and bl_number:
-                    try:
-                        MoveBL.objects.create(move=move, numero=int(bl_number), is_annexe=False)
-                    except (ValueError, TypeError):
-                        return JsonResponse({'success': False, 'message': 'Le N° BL doit être un nombre entier.'}, status=200)
+                if move_type == 'normal':
+                    if is_mp:
+                        # Auto generate sequence for MP
+                        year = int(date_str.split('-')[0]) if date_str else move.date.year
+                        seq_obj, created = MoveMPSequence.objects.select_for_update().get_or_create(
+                            site_id=site_id, year=year
+                        )
+                        seq_obj.sequence += 1
+                        seq_obj.save()
+                        MoveBL.objects.create(move=move, numero=seq_obj.sequence, is_annexe=False)
+                    else:
+                        try:
+                            MoveBL.objects.create(move=move, numero=int(bl_number), is_annexe=False)
+                        except (ValueError, TypeError):
+                            return JsonResponse({'success': False, 'message': 'Le N° BL doit être un nombre entier.'}, status=200)
                 elif move_type == 'transfer' and btr_number:
                     try:
                         MoveBL.objects.create(move=move, numero=int(btr_number), is_annexe=False)
                     except (ValueError, TypeError):
                         return JsonResponse({'success': False, 'message': 'Le N° BTR doit être un nombre entier.'}, status=200)
 
-                products_list = data.get('products', [])
                 for prod_item in products_list:
                     product_id = prod_item.get('product_id')
-                    picks = prod_item.get('picks', [])
-                    if not product_id or not picks:
+                    desired_qte = float(prod_item.get('qte', 0))
+                    
+                    if not product_id or desired_qte <= 0:
                         continue
 
-                    ml = MoveLine.objects.create(
+                    MoveLine.objects.create(
                         move=move,
                         product_id=product_id,
                         lot_number='/',
+                        initial_qte=desired_qte,
                         create_uid=request.user,
                         write_uid=request.user,
                         observation=observation
                     )
 
-                    grouped_picks = {}
-                    for pick in picks:
-                        emp_id = pick.get('emplacement_id')
-                        wh_id = pick.get('warehouse_id')
-                        lot = pick.get('n_lot')
-                        key = (emp_id, wh_id, lot)
-                        if key not in grouped_picks:
-                            grouped_picks[key] = []
-                        grouped_picks[key].append(pick)
-
-                    for key, pick_list in grouped_picks.items():
-                        emp_id, wh_id, lot = key
-                        total_qte = sum(float(p.get('qte', 0)) for p in pick_list)
-                        total_pal = len(pick_list)
-
-                        dispo = Disponibility.objects.filter(product_id=product_id, emplacement_id=emp_id, n_lot=lot).first()
-                        expiry_date = dispo.expiry_date if dispo else None
-
-                        ld = LineDetail.objects.create(
-                            move_line=ml,
-                            warehouse_id=wh_id,
-                            emplacement_id=emp_id,
-                            n_lot=lot,
-                            qte=total_qte,
-                            palette=total_pal,
-                            expiry_date=expiry_date,
-                            create_uid=request.user,
-                            write_uid=request.user
-                        )
-
-                        for p in pick_list:
-                            DetailCode.objects.create(
-                                line_detail=ld,
-                                code=p.get('code'),
-                                qte=float(p.get('qte', 0)),
-                                palette=1
-                            )
-
                 if not move.move_lines.exists():
                     move.delete()
                     return JsonResponse({'success': False, 'message': 'Veuillez ajouter au moins un produit valide à sortir.'}, status=200)
 
-                return JsonResponse({'success': True, 'message': 'Mouvement de sortie créé avec succès.', 'new_record': move.id}, status=200)
+                return JsonResponse({'success': True, 'message': 'Mouvement de sortie créé avec succès (Brouillon).', 'new_record': move.id}, status=200)
 
         except Exception as e:
             return JsonResponse({'success': False, 'message': f'Erreur lors de la création de la sortie : {str(e)}'}, status=500)

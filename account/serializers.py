@@ -96,17 +96,18 @@ class ProductDisponibilitySerializer(serializers.ModelSerializer):
         fields = ['id', 'disponibility']
 
 
-class TabletMoveScanSerializer(serializers.ModelSerializer):
+class LightMoveSerializer(serializers.ModelSerializer):
     bl_str = serializers.ReadOnlyField()
     site_name = serializers.CharField(source='site.designation', default='/', read_only=True)
+    product_display_pda = serializers.ReadOnlyField()
     type = serializers.SerializerMethodField()
-    observation = serializers.SerializerMethodField()
-    to_scan = serializers.SerializerMethodField()
-    scanned = serializers.SerializerMethodField()
+    expected_qte = serializers.SerializerMethodField()
+    expected_plt = serializers.SerializerMethodField()
+    date = serializers.ReadOnlyField()
 
     class Meta:
         model = Move
-        fields = ['id', 'bl_str', 'date', 'site_name', 'type', 'observation', 'to_scan', 'scanned']
+        fields = ['id', 'bl_str', 'date', 'site_name', 'product_display_pda', 'expected_qte', 'expected_plt', 'type']
 
     def get_type(self, obj):
         if obj.is_transfer and not obj.is_isolation:
@@ -117,59 +118,14 @@ class TabletMoveScanSerializer(serializers.ModelSerializer):
             return "consumption"
         return "normal"
 
-    def get_observation(self, obj):
-        first_line = obj.move_lines.first()
-        return first_line.observation if (first_line and first_line.observation) else "/"
+    def get_expected_qte(self, obj):
+        return sum((ml.initial_qte or 0) for ml in obj.move_lines.all())
 
-    def _get_scan_data(self, obj, is_scanned):
-        detail_codes = DetailCode.objects.filter(line_detail__move_line__move=obj, is_scanned=is_scanned).select_related(
-            'line_detail__emplacement__warehouse', 'line_detail__move_line__product')
-        emplacements_map = {}
-        for dc in detail_codes:
-            emp = dc.line_detail.emplacement
-            prod = dc.line_detail.move_line.product
-            
-            if emp.id not in emplacements_map:
-                warehouse_name = emp.warehouse.designation if emp.warehouse else ""
-                emplacements_map[emp.id] = {
-                    'id': emp.id,
-                    'name': f"{warehouse_name} - {emp.designation}",
-                    'products': {}
-                }
-            
-            if prod.id not in emplacements_map[emp.id]['products']:
-                image_url = ""
-                if prod.image:
-                    request = self.context.get('request')
-                    if request:
-                        image_url = request.build_absolute_uri(prod.image.url)
-                    else:
-                        image_url = prod.image.url
-                
-                emplacements_map[emp.id]['products'][prod.id] = {
-                    'id': prod.id,
-                    'name': prod.designation,
-                    'image': image_url,
-                    'codes': []
-                }
-            
-            emplacements_map[emp.id]['products'][prod.id]['codes'].append({
-                'id': dc.id,
-                'code': dc.code,
-                'qte_to_scan': f'{dc.qte} {prod.packing.unit}',
-                'qte_per_cond': f'{dc.qte / prod.qte_per_cond} {prod.packing.designation}' if prod.qte_per_cond else f'{dc.qte} {prod.packing.unit}'
-            })
-            
-        result = []
-        for emp_id, emp_data in emplacements_map.items():
-            emp_data['products'] = list(emp_data['products'].values())
-            result.append(emp_data)
-        return result
-
-    def get_to_scan(self, obj):
-        return self._get_scan_data(obj, is_scanned=False)
-
-    def get_scanned(self, obj):
-        return self._get_scan_data(obj, is_scanned=True)
-
-
+    def get_expected_plt(self, obj):
+        import math
+        total_plt = 0
+        for ml in obj.move_lines.all():
+            qte = ml.initial_qte or 0
+            if ml.product.qte_per_pal and ml.product.qte_per_pal > 0:
+                total_plt += math.ceil(qte / ml.product.qte_per_pal)
+        return total_plt

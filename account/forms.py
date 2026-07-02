@@ -70,7 +70,7 @@ class UserForm(BaseModelForm):
 class SiteForm(BaseModelForm):
     class Meta:
         model = Site
-        fields = ['designation', 'image', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr', 'check_for_drafts']
+        fields = ['designation', 'image', 'address', 'email', 'prefix_bl', 'prefix_bl_a', 'prefix_btr', 'prefix_mp', 'check_for_drafts']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     address = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Adresse')))
@@ -78,6 +78,7 @@ class SiteForm(BaseModelForm):
     prefix_bl = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL')))
     prefix_bl_a = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BL Annex')))
     prefix_btr = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe BTR')))
+    prefix_mp = forms.CharField(required=False, widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe MP')))
     image = forms.ImageField(widget=forms.ClearableFileInput(attrs={'class': 'custom-file-input','accept': 'image/*'}))
     check_for_drafts = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
         'type': 'checkbox',

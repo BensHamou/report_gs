@@ -101,6 +101,14 @@
                     <small class="text-danger">{{ form.prefix_btr.errors }}</small>
                 {% endif %}
             </div>
+
+            <div class="col-lg-4 col-md-12 mb-2">
+                <label for="prefix_mp" class="form-label" style="color: #5d5d5d;">Préfixe MP</label>
+                {{ form.prefix_mp }}
+                {% if form.prefix_mp.errors %}
+                    <small class="text-danger">{{ form.prefix_mp.errors }}</small>
+                {% endif %}
+            </div>
         </div>
     </div>
 </form>

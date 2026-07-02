@@ -51,6 +51,7 @@ class Site(BaseModel):
     prefix_bl = models.CharField(max_length=50)
     prefix_bl_a = models.CharField(max_length=50)
     prefix_btr = models.CharField(max_length=50)
+    prefix_mp = models.CharField(max_length=50, blank=True, null=True)
     check_for_drafts = models.BooleanField(default=False)
     image = models.ImageField(upload_to=get_site_image_filename, verbose_name='Image', blank=True, null=True)
 

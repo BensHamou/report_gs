@@ -50,6 +50,7 @@ urlpatterns = [
     path('move/validate/<int:move_id>/', validateMove, name='validate_move'),
     
     path('move-out/create/', create_move_out_view, name='create_move_out_web'),
+    path('move-out/edit-line/<int:move_line_id>/', edit_move_out_line_view, name='edit_move_out_line'),
     path('get-available-stock/', get_available_stock, name='get_available_stock'),
     
     path('generate-qr-code/<int:detail_id>/', generateQRCode, name='generate_qr_code'),

@@ -129,6 +129,7 @@ class Move(BaseModel):
     is_transfer = models.BooleanField(default=False)
     is_isolation = models.BooleanField(default=False)
     is_inventory = models.BooleanField(default=False)
+    is_mp = models.BooleanField(default=False)
     stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
 
 
@@ -136,6 +137,22 @@ class Move(BaseModel):
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
     transfer_to = models.ForeignKey(Site, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers')
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
+
+    @property
+    def scan_status(self):
+        if self.state != 'Brouillon' or self.type != 'Sortie':
+            return ""
+        
+        total_scanned = sum(ml.details.aggregate(total=models.Count('detail_codes'))['total'] or 0 for ml in self.move_lines.all())
+        total_expected_qte = sum(ml.initial_qte for ml in self.move_lines.all())
+        total_scanned_qte = sum(ml.qte for ml in self.move_lines.all())
+
+        if total_scanned == 0:
+            return "en attente"
+        elif total_scanned_qte >= total_expected_qte and total_expected_qte > 0:
+            return "scanné"
+        else:
+            return "en cours"
 
     @property
     def palette(self):
@@ -376,6 +393,15 @@ class Move(BaseModel):
         if len(self.move_lines.all()) > 1:
             return f"{first_move_line.product}, ..."
         return f'{first_move_line.product.designation}'
+
+    @property
+    def product_display_pda(self):
+        first_move_line = self.move_lines.first()
+        if not first_move_line:
+            return '/'
+        if len(self.move_lines.all()) > 1:
+            return ','.join([str(ml.product) for ml in self.move_lines.all()])
+        return f'{first_move_line.product.designation}'
     
     def is_in_mp(self):
         return all([ml.product.type == 'Matière Première' for ml in self.move_lines.all()]) and not self.is_transfer and self.type == 'Entré'
@@ -397,6 +423,7 @@ class MoveLine(BaseModel):
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     mirror = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
     observation = models.TextField(blank=True, null=True)
+    initial_qte = models.FloatField(default=0, null=True, blank=True)
     transfered_qte = models.FloatField(default=0, null=True, blank=True)
     diff_qte = models.FloatField(default=0, null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
@@ -728,6 +755,8 @@ class MoveBL(BaseModel):
 
     @property
     def num(self):
+        if self.move.type == 'Sortie' and self.move.is_mp and not self.move.is_transfer:
+            return f'{self.move.site.prefix_mp or ""}{str(self.numero).zfill(5)}/{str(self.move.date.year)[-2:]}'
         if self.move.is_transfer:
             return f'{self.move.site.prefix_btr}{str(self.numero).zfill(4)}/{str(self.move.date.year)[-2:]}'
         elif self.is_annexe:
@@ -737,6 +766,11 @@ class MoveBL(BaseModel):
     
     def __str__(self):
         return f"{self.move} - {self.numero}"
+
+class MoveMPSequence(BaseModel):
+    site = models.ForeignKey(Site, on_delete=models.CASCADE, related_name='mp_sequences')
+    year = models.IntegerField()
+    sequence = models.IntegerField(default=0)
 
 class Validation(BaseModel):
     MOVE_STATE = [
