@@ -23,6 +23,8 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from report.cron import send_stock
 from django.templatetags.static import static
+from django.utils import timezone
+
 
 # PACKING
 
