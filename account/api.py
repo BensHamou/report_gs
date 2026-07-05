@@ -191,11 +191,13 @@ def sync_move_out_scans_api(request, move_id):
 
                 product = move_line.product
                 if product.qte_per_pal and qte > product.qte_per_pal:
+                    transaction.set_rollback(True)
                     return Response({'success': False, 'message': f"La quantité ({qte}) dépasse la limite de {product.qte_per_pal} par palette pour le code {code}."}, status=400)
                 
                 if product.qte_per_cond:
                     remainder = qte % product.qte_per_cond
                     if remainder > 1e-5 and (product.qte_per_cond - remainder) > 1e-5:
+                        transaction.set_rollback(True)
                         return Response({'success': False, 'message': f"La quantité ({qte}) n'est pas un multiple de {product.qte_per_cond} pour le code {code}."}, status=400)
 
                 emp = Emplacement.objects.get(id=emplacement_id)
@@ -229,6 +231,12 @@ def sync_move_out_scans_api(request, move_id):
                 ld.qte = total
                 ld.palette = pal
                 ld.save()
+
+            for ml in move.move_lines.all():
+                total_scanned = ml.details.aggregate(total=models.Sum('qte'))['total'] or 0
+                if ml.initial_qte and total_scanned > ml.initial_qte:
+                    transaction.set_rollback(True)
+                    return Response({'success': False, 'message': f"La quantité totale scannée ({total_scanned}) dépasse la quantité attendue ({ml.initial_qte}) pour le produit {ml.product.designation}."}, status=400)
 
         return Response({'success': True, 'message': 'Synchronisation réussie.'}, status=200)
 
