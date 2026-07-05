@@ -11,7 +11,7 @@ import json
 from report.models import *
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
-from django.db import transaction
+from django.db import transaction, models
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 
