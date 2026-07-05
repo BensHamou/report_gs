@@ -234,7 +234,6 @@ def sync_move_out_scans_api(request, move_id):
 
             for ml in move.move_lines.all():
                 total_scanned = ml.details.aggregate(total=models.Sum('qte'))['total'] or 0
-                print('HEEEEERE', total_scanned, ml.initial_qte, ml.product.designation)
                 if ml.initial_qte and total_scanned > ml.initial_qte:
                     transaction.set_rollback(True)
                     return Response({'success': False, 'message': f"La quantité totale scannée ({total_scanned}) dépasse la quantité attendue ({ml.initial_qte}) pour le produit {ml.product.designation}."}, status=400)
