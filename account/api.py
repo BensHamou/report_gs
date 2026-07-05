@@ -43,7 +43,7 @@ def login_api(request):
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée.'}, status=405)
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 5
     page_size_query_param = 'page_size'
     max_page_size = 100
 
