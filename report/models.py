@@ -6,8 +6,7 @@ import datetime
 from django.db import models
 import math
 import os
-from django.utils import timezone
-from datetime import timedelta
+from django.utils.functional import cached_property
 
 def get_family_image_filename(instance, filename):
     title = instance.designation
@@ -125,7 +124,7 @@ class Move(BaseModel):
     shift = models.ForeignKey(Shift, on_delete=models.SET_NULL, null=True, blank=True, related_name='moves')
     gestionaire = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='moves', limit_choices_to=Q(role='Gestionaire') | Q(role='Validateur') | Q(role='Admin'))
 
-    date = models.DateField(default=datetime.date.today, null=True, blank=True)
+    date = models.DateField(default=datetime.date.today, null=True, blank=True, db_index=True)
     is_transfer = models.BooleanField(default=False)
     is_isolation = models.BooleanField(default=False)
     is_inventory = models.BooleanField(default=False)
@@ -133,8 +132,8 @@ class Move(BaseModel):
     stayed_in_temp = models.PositiveIntegerField(default=0, null=True, blank=True) 
 
 
-    state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon')
-    type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré')
+    state = models.CharField(choices=MOVE_STATE, max_length=15, default='Brouillon', db_index=True)
+    type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré', db_index=True)
     transfer_to = models.ForeignKey(Site, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers')
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
 
@@ -418,7 +417,7 @@ class Move(BaseModel):
         return f"[{self.id}] {self.line.designation} - {self.date}"
     
 class MoveLine(BaseModel):
-    lot_number = models.CharField(max_length=255)
+    lot_number = models.CharField(max_length=255, db_index=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='move_lines')
     move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='move_lines')
     mirror = models.ForeignKey('LineDetail', on_delete=models.SET_NULL, related_name='transferred_line', null=True, blank=True)
@@ -428,19 +427,19 @@ class MoveLine(BaseModel):
     diff_qte = models.FloatField(default=0, null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
 
-    @property
+    @cached_property
     def qte(self):
         return self.details.aggregate(total=models.Sum('qte'))['total'] or 0.0
 
-    @property
+    @cached_property
     def package(self):
         return sum(detail.package for detail in self.details.all()) or 0
 
-    @property
+    @cached_property
     def palette(self):
         return sum(detail.palette for detail in self.details.all()) or 0
 
-    @property
+    @cached_property
     def expected_plt(self):
         import math
         if self.product.qte_per_pal and self.product.qte_per_pal > 0:
@@ -475,8 +474,8 @@ class LineDetail(BaseModel):
     qte = models.FloatField()
     palette = models.PositiveIntegerField(default=0)
     expiry_date = models.DateField(null=True, blank=True)
-    code = models.CharField(max_length=255, null=True, blank=True)
-    n_lot = models.CharField(max_length=255, null=True, blank=True)
+    code = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    n_lot = models.CharField(max_length=255, null=True, blank=True, db_index=True)
 
     @property
     def has_unprinted_codes(self):
@@ -507,17 +506,21 @@ class LineDetail(BaseModel):
 
             if self.move_line.mirror and self.move_line.mirror.detail_codes.count() == (self.palette if self.palette > 0 else 1):
                 first_code = None
-                idx = 0
-                for original_dc in self.move_line.mirror.detail_codes.all():
+                detail_codes_to_create = []
+                dispo_lines_to_create = []
+                
+                for idx, original_dc in enumerate(self.move_line.mirror.detail_codes.all()):
                     seq_num = next_seq + idx
                     unique_code = f"Product:{self.move_line.product.id};Emplacement:{self.emplacement.id};NLOT:{self.n_lot};PAL:{seq_num}"
                     if idx == 0:
                         first_code = unique_code
 
-                    DetailCode.objects.create(line_detail=self, code=unique_code, qte=original_dc.qte, palette=1)
-                    DisponibilityLine.objects.create(disponibility=dispo, code=unique_code, qte=original_dc.qte, 
-                                                     palette=1, sequence=seq_num, shift=self.move_line.move.shift)
-                    idx += 1
+                    detail_codes_to_create.append(DetailCode(line_detail=self, code=unique_code, qte=original_dc.qte, palette=1))
+                    dispo_lines_to_create.append(DisponibilityLine(disponibility=dispo, code=unique_code, qte=original_dc.qte, 
+                                                                   palette=1, sequence=seq_num, shift=self.move_line.move.shift))
+                
+                DetailCode.objects.bulk_create(detail_codes_to_create)
+                DisponibilityLine.objects.bulk_create(dispo_lines_to_create)
                 self.code = first_code
 
             elif self.move_line.product.type == 'Matière Première':
@@ -545,6 +548,9 @@ class LineDetail(BaseModel):
 
                 distributed_qte = 0.0
                 first_code = None
+                
+                detail_codes_to_create = []
+                dispo_lines_to_create = []
 
                 for idx in range(num_palettes):
                     seq_num = next_seq + idx
@@ -559,20 +565,23 @@ class LineDetail(BaseModel):
 
                     distributed_qte += palette_qte
 
-                    DetailCode.objects.create(
+                    detail_codes_to_create.append(DetailCode(
                         line_detail=self,
                         code=unique_code,
                         qte=palette_qte,
                         palette=1
-                    )
-                    DisponibilityLine.objects.create(
+                    ))
+                    dispo_lines_to_create.append(DisponibilityLine(
                         disponibility=dispo,
                         code=unique_code,
                         qte=palette_qte,
                         palette=1,
                         sequence=seq_num,
                         shift=self.move_line.move.shift
-                    )
+                    ))
+                
+                DetailCode.objects.bulk_create(detail_codes_to_create)
+                DisponibilityLine.objects.bulk_create(dispo_lines_to_create)
                 self.code = first_code
 
             self.save()
@@ -589,7 +598,7 @@ class LineDetail(BaseModel):
 
 class DetailCode(BaseModel):
     line_detail = models.ForeignKey(LineDetail, on_delete=models.CASCADE, related_name='detail_codes')
-    code = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, db_index=True)
     qte = models.FloatField()
     palette = models.PositiveIntegerField(default=1)
     is_printed = models.BooleanField(default=False)
@@ -797,7 +806,7 @@ class Validation(BaseModel):
 class Disponibility(BaseModel):
     emplacement = models.ForeignKey(Emplacement, related_name='disponibilities', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='disponibilities', on_delete=models.CASCADE)
-    n_lot = models.CharField(max_length=50)
+    n_lot = models.CharField(max_length=50, db_index=True)
     qte = models.FloatField()
     nqte = models.FloatField(default=0)
     palette = models.PositiveIntegerField(default=0)

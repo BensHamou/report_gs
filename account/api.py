@@ -59,10 +59,12 @@ def get_available_palettes_api(request, move_id):
         is_transfer = move.is_transfer
         is_isolation = move.is_isolation
         
-        if is_isolation:
-            m_type = 'consumption'
-        elif is_transfer:
+        if is_transfer and not is_isolation:
             m_type = 'transfer'
+        elif is_transfer and is_isolation:
+            m_type = 'isolation'
+        elif not is_transfer and is_isolation:
+            m_type = 'consumption'
         else:
             m_type = 'normal'
 
@@ -73,14 +75,12 @@ def get_available_palettes_api(request, move_id):
             qte__gt=0
         ).select_related('emplacement', 'emplacement__warehouse', 'product')
 
-        if m_type == 'normal':
+        if m_type in ['normal', 'transfer']:
             dispos = dispos.filter(emplacement__quarantine=False, emplacement__temp=False).order_by('expiry_date', 'n_lot')
         elif m_type == 'isolation':
             dispos = dispos.filter(emplacement__quarantine=False)
         elif m_type == 'consumption':
             dispos = dispos.filter(emplacement__quarantine=True)
-        elif m_type == 'transfer':
-            dispos = dispos.filter(emplacement__quarantine=False, emplacement__temp=False).order_by('expiry_date', 'n_lot')
 
         scanned_codes = set()
         scanned_detail_codes = DetailCode.objects.filter(line_detail__move_line__move=move).select_related('line_detail', 'line_detail__move_line__product')
@@ -102,12 +102,12 @@ def get_available_palettes_api(request, move_id):
             palettes = []
             for line in d.sorted_lines:
                 if line.status == 'Valide' and line.code not in scanned_codes:
-                    palettes.append({
-                        'id': line.id,
-                        'code': line.code,
-                        'qte': line.qte,
-                        'sequence': line.sequence
-                    })
+                    palettes.append([
+                        line.id,
+                        line.code,
+                        line.qte,
+                        line.sequence
+                    ])
             
             if palettes:
                 stock_list.append({
@@ -271,11 +271,11 @@ class SendWarningEmail(APIView):
 def draft_move_list_api(request):
     user = request.user
     if user.role == 'Admin':
-        moves = Move.objects.filter(state='Brouillon', type='Sortie')
+        moves = Move.objects.filter(state='Brouillon', type='Sortie').prefetch_related('move_lines__product')
     else:
         if not user.default_site:
             return Response({"detail": "L'utilisateur n'a pas de site par défaut défini."}, status=400)
-        moves = Move.objects.filter(state='Brouillon', type='Sortie', site=user.default_site)
+        moves = Move.objects.filter(state='Brouillon', type='Sortie', site=user.default_site).prefetch_related('move_lines__product')
     moves = moves.order_by('-date_modified')
     paginator = StandardResultsSetPagination()
     paginated_moves = paginator.paginate_queryset(moves, request)
