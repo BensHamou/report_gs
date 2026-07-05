@@ -155,7 +155,10 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="custom-text-box">{{ line.palette|intcomma }}</p>
+                                <p class="custom-text-box">
+                                    {{ line.palette|intcomma }}
+                                    {% if move.type == 'Sortie' %} / {{ line.expected_plt|intcomma }} {% endif %}
+                                </p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">
@@ -386,7 +389,10 @@
                             </div>
                             <div class="col-lg-6 col-12 mb-2" {% if line.product.qte_per_pal == 1 %} hidden {% endif %}>
                                 <label for="palette" class="form-label">Nombre Palettes</label>
-                                <p class="custom-text-box">{{ line.palette|intcomma }}</p>
+                                <p class="custom-text-box">
+                                    {{ line.palette|intcomma }}
+                                    {% if move.type == 'Sortie' %} / {{ line.expected_plt|intcomma }} {% endif %}
+                                </p>
                             </div>
                             {% if line.transfered_qte %}
                                 <div class="col-lg-6 col-12 mb-2">

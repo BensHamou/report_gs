@@ -441,6 +441,13 @@ class MoveLine(BaseModel):
         return sum(detail.palette for detail in self.details.all()) or 0
 
     @property
+    def expected_plt(self):
+        import math
+        if self.product.qte_per_pal and self.product.qte_per_pal > 0:
+            return math.ceil((self.initial_qte or 0) / self.product.qte_per_pal)
+        return 0
+
+    @property
     def is_out(self):
         return self.move.type == 'Sortie'
 
