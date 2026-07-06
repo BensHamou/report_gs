@@ -687,7 +687,14 @@ def update_move_mp(request, move_line_id):
 @login_required(login_url='login')
 @can_view_move_required        
 def move_detail(request, move_id):
-    move = get_object_or_404(Move, id=move_id)
+    move = get_object_or_404(
+        Move.objects.prefetch_related(
+            'move_lines__product__packing',
+            'move_lines__details__warehouse',
+            'move_lines__details__emplacement'
+        ),
+        id=move_id
+    )
     can_edit, can_cancel, can_confirm, can_validate, can_print = False, False, False, False, move.state == 'Validé' and move.type == 'Entré'
     if request.user.role == 'Admin':
         can_edit = move.type == 'Entré' or move.state == 'Brouillon'
@@ -1106,7 +1113,10 @@ def extractStockView(request):
     n_lot = request.GET.get('n_lot')
     product = request.GET.get('product')
 
-    queryset = Disponibility.objects.all().order_by('-emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation')
+    queryset = Disponibility.objects.select_related(
+        'emplacement__warehouse__site',
+        'product'
+    ).all().order_by('-emplacement__warehouse__site__designation', 'emplacement__warehouse__designation', 'emplacement__designation', 'product__designation')
     if site:
         queryset = queryset.filter(emplacement__warehouse__site__designation__icontains=site)
     if warehouse:

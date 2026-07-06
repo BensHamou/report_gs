@@ -583,6 +583,10 @@
                 </div>
             </div>
         {% endif %}
+    {% empty %}
+        <div class="alert alert-info text-center m-3 w-100" role="alert">
+            <i class="fas fa-info-circle me-2"></i> Aucune ligne de mouvement trouvée.
+        </div>
     {% endfor %}
 </div>
 
