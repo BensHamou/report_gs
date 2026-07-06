@@ -237,6 +237,30 @@ class Move(BaseModel):
                         TemporaryEmplacementAlert.objects.get_or_create(dispo=ds, write_uid=detail.create_uid, create_uid=detail.create_uid, type='Temporaire')
                     else:
                         ds.save()
+                        
+                    if self.extourned_by:
+                        for dc in detail.detail_codes.all():
+                            dl = DisponibilityLine.objects.filter(code=dc.code).first()
+                            if dl:
+                                dl.qte += dc.qte
+                                dl.status = 'Valide'
+                                dl.save()
+                            else:
+                                seq = 1
+                                if "PAL:" in dc.code:
+                                    try:
+                                        seq = int(dc.code.split("PAL:")[-1])
+                                    except ValueError:
+                                        pass
+                                DisponibilityLine.objects.create(
+                                    disponibility=ds,
+                                    code=dc.code,
+                                    qte=dc.qte,
+                                    palette=dc.palette,
+                                    sequence=seq,
+                                    shift=self.shift,
+                                    status='Valide'
+                                )
                 else:
                     detail_codes = detail.detail_codes.all()
                     if detail_codes.exists():
@@ -293,7 +317,7 @@ class Move(BaseModel):
             self.create_isolation()
             return True, 'Stock ajusté créé avec succès.'
         
-        elif self.type == 'Entré':
+        elif self.type == 'Entré' and not self.extourned_by:
             for ml in self.move_lines.all():
                 for detail in ml.details.all():
                     if not detail.generateCode():

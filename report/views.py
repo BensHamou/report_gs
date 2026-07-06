@@ -1728,21 +1728,21 @@ def extourneMove(request, move_id):
             
             for ml in move.move_lines.all():
                 for ld in ml.details.all():
+                    from report.models import Disponibility
+                    dispo = Disponibility.objects.filter(product=ml.product, emplacement=ld.emplacement, n_lot=ld.n_lot).first()
+                    exp_date = ld.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
+
                     new_ml = MoveLine.objects.create(
                         move=extourne,
                         product=ml.product,
                         lot_number=ml.lot_number,
                         observation=ml.observation,
                         initial_qte=ld.qte,
-                        expiry_date=ml.expiry_date,
+                        expiry_date=exp_date,
                         mirror=ld,
                         create_uid=request.user,
                         write_uid=request.user
                     )
-                    
-                    from report.models import Disponibility
-                    dispo = Disponibility.objects.filter(product=ml.product, emplacement=ld.emplacement, n_lot=ld.n_lot).first()
-                    exp_date = ld.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
                     
                     new_ld = LineDetail.objects.create(
                         move_line=new_ml,
@@ -1755,16 +1755,14 @@ def extourneMove(request, move_id):
                         create_uid=request.user,
                         write_uid=request.user
                     )
-                    
-                    if new_type == 'Sortie':
-                        for dc in ld.detail_codes.all():
-                            DetailCode.objects.create(
-                                line_detail=new_ld,
-                                code=dc.code,
-                                qte=dc.qte,
-                                palette=dc.palette,
-                                is_scanned=True
-                            )
+                    for dc in ld.detail_codes.all():
+                        DetailCode.objects.create(
+                            line_detail=new_ld,
+                            code=dc.code,
+                            qte=dc.qte,
+                            palette=dc.palette,
+                            is_scanned=True
+                        )
             
             extourne.check_can_confirm()
             extourne.changeState(request.user.id, 'Confirmé')
