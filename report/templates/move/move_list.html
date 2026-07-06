@@ -105,7 +105,14 @@
                     <tr style="color: #5d5d5d; border-top: 1px #cccccc solid; cursor: pointer;" class="table-row-hover" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">
                         <td class="table-text">{{ move.id }}</td>
                         <td class="table-text">{{ move.n_lots|default:'/' }}</td>
-                        <td class="table-text move-type-{{ move.display_type|slugify }}">{{ move.display_type }}</td>
+                        <td class="table-text move-type-{{ move.display_type|slugify }}">
+                            {{ move.display_type }}
+                            {% if move.extourned_by %}
+                                <br><span class="badge badge-soft-info mt-1" style="font-size: 11px;">Issu d'Extourne</span>
+                            {% elif move.reversed_move.all %}
+                                <br><span class="badge badge-soft-danger mt-1" style="font-size: 11px;">Extourné</span>
+                            {% endif %}
+                        </td>
                         <td class="table-text">{{ move.product_display }}</td>
                         <td class="table-text d-none d-md-table-cell">{{ move.gestionaire }}</td>
                         <td class="table-text d-none d-md-table-cell">{{ move.site }}</td>
