@@ -1137,7 +1137,7 @@ def editStockView(request, id):
             stock.qte = total_qte
             stock.save(update_fields=['qte'])
             
-            url_path = reverse('stocks')
+            url_path = reverse('stock_detail', args=[stock.id])
             return redirect(getRedirectionURL(request, url_path))
         else:
             messages.error(request, "Veuillez corriger les erreurs ci-dessous.")
