@@ -1718,18 +1718,19 @@ def extourneMove(request, move_id):
             )
             
             for ml in move.move_lines.all():
-                new_ml = MoveLine.objects.create(
-                    move=extourne,
-                    product=ml.product,
-                    lot_number=ml.lot_number,
-                    observation=ml.observation,
-                    initial_qte=ml.qte,
-                    expiry_date=ml.expiry_date,
-                    create_uid=request.user,
-                    write_uid=request.user
-                )
-                
                 for ld in ml.details.all():
+                    new_ml = MoveLine.objects.create(
+                        move=extourne,
+                        product=ml.product,
+                        lot_number=ml.lot_number,
+                        observation=ml.observation,
+                        initial_qte=ld.qte,
+                        expiry_date=ml.expiry_date,
+                        mirror=ld,
+                        create_uid=request.user,
+                        write_uid=request.user
+                    )
+                    
                     from report.models import Disponibility
                     dispo = Disponibility.objects.filter(product=ml.product, emplacement=ld.emplacement, n_lot=ld.n_lot).first()
                     exp_date = ld.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
