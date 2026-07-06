@@ -190,9 +190,39 @@
 
 <script>
 function replaceDamagedPalette(lineId) {
-    if(confirm('Voulez-vous vraiment remplacer cette palette endommagée par une nouvelle ?')) {
-        window.location.href = constructUrl('/report/replace_damaged_palette/' + lineId + '/');
-    }
+    swal({
+        title: "Remplacer la palette endommagée ?",
+        text: "Êtes-vous sûr de vouloir invalider ce code QR ? La palette actuelle sera marquée comme Détruite (quantité 0) et une nouvelle palette identique (Valide) sera créée avec un nouveau code.",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        confirmButtonText: "Oui",
+        cancelButtonText: "Non",
+    })
+    .then((willConfirm) => {
+        if (willConfirm) {
+            $.ajax({
+                type: "POST",
+                url: `/stock/replace-palette/${lineId}/`,
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function(response) {
+                    if (response.success) {
+                        swal("Succès!", response.message, "success")
+                        .then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        swal("Erreur!", response.message, "error");
+                    }
+                },
+                error: function() {
+                    swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                }
+            });
+        }
+    });
 }
 </script>
 
