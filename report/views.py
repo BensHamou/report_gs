@@ -1045,13 +1045,20 @@ def handleDetails(request, move_line):
 
 @login_required(login_url='login')
 @admin_required
+def stockDetailView(request, id):
+    stock = get_object_or_404(Disponibility, id=id)
+    context = {'stock': stock}
+    return render(request, 'dispo_detail.html', context)
+
+@login_required(login_url='login')
+@admin_required
 def listStockView(request):
     stocks = Disponibility.objects.all().order_by('-date_modified')
     filteredData = DisponibilityFilter(request.GET, queryset=stocks)
     stocks = filteredData.qs
     
     total_qte = stocks.aggregate(Sum('qte'))['qte__sum'] or 0
-    total_palettes = stocks.aggregate(Sum('palette'))['palette__sum'] or 0
+    total_palettes = DisponibilityLine.objects.filter(disponibility__in=stocks, status='Valide', qte__gt=0).count()
 
     paginator = Paginator(stocks, request.GET.get('page_size', 12))
     page_number = request.GET.get('page')
@@ -1092,12 +1099,44 @@ def createStockView(request):
 @admin_only_required
 def editStockView(request, id):
     stock = get_object_or_404(Disponibility, id=id)
-    form = DisponibilityForm(instance=stock)
+    form = EditDisponibilityForm(instance=stock)
     
     if request.method == 'POST':
-        form = DisponibilityForm(request.POST, instance=stock)
+        form = EditDisponibilityForm(request.POST, instance=stock)
         if form.is_valid():
             form.save(user=request.user)
+            
+            total_qte = 0
+            has_error = False
+            for line in stock.lines.all():
+                qte_str = request.POST.get(f'line_qte_{line.id}')
+                if qte_str is not None:
+                    try:
+                        new_qte = float(qte_str)
+                        if new_qte >= 0:
+                            if stock.product.type != 'Matière Première':
+                                if new_qte > stock.product.qte_per_pal:
+                                    messages.error(request, f"La quantité de la palette {line.sequence} dépasse le maximum ({stock.product.qte_per_pal}).")
+                                    has_error = True
+                                    continue
+                                if stock.product.qte_per_cond > 0 and (new_qte % stock.product.qte_per_cond) != 0:
+                                    messages.error(request, f"La quantité de la palette {line.sequence} doit être un multiple de {stock.product.qte_per_cond}.")
+                                    has_error = True
+                                    continue
+                            line.qte = new_qte
+                            line.save(update_fields=['qte'])
+                        total_qte += new_qte
+                    except ValueError:
+                        total_qte += line.qte
+                else:
+                    total_qte += line.qte
+            
+            if has_error:
+                return redirect(request.path)
+                
+            stock.qte = total_qte
+            stock.save(update_fields=['qte'])
+            
             url_path = reverse('stocks')
             return redirect(getRedirectionURL(request, url_path))
         else:

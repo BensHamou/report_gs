@@ -814,6 +814,10 @@ class Disponibility(BaseModel):
     expiry_date = models.DateField(null=True, blank=True)
 
     @property
+    def valid_palettes_count(self):
+        return self.lines.filter(status='Valide', qte__gt=0).count()
+
+    @property
     def sorted_lines(self):
         from django.db.models import Case, When, Value, IntegerField
         return self.lines.all().annotate(

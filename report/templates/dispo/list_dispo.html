@@ -119,123 +119,49 @@
     </div>
 
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
-        <table class="table table-borderless">
+        <table class="table table-borderless table-hover">
             <thead>
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">Site</th>
                     <th class="table-header">Magasin</th>
-                    <th class="table-header">Zone</th>
+                    <th class="table-header d-none d-md-table-cell">Zone</th>
                     <th class="table-header">N° Lot</th>
                     <th class="table-header">Produit</th>
                     <th class="table-header">Quantité</th>
                     <th class="table-header">Palette</th>
-                    <th class="table-header">Produit le</th>
-                    <th class="table-header">Expire le</th>
+                    <th class="table-header d-none d-md-table-cell">Produit le</th>
+                    <th class="table-header d-none d-md-table-cell">Expire le</th>
                     {% if user.role == 'Admin' %}<th class="table-header" style="text-align: center;">Actions</th>{% endif %}
-                    
                 </tr>
             </thead>
             <tbody>
                 {% if page %}
                     {% for dispo in page %}
-                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid; cursor: pointer;" onclick="window.location=constructUrl('{% url 'stock_detail' dispo.id %}')">
                         <td class="table-text">
-                            {% if dispo.lines.exists %}
-                                <a href="javascript:void(0);" onclick="$('#lines_for_{{ dispo.id }}').toggle(); $(this).find('i').toggleClass('fa-plus-circle fa-minus-circle');" style="color: #0082cd; text-decoration: none;">
-                                    <i class="fas fa-plus-circle mr-1"></i>
-                                </a>
-                            {% endif %}
                             {{ dispo.emplacement.warehouse.site }}
                         </td>
                         <td class="table-text">{{ dispo.emplacement.warehouse.designation }}</td>
-                        <td class="table-text">{{ dispo.emplacement.designation }}</td>
+                        <td class="table-text d-none d-md-table-cell">{{ dispo.emplacement.designation }}</td>
                         <td class="table-text">{{ dispo.n_lot|default:'/' }}</td>
                         <td class="table-text">{{ dispo.product }}</td>
                         <td class="table-text">{{ dispo.qte|default:'1'|floatformat:2|intcomma }}</td>
-                        <td class="table-text">{{ dispo.palette|default:'1'|intcomma }}</td>
-                        <td class="table-text">{{ dispo.production_date|default:'/' }}</td>
-                        <td class="table-text">{{ dispo.expiry_date|default:'31 décembre 2099' }}</td>
+                        <td class="table-text">{{ dispo.valid_palettes_count|intcomma }}</td>
+                        <td class="table-text d-none d-md-table-cell">{{ dispo.production_date|default:'/' }}</td>
+                        <td class="table-text d-none d-md-table-cell">{{ dispo.expiry_date|default:'31 décembre 2099' }}</td>
                         {% if user.role == 'Admin' %}
-                            <td class="text-center p-0 m-0">
+                            <td class="text-center text-nowrap p-0 m-0" onclick="event.stopPropagation();">
                                 <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_stock' dispo.id %}')" 
-                                    class="btn" style="color: #5d5d5d;">
+                                    class="btn p-0 m-0" style="color: #5d5d5d;">
                                     <i class="far fa-pen-to-square"></i>
                                 </a>
                                 <a href="javascript:void(0);" onclick="confirmDispoDel('{{ dispo.id }}')"
-                                    class="btn" style="color: #5d5d5d;">
+                                    class="btn p-0 m-0 ms-2" style="color: #5d5d5d;">
                                     <i class="far fa-trash-can"></i>
                                 </a>
                             </td>
                         {% endif %}
                     </tr>
-                    {% if dispo.lines.exists %}
-                    <tr id="lines_for_{{ dispo.id }}" style="display: none; background-color: #f1f2f6;">
-                        <td colspan="10" style="padding: 15px 15px 15px 50px;">
-                            <div class="p-3" style="border: 1px solid #ccc; border-radius: 8px; background: white;">
-                                <h6 style="color: #133356;">Détails des palettes en stock :</h6>
-                                <div class="row mt-3">
-                                    {% for line in dispo.sorted_lines %}
-                                        <div class="col-lg-6 col-12">
-                                            <div class="suggestion-card" style="margin-bottom: 10px; padding: 12px 15px;">
-                                                <div class="card-icon-wrapper" style="width: 36px; height: 36px; font-size: 16px; margin-right: 12px;">
-                                                    <i class="fas fa-pallet"></i>
-                                                </div>
-                                                <div class="card-badges-wrapper">
-                                                    <span class="custom-badge bg-light text-dark border" style="font-family: monospace; font-size: 12px;">
-                                                        {% if dispo.product.type == 'Matière Première' %}
-                                                            Code {{ line.sequence }}
-                                                        {% else %}
-                                                            Palette N° {{ line.sequence }}
-                                                        {% endif %}
-                                                    </span>
-                                                    {% if line.status == 'Détruit' %}
-                                                        <span class="custom-badge bg-danger text-white">Détruit</span>
-                                                    {% elif line.qte <= 0 %}
-                                                        <span class="custom-badge bg-secondary text-white">Vidé</span>
-                                                    {% else %}
-                                                        <span class="custom-badge bg-success text-white">Valide</span>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="ms-auto text-end d-flex align-items-center">
-                                                    <span class="badge bg-secondary text-white me-2" style="font-size: 12px;">{{ line.qte|floatformat:2|intcomma }} Kg</span>
-                                                    {% if line.status == 'Valide' and line.qte > 0 %}
-                                                        {% if not line.is_printed or dispo.product.type == 'Matière Première' %}
-                                                            <button class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
-                                                                    data-line-detail-id="{{ line.id }}" 
-                                                                    data-product-name="{{ dispo.product.designation }}"
-                                                                    data-lot-number="{{ dispo.n_lot }}"
-                                                                    data-expiry-date="{{ dispo.expiry_date|default:'/' }}"
-                                                                    data-production-date="{{ dispo.production_date|default:'/' }}"
-                                                                    data-magasin="{{ dispo.emplacement.warehouse.designation }}"
-                                                                    data-emplacement="{{ dispo.emplacement.designation }}"
-                                                                    data-shift="{{ line.shift|default:'/' }}"
-                                                                    data-palettes="{% if dispo.product.type == 'Matière Première' %}{{ line.package }}{% else %}1{% endif %}"
-                                                                    data-use-dl="1"
-                                                                    data-is-bulk="0"
-                                                                    data-is-mp="{% if dispo.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
-                                                                    data-from-move-detail="0"
-                                                                    data-code="{{ line.code }}"
-                                                                    data-sequence="{{ line.sequence }}">
-                                                                <i class="fas fa-print"></i>
-                                                            </button>
-                                                        {% endif %}
-                                                        {% if user.role == 'Admin' and dispo.product.type != 'Matière Première' %}
-                                                        <button class="btn btn-sm btn-warning ms-1" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
-                                                            <i class="fas fa-sync"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                    {% else %}
-                                                        <span class="text-muted">-</span>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endif %}
                     {% endfor %}
                     <tr style="color: #5d5d5d; font-weight: bold; border-top: 2px solid #ccc;">
                         <td colspan="5" class="table-text">Totaux:</td>
@@ -278,7 +204,19 @@
         const url = "{% url 'extract_stock' %}";
         const formData = new FormData(form);
         const queryParams = new URLSearchParams(formData).toString();
+        
+        // Add loading state
+        const originalContent = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        this.classList.add('disabled');
+        
         window.location.href = `${url}?${queryParams}`;
+        
+        // Reset button after download starts
+        setTimeout(() => {
+            this.innerHTML = originalContent;
+            this.classList.remove('disabled');
+        }, 3000);
     });
     document.querySelector('.email-btn').addEventListener('click', function () {
         swal({

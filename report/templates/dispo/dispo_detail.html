@@ -1,0 +1,217 @@
+{% extends "main.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    Détails de Stock
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-left mb-3">
+    <a href="javascript:void(0);" 
+       onclick="window.location=constructUrl('{% url 'stocks' %}')" 
+        class="text-decoration-none d-flex align-items-center" 
+        style="letter-spacing: 1.2px;">
+        <button class="btn btn-outshift-dark me-2" 
+                style="border-color: #c2c2c2; background-color: #fff; border-radius: 5px; padding: 0 5px;">
+            <i class="fas fa-arrow-left" style="color: #108ad0;"></i>
+        </button>
+        <p class="lead m-0 p-0" style="color: #133356;">Stock</p>
+    </a>
+</div>
+
+<div class="row mb-4 align-items-center">
+    <div class="col-12 col-md-8">
+        <h3 class="mb-1 fw-bold" style="color: #0082cd;">Détails de Stock</h3>
+        <p class="text-muted mb-0" style="font-size: 16px;">Informations détaillées du lot et de ses palettes</p>
+    </div>
+    <div class="col-12 col-md-4 d-flex justify-content-md-end mt-3 mt-md-0">
+        {% if user.role == 'Admin' %}
+            <a href="javascript:void(0);" onclick="window.location=constructUrl('{% url 'edit_stock' stock.id %}')" class="btn btn-primary px-4 py-2 shadow-sm rounded" style="background-color: #1d71b8; border: none; transition: transform 0.2s;">
+                <i class="fas fa-edit me-2"></i> Modifier
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Product Profile Card -->
+    <div class="col-lg-4 col-12 mb-4 mb-lg-0">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+            <div class="card-body text-center d-flex flex-column justify-content-center align-items-center p-4">
+                <p class="mb-3 fw-bold" style="color: #133356; font-size: 20px;">{{ stock.product.designation }}</p>
+                <div class="img-container mb-3 shadow-sm" style="border-radius: 12px; padding: 10px; background: white;">
+                    <img src="{% if not stock.product.image %}{% static 'img/pf.png' %}{% else %}{{ stock.product.image.url }}{% endif %}" alt="{{ stock.product.designation }}" class="img-fluid" style="max-height: 180px; object-fit: contain;">
+                </div>
+                <span class="badge rounded-pill bg-light text-primary border border-primary px-3 py-2 mt-2" style="font-size: 14px;">
+                    <i class="fas fa-barcode me-1"></i> {{ stock.product.code|default:stock.product.type }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Info Card -->
+    <div class="col-lg-8 col-12">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold" style="color: #133356;"><i class="fas fa-info-circle me-2 text-primary"></i> Informations Générales</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="row g-4 mt-1">
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">Site & Magasin</label>
+                            <p class="mb-0 fw-bold text-dark" style="font-size: 15px;">{{ stock.emplacement.warehouse.site|default:'/' }} <span class="text-muted">|</span> {{ stock.emplacement.warehouse.designation|default:'/' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">Emplacement</label>
+                            <p class="mb-0 fw-bold text-dark" style="font-size: 15px;">{{ stock.emplacement.designation|default:'/' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">N° Lot</label>
+                            <p class="mb-0 fw-bold text-dark" style="font-size: 15px;">{{ stock.n_lot|default:'/' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">Quantité Totale</label>
+                            <p class="mb-0 fw-bold text-primary" style="font-size: 16px;">
+                                {{ stock.qte|default:'0'|floatformat:2|intcomma }} 
+                                {% if stock.product.type == 'Matière Première' %} {{ stock.product.packing|default:'' }} {% else %} Kg {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">Nombre de Palettes</label>
+                            <p class="mb-0 fw-bold text-dark" style="font-size: 15px;">{{ stock.palette|default:'0'|intcomma }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6">
+                        <div class="info-block">
+                            <label class="text-muted mb-1 text-uppercase" style="font-size: 11px; letter-spacing: 0.5px; font-weight: 600;">Dates</label>
+                            <p class="mb-0 text-dark" style="font-size: 13px;">
+                                <strong>Prod:</strong> {{ stock.production_date|default:'/' }}<br>
+                                <strong>Exp:</strong> {{ stock.expiry_date|default:'31 décembre 2099' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stock.lines.exists %}
+<div class="card border-0 shadow-sm" style="border-radius: 12px; background-color: #ffffff;">
+    <div class="card-header bg-white border-bottom pt-4 pb-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0" style="color: #133356;"><i class="fas fa-boxes me-2 text-primary"></i> Détails des Palettes</h5>
+        <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2">{{ stock.valid_palettes_count }} Palettes</span>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3">
+            {% for line in stock.sorted_lines %}
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="palette-card p-3 h-100 d-flex flex-column justify-content-between" style="border: 1px solid #e0e6ed; border-radius: 10px; transition: all 0.2s ease;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-light text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; border-radius: 50%;">
+                                    <i class="fas fa-pallet"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">
+                                        {% if stock.product.type == 'Matière Première' %}
+                                            Code {{ line.sequence }}
+                                        {% else %}
+                                            Palette {{ line.sequence }}/{{ stock.palette|default:'1' }}
+                                        {% endif %}
+                                    </h6>
+                                    <div class="mt-1">
+                                        {% if line.status == 'Détruit' %}
+                                            <span class="badge bg-soft-danger text-danger border-danger border px-2 py-1" style="font-size: 11px;">Détruit</span>
+                                        {% elif line.qte <= 0 %}
+                                            <span class="badge bg-soft-secondary text-secondary border-secondary border px-2 py-1" style="font-size: 11px;">Vidé</span>
+                                        {% else %}
+                                            <span class="badge bg-soft-success text-success border-success border px-2 py-1" style="font-size: 11px;">Valide</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-dark text-white px-2 py-1" style="font-size: 13px;">{{ line.qte|floatformat:2|intcomma }} Kg</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 pt-2 border-top d-flex justify-content-end gap-2 align-items-center">
+                            {% if line.status == 'Valide' and line.qte > 0 %}
+                                {% if not line.is_printed or stock.product.type == 'Matière Première' %}
+                                    <button class="btn btn-sm btn-outline-success d-flex align-items-center" type="button" data-bs-toggle="modal" data-bs-target="#printModal"
+                                            data-line-detail-id="{{ line.id }}" 
+                                            data-product-name="{{ stock.product.designation }}"
+                                            data-lot-number="{{ stock.n_lot }}"
+                                            data-expiry-date="{{ stock.expiry_date|default:'/' }}"
+                                            data-production-date="{{ stock.production_date|default:'/' }}"
+                                            data-magasin="{{ stock.emplacement.warehouse.designation }}"
+                                            data-emplacement="{{ stock.emplacement.designation }}"
+                                            data-shift="{{ line.shift|default:'/' }}"
+                                            data-palettes="{% if stock.product.type == 'Matière Première' %}{{ line.package }}{% else %}1{% endif %}"
+                                            data-use-dl="1"
+                                            data-is-bulk="0"
+                                            data-is-mp="{% if stock.product.type == 'Matière Première' %}1{% else %}0{% endif %}"
+                                            data-from-move-detail="0"
+                                            data-code="{{ line.code }}"
+                                            data-sequence="{{ line.sequence }}"
+                                            title="Imprimer le code-barres">
+                                        <i class="fas fa-print me-1"></i> Imprimer
+                                    </button>
+                                {% endif %}
+                                {% if user.role == 'Admin' and stock.product.type != 'Matière Première' %}
+                                <button class="btn btn-sm btn-outline-warning d-flex align-items-center" type="button" onclick="replaceDamagedPalette({{ line.id }})" title="Remplacer le scan endommagé">
+                                    <i class="fas fa-sync me-1"></i> Remplacer
+                                </button>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted" style="font-size: 12px; font-style: italic;">Aucune action</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% include 'print_modal.html' %}
+
+<script>
+function replaceDamagedPalette(lineId) {
+    if(confirm('Voulez-vous vraiment remplacer cette palette endommagée par une nouvelle ?')) {
+        window.location.href = constructUrl('/report/replace_damaged_palette/' + lineId + '/');
+    }
+}
+</script>
+
+<style>
+    .info-block {
+        background-color: #f8f9fc;
+        padding: 12px 16px;
+        border-radius: 8px;
+        height: 100%;
+        border-left: 3px solid #1d71b8;
+    }
+    .palette-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+        border-color: #b3c2d1 !important;
+    }
+    .bg-soft-primary { background-color: rgba(29, 113, 184, 0.1); }
+    .bg-soft-success { background-color: rgba(40, 167, 69, 0.1); }
+    .bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); }
+    .bg-soft-secondary { background-color: rgba(108, 117, 125, 0.1); }
+</style>
+{% endblock %}

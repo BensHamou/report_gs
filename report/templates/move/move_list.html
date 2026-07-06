@@ -116,17 +116,33 @@
 
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <table class="table table-borderless">
+            <style>
+                .badge-soft-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+                .badge-soft-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+                .badge-soft-primary { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+                .badge-soft-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+                .badge-soft-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+                .badge-soft-secondary { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+                .badge-modern {
+                    font-weight: 600;
+                    padding: 0.4em 0.6em;
+                    border-radius: 0.25rem;
+                }
+                .table-row-hover:hover {
+                    background-color: #f1f2f6;
+                }
+            </style>
             <thead>
                 <tr style="color: #5d5d5d; border-bottom: 2px solid #ccc;">
                     <th class="table-header">#</th>
                     <th class="table-header">N° Lot</th>
                     <th class="table-header">Catégorie</th>
                     <th class="table-header">Produits</th>
-                    <th class="table-header">Gestionaire</th>
-                    <th class="table-header">Site</th>
+                    <th class="table-header d-none d-md-table-cell">Gestionaire</th>
+                    <th class="table-header d-none d-md-table-cell">Site</th>
                     <th class="table-header">Quantité</th>
                     <th class="table-header">Palettes</th>
-                    <th class="table-header">N° Bl</th>
+                    <th class="table-header d-none d-md-table-cell">N° Bl</th>
                     <th class="table-header">État</th>
                     {% if user.role in 'Admin,Gestionaire,Validateur' %}
                         <th class="table-header" style="text-align: center;">Actions</th>
@@ -136,21 +152,39 @@
             <tbody>
                 {% if page %}
                     {% for move in page %}
-                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid">
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.id }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.n_lots|default:'/' }}</td>
-                        <td class="table-text move-type-{{ move.display_type|slugify }}" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')" style="cursor: pointer;">{{ move.display_type }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.product_display }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.gestionaire }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.site }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.qte|intcomma }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.palette|intcomma }} Palettes</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">{{ move.bl_str|default:"/" }}</td>
-                        <td class="table-text" style="cursor: pointer;" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">
-                            {{ move.state }} {{ move.scan_status|default:'' }}
+                    <tr style="color: #5d5d5d; border-top: 1px #cccccc solid; cursor: pointer;" class="table-row-hover" onclick="window.location=constructUrl('{% url 'move_detail' move.id %}')">
+                        <td class="table-text">{{ move.id }}</td>
+                        <td class="table-text">{{ move.n_lots|default:'/' }}</td>
+                        <td class="table-text move-type-{{ move.display_type|slugify }}">{{ move.display_type }}</td>
+                        <td class="table-text">{{ move.product_display }}</td>
+                        <td class="table-text d-none d-md-table-cell">{{ move.gestionaire }}</td>
+                        <td class="table-text d-none d-md-table-cell">{{ move.site }}</td>
+                        <td class="table-text">{{ move.qte|intcomma }}</td>
+                        <td class="table-text">{{ move.palette|intcomma }} Palettes</td>
+                        <td class="table-text d-none d-md-table-cell">{{ move.bl_str|default:"/" }}</td>
+                        <td class="table-text">
+                            {% if move.state == 'Brouillon' %}
+                                {% if move.scan_status == 'en cours' %}
+                                    <span class="badge badge-modern badge-soft-warning">Brouillon - En cours</span>
+                                {% elif move.scan_status == 'en attente' %}
+                                    <span class="badge badge-modern badge-soft-danger">Brouillon - En attente</span>
+                                {% elif move.scan_status == 'scanné' %}
+                                    <span class="badge badge-modern badge-soft-primary"><i class="fas fa-qrcode"></i> Brouillon - Scanné</span>
+                                {% else %}
+                                    <span class="badge badge-modern badge-soft-secondary">Brouillon</span>
+                                {% endif %}
+                            {% elif move.state == 'Confirmé' %}
+                                <span class="badge badge-modern badge-soft-info">Confirmé</span>
+                            {% elif move.state == 'Validé' %}
+                                <span class="badge badge-modern badge-soft-success"><i class="fas fa-check"></i> Validé</span>
+                            {% elif move.state == 'Annulé' %}
+                                <span class="badge badge-modern badge-soft-danger">Annulé</span>
+                            {% else %}
+                                <span class="badge badge-modern bg-dark text-white">{{ move.state }}</span>
+                            {% endif %}
                         </td>
                         {% if user.role in 'Admin,Gestionaire,Validateur' %}
-                            <td class="text-center p-0 m-0">
+                            <td class="text-center p-0 m-0" onclick="event.stopPropagation();">
                                 <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}')"
                                     class="btn
                                     {% if user.role != 'Admin' and move.state != 'Brouillon' %}disabled 

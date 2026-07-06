@@ -88,6 +88,14 @@ class MProductForm(BaseModelForm):
         model = Product
         fields = ['qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
 
+class EditDisponibilityForm(BaseModelForm):
+    production_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
+    expiry_date = forms.DateField(widget=forms.DateInput(attrs=getAttrs('date'), format='%Y-%m-%d'), required=False)
+
+    class Meta:
+        model = Disponibility
+        fields = ['production_date', 'expiry_date']
+
 class DisponibilityForm(BaseModelForm):
     
     emplacement = forms.ModelChoiceField(queryset=Emplacement.objects.all(), widget=forms.Select(attrs=getAttrs('select3')), empty_label="Emplacement")

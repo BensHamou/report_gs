@@ -1,4 +1,5 @@
 {% extends "main.html" %}
+{% load static %}
 
 {% block title %} Stock {% endblock %}
 
@@ -33,49 +34,55 @@
     {% csrf_token %}
     <div class="table-responsive" style="background-color: #f8f8f8; padding: 15px; border-radius: 8px;">
         <div class="row mb-4">
-            <div class="col-lg-12 col-md-12">
-                <label for="n_lot" class="form-label" style="color: #5d5d5d;">N° Lot</label>
-                {{ form.n_lot }}
-                {% if form.n_lot.errors %}
-                    <small class="text-danger">{{ form.n_lot.errors }}</small>
-                {% endif %}
-            </div>
-            <div class="col-lg-6 col-md-12">
-                <label for="emplacement" class="form-label" style="color: #5d5d5d;">Emplacement</label>
-                {{ form.emplacement }}
-                {% if form.emplacement.errors %}
-                    <small class="text-danger">{{ form.emplacement.errors }}</small>
-                {% endif %}
-            </div>
-            <div class="col-lg-6 col-md-12">
-                <label for="product" class="form-label" style="color: #5d5d5d;">Produit</label>
-                {{ form.product }}
-                {% if form.product.errors %}
-                    <small class="text-danger">{{ form.product.errors }}</small>
-                {% endif %}
-            </div>
-            <div class="col-lg-6 col-md-12">
-                <label for="qte" class="form-label" style="color: #5d5d5d;">Quantité</label>
-                {{ form.qte }}
-                {% if form.qte.errors %}
-                    <small class="text-danger">{{ form.qte.errors }}</small>
-                {% endif %}
-            </div>
-            <div class="col-lg-6 col-md-12">
-                <label for="palette" class="form-label" style="color: #5d5d5d;">Palette</label>
-                {{ form.palette }}
-                {% if form.palette.errors %}
-                    <small class="text-danger">{{ form.palette.errors }}</small>
-                {% endif %}
-            </div>
-            <div class="col-lg-6 col-md-12">
+            {% if form.instance.pk %}
+                <div class="col-lg-12 d-flex align-items-center flex-column mb-4">
+                    <p class="mb-3" style="color: #133356; font-size: 18px; text-align: center; font-weight: bold;">{{ stock.product.designation }}</p>
+                    <img src="{% if not stock.product.image %}{% static 'img/pf.png' %}{% else %}{{ stock.product.image.url }}{% endif %}" alt="{{ stock.product.designation }}" class="img-fluid" style="max-width: 200px; height: auto; border-radius: 8px;">
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label class="form-label" style="color: #5d5d5d;">N° Lot</label>
+                    <input type="text" class="form-control" value="{{ stock.n_lot|default:'/' }}" disabled>
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label class="form-label" style="color: #5d5d5d;">Emplacement</label>
+                    <input type="text" class="form-control" value="{{ stock.emplacement }}" disabled>
+                </div>
+            {% else %}
+                <div class="col-lg-12 col-md-12 mb-3">
+                    <label for="n_lot" class="form-label" style="color: #5d5d5d;">N° Lot</label>
+                    {{ form.n_lot }}
+                    {% if form.n_lot.errors %}<small class="text-danger">{{ form.n_lot.errors }}</small>{% endif %}
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label for="emplacement" class="form-label" style="color: #5d5d5d;">Emplacement</label>
+                    {{ form.emplacement }}
+                    {% if form.emplacement.errors %}<small class="text-danger">{{ form.emplacement.errors }}</small>{% endif %}
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label for="product" class="form-label" style="color: #5d5d5d;">Produit</label>
+                    {{ form.product }}
+                    {% if form.product.errors %}<small class="text-danger">{{ form.product.errors }}</small>{% endif %}
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label for="qte" class="form-label" style="color: #5d5d5d;">Quantité</label>
+                    {{ form.qte }}
+                    {% if form.qte.errors %}<small class="text-danger">{{ form.qte.errors }}</small>{% endif %}
+                </div>
+                <div class="col-lg-6 col-md-12 mb-3">
+                    <label for="palette" class="form-label" style="color: #5d5d5d;">Palette</label>
+                    {{ form.palette }}
+                    {% if form.palette.errors %}<small class="text-danger">{{ form.palette.errors }}</small>{% endif %}
+                </div>
+            {% endif %}
+            
+            <div class="col-lg-6 col-md-12 mb-3">
                 <label for="production_date" class="form-label" style="color: #5d5d5d;">Date de Production</label>
                 {{ form.production_date }}
                 {% if form.production_date.errors %}
                     <small class="text-danger">{{ form.production_date.errors }}</small>
                 {% endif %}
             </div>
-            <div class="col-lg-6 col-md-12">
+            <div class="col-lg-6 col-md-12 mb-3">
                 <label for="expiry_date" class="form-label" style="color: #5d5d5d;">Date d'expiration</label>
                 {{ form.expiry_date }}
                 {% if form.expiry_date.errors %}
@@ -83,6 +90,34 @@
                 {% endif %}
             </div>
         </div>
+        
+        {% if form.instance.pk %}
+        <div class="row mt-2">
+            <div class="col-12">
+                <h5 style="color: #133356;">Quantités des palettes (Kg)</h5>
+                <hr>
+                <div class="row">
+                    {% for line in stock.sorted_lines %}
+                        {% if line.status == 'Valide' %}
+                        <div class="col-lg-3 col-md-4 col-6 mb-3">
+                            <label class="form-label" style="color: #5d5d5d; font-size: 14px;">
+                                {% if stock.product.type == 'Matière Première' %} Code {{ line.sequence }} {% else %} Palette N° {{ line.sequence }} {% endif %}
+                            </label>
+                            <input type="number" 
+                                {% if stock.product.type != 'Matière Première' %}
+                                    step="{{ stock.product.qte_per_cond|stringformat:'s' }}" 
+                                    max="{{ stock.product.qte_per_pal|stringformat:'s' }}"
+                                {% else %}
+                                    step="any"
+                                {% endif %}
+                                name="line_qte_{{ line.id }}" class="form-control" value="{{ line.qte|stringformat:'s'|default:0 }}">
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </form>
 {% endblock %}
