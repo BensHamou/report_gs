@@ -1114,17 +1114,20 @@ def editStockView(request, id):
                     try:
                         new_qte = float(qte_str)
                         if new_qte >= 0:
-                            if stock.product.type != 'Matière Première':
-                                if new_qte > stock.product.qte_per_pal:
-                                    messages.error(request, f"La quantité de la palette {line.sequence} dépasse le maximum ({stock.product.qte_per_pal}).")
-                                    has_error = True
-                                    continue
-                                if stock.product.qte_per_cond > 0 and (new_qte % stock.product.qte_per_cond) != 0:
-                                    messages.error(request, f"La quantité de la palette {line.sequence} doit être un multiple de {stock.product.qte_per_cond}.")
-                                    has_error = True
-                                    continue
-                            line.qte = new_qte
-                            line.save(update_fields=['qte'])
+                            if new_qte == 0:
+                                line.delete()
+                            else:
+                                if stock.product.type != 'Matière Première':
+                                    if new_qte > stock.product.qte_per_pal:
+                                        messages.error(request, f"La quantité de la palette {line.sequence} dépasse le maximum ({stock.product.qte_per_pal}).")
+                                        has_error = True
+                                        continue
+                                    if stock.product.qte_per_cond > 0 and (new_qte % stock.product.qte_per_cond) != 0:
+                                        messages.error(request, f"La quantité de la palette {line.sequence} doit être un multiple de {stock.product.qte_per_cond}.")
+                                        has_error = True
+                                        continue
+                                line.qte = new_qte
+                                line.save(update_fields=['qte'])
                         total_qte += new_qte
                     except ValueError:
                         total_qte += line.qte
@@ -1134,8 +1137,14 @@ def editStockView(request, id):
             if has_error:
                 return redirect(request.path)
                 
-            stock.qte = total_qte
-            stock.save(update_fields=['qte'])
+            if total_qte <= 0:
+                stock.delete()
+                messages.success(request, "Stock supprimé car la quantité est devenue 0.")
+                return redirect('stocks')
+            else:
+                stock.qte = total_qte
+                stock.palette = stock.lines.count()
+                stock.save(update_fields=['qte', 'palette'])
             
             url_path = reverse('stock_detail', args=[stock.id])
             return redirect(getRedirectionURL(request, url_path))
