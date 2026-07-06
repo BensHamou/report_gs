@@ -312,7 +312,9 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date or ml.expiry_date, mirror=d, 
+                        dispo = Disponibility.objects.filter(product=ml.product, emplacement=d.emplacement, n_lot=d.n_lot).first()
+                        exp_date = d.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=exp_date, mirror=d, 
                                                               move=mirror, transfered_qte=d.qte, create_uid=ml.create_uid, write_uid=ml.create_uid)
                         ml.mirror = d
                         ml.save()
@@ -332,10 +334,12 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=d.expiry_date or ml.expiry_date, 
+                        dispo = Disponibility.objects.filter(product=ml.product, emplacement=d.emplacement, n_lot=d.n_lot).first()
+                        exp_date = d.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=exp_date, 
                                                           create_uid=ml.create_uid, write_uid=ml.write_uid, mirror=d)
                         LineDetail.objects.create(move_line=move_mirror, warehouse=emp.warehouse, emplacement=emp, 
-                                                  qte=d.qte, palette=d.palette, expiry_date=d.expiry_date or ml.expiry_date, code=d.code, n_lot=d.n_lot)
+                                                  qte=d.qte, palette=d.palette, expiry_date=exp_date, code=d.code, n_lot=d.n_lot)
                 for bl in self.bls.all():
                     MoveBL.objects.create(move=mirror, numero=bl.numero)
                 

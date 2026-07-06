@@ -1730,6 +1730,10 @@ def extourneMove(request, move_id):
                 )
                 
                 for ld in ml.details.all():
+                    from report.models import Disponibility
+                    dispo = Disponibility.objects.filter(product=ml.product, emplacement=ld.emplacement, n_lot=ld.n_lot).first()
+                    exp_date = ld.expiry_date or ml.expiry_date or (dispo.expiry_date if dispo else None)
+                    
                     new_ld = LineDetail.objects.create(
                         move_line=new_ml,
                         warehouse=ld.warehouse,
@@ -1737,7 +1741,7 @@ def extourneMove(request, move_id):
                         n_lot=ld.n_lot,
                         qte=ld.qte,
                         palette=ld.palette,
-                        expiry_date=ld.expiry_date or ml.expiry_date,
+                        expiry_date=exp_date,
                         create_uid=request.user,
                         write_uid=request.user
                     )
