@@ -48,6 +48,7 @@ urlpatterns = [
     path('move/confirm/<int:move_id>/', confirmMove, name='confirm_move'),
     path('move/cancel/<int:move_id>/', cancelMove, name='cancel_move'),
     path('move/validate/<int:move_id>/', validateMove, name='validate_move'),
+    path('move/extourne/<int:move_id>/', extourneMove, name='extourne_move'),
     
     path('move-out/create/', create_move_out_view, name='create_move_out_web'),
     path('move-out/edit-line/<int:move_line_id>/', edit_move_out_line_view, name='edit_move_out_line'),

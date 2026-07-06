@@ -136,6 +136,8 @@ class Move(BaseModel):
     type = models.CharField(choices=MOVE_TYPE, max_length=6, default='Entré', db_index=True)
     transfer_to = models.ForeignKey(Site, on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers')
     mirror = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='transferred_move', null=True, blank=True)
+    is_extourne = models.BooleanField(default=False)
+    extourned_by = models.ForeignKey('self', on_delete=models.SET_NULL, related_name='reversed_move', null=True, blank=True)
 
     @property
     def scan_status(self):
@@ -310,7 +312,7 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date, mirror=d, 
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, expiry_date=d.expiry_date or ml.expiry_date, mirror=d, 
                                                               move=mirror, transfered_qte=d.qte, create_uid=ml.create_uid, write_uid=ml.create_uid)
                         ml.mirror = d
                         ml.save()
@@ -330,10 +332,10 @@ class Move(BaseModel):
                 self.save()
                 for ml in self.move_lines.all():
                     for d in ml.details.all():
-                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=d.expiry_date, 
+                        move_mirror = MoveLine.objects.create(lot_number=d.n_lot, product=ml.product, move=mirror, expiry_date=d.expiry_date or ml.expiry_date, 
                                                           create_uid=ml.create_uid, write_uid=ml.write_uid, mirror=d)
                         LineDetail.objects.create(move_line=move_mirror, warehouse=emp.warehouse, emplacement=emp, 
-                                                  qte=d.qte, palette=d.palette, expiry_date=d.expiry_date, code=d.code, n_lot=d.n_lot)
+                                                  qte=d.qte, palette=d.palette, expiry_date=d.expiry_date or ml.expiry_date, code=d.code, n_lot=d.n_lot)
                 for bl in self.bls.all():
                     MoveBL.objects.create(move=mirror, numero=bl.numero)
                 
@@ -458,7 +460,9 @@ class MoveLine(BaseModel):
             return self.lot_number
         if self.move.type == 'Entré':
             if self.product.type == 'Produit Fini':
-                return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(4)}/{str(self.move.date.year)[-2:]}' or '/'
+                if self.move.line:
+                    return f'{self.move.line.prefix_nlot}-{self.lot_number.zfill(4)}/{str(self.move.date.year)[-2:]}'
+                return self.lot_number or '/'
             else:
                 return self.lot_number
         else:

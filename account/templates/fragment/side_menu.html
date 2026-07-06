@@ -42,7 +42,7 @@
                     <span class="menu-text">Rapports</span>
                 </a>
             </li>
-        {% if user.role == 'Admin' or user.is_admin %}
+        {% if user.role == 'Admin' or user.role == 'Validateur' or user.is_admin %}
             <li class="nav-item mb-2">
                 <a class="nav-link {% if request.resolver_match.url_name in 'stocks,edit_stock,stock_detail' %} activeP {% endif %}" href="{% url 'stocks' %}">
                     <i class="margiin fas fa-cubes"></i> 

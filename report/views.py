@@ -1,4 +1,4 @@
-from account.decorators import admin_only_required, getRedirectionURL, admin_or_gs_required, can_view_move_required, admin_required
+from account.decorators import admin_only_required, getRedirectionURL, admin_or_gs_required, can_view_move_required, admin_required, admin_or_validator_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
@@ -1044,14 +1044,14 @@ def handleDetails(request, move_line):
 # STOCK
 
 @login_required(login_url='login')
-@admin_required
+@admin_or_validator_required
 def stockDetailView(request, id):
     stock = get_object_or_404(Disponibility, id=id)
     context = {'stock': stock}
     return render(request, 'dispo_detail.html', context)
 
 @login_required(login_url='login')
-@admin_required
+@admin_or_validator_required
 def listStockView(request):
     stocks = Disponibility.objects.all().order_by('-date_modified')
     filteredData = DisponibilityFilter(request.GET, queryset=stocks)
@@ -1682,3 +1682,91 @@ def create_move_out_view(request):
     return render(request, 'move/pf/form_sortie.html', context)
 
 
+@login_required(login_url='login')
+@admin_only_required
+def extourneMove(request, move_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Méthode non autorisée.'})
+        
+    try:
+        move = Move.objects.get(id=move_id)
+    except Move.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Mouvement introuvable.'})
+        
+    if move.state != 'Validé':
+        return JsonResponse({'success': False, 'message': 'Seul un mouvement Validé peut être extourné.'})
+        
+    if move.is_extourne:
+        return JsonResponse({'success': False, 'message': 'Ce mouvement a déjà été extourné.'})
+        
+    if move.is_transfer or move.is_isolation or move.is_inventory:
+        return JsonResponse({'success': False, 'message': 'Seuls les rapports d\'Entré ou de Sortie simples peuvent être extournés.'})
+        
+    try:
+        with transaction.atomic():
+            new_type = 'Sortie' if move.type == 'Entré' else 'Entré'
+            
+            extourne = Move.objects.create(
+                site=move.site,
+                line=move.line,
+                shift=move.shift,
+                gestionaire=request.user,
+                is_mp=move.is_mp,
+                type=new_type,
+                state='Brouillon',
+                extourned_by=move
+            )
+            
+            for ml in move.move_lines.all():
+                new_ml = MoveLine.objects.create(
+                    move=extourne,
+                    product=ml.product,
+                    lot_number=ml.lot_number,
+                    observation=ml.observation,
+                    initial_qte=ml.qte,
+                    expiry_date=ml.expiry_date,
+                    create_uid=request.user,
+                    write_uid=request.user
+                )
+                
+                for ld in ml.details.all():
+                    new_ld = LineDetail.objects.create(
+                        move_line=new_ml,
+                        warehouse=ld.warehouse,
+                        emplacement=ld.emplacement,
+                        n_lot=ld.n_lot,
+                        qte=ld.qte,
+                        palette=ld.palette,
+                        expiry_date=ld.expiry_date or ml.expiry_date,
+                        create_uid=request.user,
+                        write_uid=request.user
+                    )
+                    
+                    if new_type == 'Sortie':
+                        for dc in ld.detail_codes.all():
+                            DetailCode.objects.create(
+                                line_detail=new_ld,
+                                code=dc.code,
+                                qte=dc.qte,
+                                palette=dc.palette,
+                                is_scanned=True
+                            )
+            
+            extourne.check_can_confirm()
+            extourne.changeState(request.user.id, 'Confirmé')
+            
+            extourne.can_validate()
+            extourne.changeState(request.user.id, 'Validé')
+            success, msg = extourne.do_after_validation(request.user)
+            if not success:
+                raise ValueError(msg)
+                
+            move.is_extourne = True
+            move.save(update_fields=['is_extourne'])
+            
+            return JsonResponse({'success': True, 'message': f'Le mouvement a été extourné avec succès. Nouveau mouvement ID: {extourne.id}', 'new_move_id': extourne.id})
+            
+    except ValueError as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Erreur inattendue: {str(e)}'})

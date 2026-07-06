@@ -11,56 +11,6 @@
     <div class="w-100">
         <p class="page-title">Rapports <i class="fas fa-chart-bar" style='font-size: 24px'></i></p>
     </div>
-    {% comment %} <div class="row align-items-center mb-3">
-        <div class="col-6">
-            <h4 style="color: #5d5d5d;">Analyse Global</h4>
-        </div>
-        <div class="col-6 d-flex justify-content-end">
-            <button id="toggle-filter" class="btn btn-outline-primary d-flex align-items-center">
-                <i class="fas fa-filter me-2"></i> Filtre
-            </button>
-        </div>
-    </div> {% endcomment %}
-
-    {% comment %} <div id="stats-section" class="row mb-3">
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
-            <div class="stat-widget">
-                <small class="stat-widget-title">Palette scannées aujourd'hui</small>
-                <h2 class="stat-widget-number">{{ palettes_today }}</h2>
-                <span class="stat-widget-subtext">Palettes</span>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
-            <div class="stat-widget">
-                <small class="text-muted">Utilisateurs actifs (24h)</small>
-                <h2 class="text-primary fw-bold m-0">{{ active_users_count }}</h2>
-                <span class="text-primary" style="font-size: 1.2rem;">Utilisateurs</span>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
-            <div class="stat-widget">
-                <small class="stat-widget-title">Top produit scanner</small>
-                {% if top_product.designation %}
-                    <div>
-                        <img src="{% if top_product.image %}{{ top_product.image }}{% else %}{% static 'img/mp.png' %}{% endif %}" alt="{{ top_product.designation }}" style="height: {% if top_product.image %}160px{% else %}100px{% endif %}; object-fit: contain;">
-                    </div>
-                    {% if not top_product.image %}
-                        <span class="text-primary" style="font-size: 0.7rem;">{{ top_product.designation  }}</span>
-                    {% endif %}
-                {% else %}
-                    <span class="text-muted">Aucun produit scanné</span>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-2">
-            <div class="stat-widget p-0 m-0">
-                <a class="weatherwidget-io" href="https://forecast7.com/fr/35d20n0d63/sidi-bel-abbes/" 
-                data-label_1="SIDI BEL ABBÈS" style="border-radius: 8px" data-theme="original" >SIDI BEL ABBÈS</a>
-            </div>
-        </div>
-    </div> {% endcomment %}
-    {% comment %} <div id="filter-section" class="mb-3" style="display: none;"> {% endcomment %}
     <div id="filter-section" class="mb-3" >
             <form method="GET" class="w-100 p-3" style="background-color: #f8f8f8; border-radius: 8px;">
             <div class="row mb-3">
@@ -145,7 +95,7 @@
                     <th class="table-header d-none d-md-table-cell">N° Bl</th>
                     <th class="table-header">État</th>
                     {% if user.role in 'Admin,Gestionaire,Validateur' %}
-                        <th class="table-header" style="text-align: center;">Actions</th>
+                        <th class="table-header" style="text-align: left;">Actions</th>
                     {% endif %}
                 </tr>
             </thead>
@@ -184,12 +134,18 @@
                             {% endif %}
                         </td>
                         {% if user.role in 'Admin,Gestionaire,Validateur' %}
-                            <td class="text-center p-0 m-0" onclick="event.stopPropagation();">
-                                <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}')"
-                                    class="btn
+                            <td class="text-right p-0 m-0" onclick="event.stopPropagation();">
+                                {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_isolation and not move.is_inventory and not move.extourned_by %}
+                                <a href="javascript:void(0);" onclick="confirmExtourne('{{ move.id }}')"
+                                    class="btn p-0 m-0" style="color: #34495e;" title="Extourner (Annuler les effets)">
+                                    <i class="fas fa-undo-alt"></i>
+                                </a>
+                                {% endif %}
+                                <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}', '{{ move.state }}')"
+                                    class="btn p-0 me-2
                                     {% if user.role != 'Admin' and move.state != 'Brouillon' %}disabled 
                                     {% elif user.role == 'Gestionaire' and move.create_uid != user %}disabled{% endif %}
-                                    " style="color: #5d5d5d;">
+                                    " style="color: #5d5d5d;" title="Supprimer">
                                     <i class="far fa-trash-can"></i>
                                 </a>
                             </td>
@@ -262,43 +218,61 @@
 </style>
 
 <script>
-    {% comment %} !function(d,s,id){
-        var js,fjs=d.getElementsByTagName(s)[0];
-        if(!d.getElementById(id)){
-            js=d.createElement(s);
-            js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';
-            fjs.parentNode.insertBefore(js,fjs);
+    function confirmMoveDel(moveId, moveState) {
+        let warningText = `Etes-vous sûr que vous voulez supprimer le mouvement : ID - ${moveId} ?`;
+        
+        if (moveState && moveState !== 'Brouillon' && moveState !== 'Annulé') {
+            warningText += `\n\nAttention : Ce rapport n'est pas Brouillon. Sa suppression est irréversible et peut déséquilibrer le stock car elle n'annule pas les effets déjà appliqués.`;
         }
-    }
-    (document,'script','weatherwidget-io-js');
-
-    document.getElementById("toggle-filter").addEventListener("click", function () {
-        const statsSection = document.getElementById("stats-section");
-        const filterSection = document.getElementById("filter-section");
-    
-        if (statsSection.style.display === "none") {
-            statsSection.style.display = "flex";
-            filterSection.style.display = "none";
-            this.innerHTML = '<i class="fas fa-filter me-2"></i> Filtre';
-        } else {
-            statsSection.style.display = "none";
-            filterSection.style.display = "block";
-            this.innerHTML = '<i class="fas fa-times me-2"></i> Cacher';
-        }
-    }); {% endcomment %}
-    function confirmMoveDel(moveId) {
+        
         swal({
-            title: "Confirmation de la suppression.",
-            text: `Etes-vous sûr que vous voulez supprimer le mouvement : ID - ${moveId}?`,
+            title: "Confirmation de la suppression",
+            text: warningText,
             icon: "warning",
             buttons: true,
             dangerMode: true,
-            confirmButtonText: "Oui",
-            cancelButtonText: "Non",
+            confirmButtonText: "Oui, Supprimer",
+            cancelButtonText: "Annuler",
         })
         .then((willConfirm) => {
             if (willConfirm) {
                 window.location.href = "{% url 'delete_move' 0 %}".replace('0', moveId);
+            }
+        });
+    }
+
+    function confirmExtourne(moveId) {
+        swal({
+            title: "Confirmation d'Extourne",
+            text: `Êtes-vous sûr de vouloir extourner ce mouvement ?\n\nCela va créer et valider un nouveau mouvement de sens inverse pour annuler les effets de celui-ci.`,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui, Extourner",
+            cancelButtonText: "Annuler",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: `/move/extourne/${moveId}/`,
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
             }
         });
     }

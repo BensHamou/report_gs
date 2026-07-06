@@ -185,13 +185,13 @@
 <script>
     function confirmDispoDel(dispoId) {
         swal({
-            title: "Confirmation de la suppression.",
-            text: `Etes-vous sûr que vous voulez supprimer ID ${dispoId}?`,
+            title: "Confirmation de la suppression",
+            text: `Êtes-vous sûr de vouloir supprimer la disponibilité (ID ${dispoId}) ?\n\nAttention : Cette action va complètement supprimer ce stock et toutes ses palettes du système. Cette action est irréversible !`,
             icon: "warning",
             buttons: true,
             dangerMode: true,
-            confirmButtonText: "Oui",
-            cancelButtonText: "Non",
+            confirmButtonText: "Oui, Supprimer",
+            cancelButtonText: "Annuler",
         })
         .then((willConfirm) => {
             if (willConfirm) {

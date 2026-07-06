@@ -38,6 +38,12 @@
                 <i class="fas fa-window-restore d-inline d-sm-none p-3"></i>
             </button>
         {% endif %}
+        {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_isolation and not move.is_inventory and not move.extourned_by %}
+            <button type="button" class="btn ml-lg-3 mt-lg-0 mt-2" onclick="confirmExtourne('{{ move.id }}')" style="color: #fff; background-color: #34495e; border-color: #2c3e50;" title="Extourner (Annuler les effets)">
+                <span class="d-none d-sm-inline p-3">Extourner</span>
+                <i class="fas fa-undo-alt d-inline d-sm-none p-3"></i>
+            </button>
+        {% endif %}
     </div>
 </div>
 
@@ -741,6 +747,41 @@
         }
     }
 
+    function confirmExtourne(moveId) {
+        swal({
+            title: "Confirmation d'Extourne",
+            text: `Êtes-vous sûr de vouloir extourner ce mouvement ?\n\nCela va créer et valider un nouveau mouvement de sens inverse pour annuler les effets de celui-ci.`,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            confirmButtonText: "Oui, Extourner",
+            cancelButtonText: "Annuler",
+        })
+        .then((willConfirm) => {
+            if (willConfirm) {
+                $.ajax({
+                    type: "POST",
+                    url: `/move/extourne/${moveId}/`,
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Succès!", response.message, "success")
+                            .then(() => {
+                                window.location.href = `/move/detail/${response.new_move_id}/`;
+                            });
+                        } else {
+                            swal("Erreur!", response.message, "error");
+                        }
+                    },
+                    error: function() {
+                        swal("Erreur!", "Une erreur s'est produite. Veuillez réessayer.", "error");
+                    }
+                });
+            }
+        });
+    }
 </script>
 
 {% endblock %}
