@@ -92,12 +92,13 @@ class SiteForm(BaseModelForm):
 class LineForm(BaseModelForm):
     class Meta:
         model = Line
-        fields = ['designation', 'site', 'prefix_nlot', 'shifts']
+        fields = ['designation', 'site', 'prefix_nlot', 'shifts', 'production_date_tolerance']
 
     designation = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Désignation')))
     prefix_nlot = forms.CharField(widget=forms.TextInput(attrs=getAttrs('control', 'Préfixe N° Lot')))
     site = forms.ModelChoiceField(queryset=Site.objects.all(), widget=forms.Select(attrs=getAttrs('select3')), empty_label="Site")
     shifts = forms.ModelMultipleChoiceField(queryset=Shift.objects.all(), widget=forms.SelectMultiple(attrs=getAttrs('select3')), required=False)
+    production_date_tolerance = forms.IntegerField(widget=forms.NumberInput(attrs=getAttrs('control', 'Tolérance date de production (Jours)')), initial=3)
 
 class WarehouseForm(BaseModelForm):
     class Meta:

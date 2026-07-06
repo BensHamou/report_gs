@@ -62,6 +62,14 @@
             </div>
 
             <div class="col-lg-6 col-md-12 mb-2">
+                <label for="production_date_tolerance" class="form-label" style="color: #5d5d5d;">Tolérance date de production (Jours)</label>
+                {{ form.production_date_tolerance }}
+                {% if form.production_date_tolerance.errors %}
+                    <small class="text-danger">{{ form.production_date_tolerance.errors }}</small>
+                {% endif %}
+            </div>
+
+            <div class="col-12 mb-2">
                 <label class="form-label" style="color: #343434; font-weight: 600;">Shifts</label>
                 {{ form.shifts }}
                 {% if form.shifts.errors %}

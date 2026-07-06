@@ -227,12 +227,13 @@
 <script>
     {% if user.role != 'Admin' %}
         const today = new Date();
+        const tolerance = parseInt('{{ move_line.move.line.production_date_tolerance|default:"3" }}');
 
         const minDate = new Date(today);
-        minDate.setDate(today.getDate() - 3);
+        minDate.setDate(today.getDate() - tolerance);
 
         const maxDate = new Date(today);
-        maxDate.setDate(today.getDate() + 3);
+        maxDate.setDate(today.getDate() + tolerance);
         const formatDate = (date) => {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -532,11 +533,12 @@
             const productionDateInput = document.getElementById('production_date');
             const productionDateValue = productionDateInput.value;
             const selectedDate = new Date(productionDateValue);
+            const tolerance = parseInt('{{ move_line.move.line.production_date_tolerance|default:"3" }}');
             const today = new Date();
             const minDate = new Date(today);
-            minDate.setDate(today.getDate() - 3);
+            minDate.setDate(today.getDate() - tolerance);
             const maxDate = new Date(today);
-            maxDate.setDate(today.getDate() + 3);
+            maxDate.setDate(today.getDate() + tolerance);
             if (selectedDate < minDate || selectedDate > maxDate) {
                 dateIsValid = false;
                 
@@ -570,33 +572,33 @@
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
             {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                 document.querySelectorAll('.lot_number').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
                 document.querySelectorAll('.production_date').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
                 document.querySelectorAll('.diff_qte').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
             {% endif %}
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
+                expire.setAttribute('readonly', 'readonly');
             });
         } else if(!dateIsValid){ 
-            swal("Erreur", "La date de production doit être comprise entre 3 jours avant et 3 jours après la date actuelle.", "error");
+            swal("Erreur", `La date de production doit être comprise entre ${tolerance} jours avant et ${tolerance} jours après la date actuelle.`, "error");
             {% if move_line.move.is_transfer and move_line.move.type == 'Entré' %}
                 document.querySelectorAll('.lot_number').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
                 document.querySelectorAll('.production_date').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
                 document.querySelectorAll('.diff_qte').forEach((expire) => {
-                    expire.addAttribute('readonly');
+                    expire.setAttribute('readonly', 'readonly');
                 });
             {% endif %}
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
+                expire.setAttribute('readonly', 'readonly');
             });
         } else {
             swal({

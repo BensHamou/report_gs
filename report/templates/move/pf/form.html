@@ -62,12 +62,12 @@
                         <select name="line" id="line" class="form-control custom-select" style="background-color: #ffffff; padding-left: 30px;" required>
                             <option value="">-- Ligne --</option>
                             {% for line in lines %}
-                                <option value="{{ line.id }}">{{ line.designation }}</option>
+                                <option value="{{ line.id }}" data-tolerance="{{ line.production_date_tolerance|default:3 }}">{{ line.designation }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     {% else %}
-                        <input type="hidden" name="line" id='line' value="{{ default_line.id }}">
+                        <input type="hidden" name="line" id='line' value="{{ default_line.id }}" data-tolerance="{{ default_line.production_date_tolerance|default:3 }}">
                     {% endif %}
                     {% if is_admin %}
                     <div class="col-lg-6 col-12 mb-2">
@@ -163,13 +163,6 @@
 
 <script>
     {% if user.role != 'Admin' %}
-        const today = new Date();
-
-        const minDate = new Date(today);
-        minDate.setDate(today.getDate() - 3);
-
-        const maxDate = new Date(today);
-        maxDate.setDate(today.getDate() + 3);
         const formatDate = (date) => {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -177,9 +170,37 @@
             return `${year}-${month}-${day}`;
         };
 
-        const productionDateInput = document.getElementById('production_date');
-        productionDateInput.min = formatDate(minDate);
-        productionDateInput.max = formatDate(maxDate);
+        const updateDateConstraints = () => {
+            const today = new Date();
+            const lineElem = document.getElementById('line');
+            let tolerance = 3;
+            if (lineElem) {
+                if (lineElem.tagName === 'SELECT') {
+                    const opt = lineElem.options[lineElem.selectedIndex];
+                    if (opt) tolerance = parseInt(opt.getAttribute('data-tolerance') || 3);
+                } else {
+                    tolerance = parseInt(lineElem.getAttribute('data-tolerance') || 3);
+                }
+            }
+
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() - tolerance);
+
+            const maxDate = new Date(today);
+            maxDate.setDate(today.getDate() + tolerance);
+
+            const productionDateInput = document.getElementById('production_date');
+            if (productionDateInput) {
+                productionDateInput.min = formatDate(minDate);
+                productionDateInput.max = formatDate(maxDate);
+            }
+        };
+
+        updateDateConstraints();
+        const lineSelect = document.getElementById('line');
+        if (lineSelect && lineSelect.tagName === 'SELECT') {
+            lineSelect.addEventListener('change', updateDateConstraints);
+        }
     {% endif %}
     
     let rowId = 1;
@@ -410,20 +431,30 @@
             expire.removeAttribute('readonly');
         });
 
-        {% if user.role != 'Admin' %}
             const productionDateInput = document.getElementById('production_date');
             const productionDateValue = productionDateInput.value;
             const selectedDate = new Date(productionDateValue);
+            
+            const lineElem = document.getElementById('line');
+            let tolerance = 3;
+            if (lineElem) {
+                if (lineElem.tagName === 'SELECT') {
+                    const opt = lineElem.options[lineElem.selectedIndex];
+                    if (opt) tolerance = parseInt(opt.getAttribute('data-tolerance') || 3);
+                } else {
+                    tolerance = parseInt(lineElem.getAttribute('data-tolerance') || 3);
+                }
+            }
+            
             const today = new Date();
             const minDate = new Date(today);
-            minDate.setDate(today.getDate() - 3);
+            minDate.setDate(today.getDate() - tolerance);
             const maxDate = new Date(today);
-            maxDate.setDate(today.getDate() + 3);
+            maxDate.setDate(today.getDate() + tolerance);
             if (selectedDate < minDate || selectedDate > maxDate) {
                 dateIsValid = false;
                 
             }
-        {% endif %}
     
         requiredFields.forEach(function(field) {
             if (!field.value.trim()) {
@@ -450,12 +481,12 @@
         if (!formIsValid) {
             swal("Erreur", "Veuillez remplir tous les champs requis.", "error");
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
+                expire.setAttribute('readonly', 'readonly');
             });
         } else if(!dateIsValid){ 
-            swal("Erreur", "La date de production doit être comprise entre 3 jours avant et 3 jours après la date actuelle.", "error");
+            swal("Erreur", `La date de production doit être comprise entre ${tolerance} jours avant et ${tolerance} jours après la date actuelle.`, "error");
             document.querySelectorAll('.expire').forEach((expire) => {
-                expire.addAttribute('readonly');
+                expire.setAttribute('readonly', 'readonly');
             });
         } else {
            swal({

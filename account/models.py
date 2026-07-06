@@ -126,6 +126,7 @@ class Line(BaseModel):
     prefix_nlot = models.CharField(max_length=50)
     site = models.ForeignKey(Site, related_name='lines', on_delete=models.CASCADE)
     shifts = models.ManyToManyField(Shift, related_name='lines', blank=True)
+    production_date_tolerance = models.PositiveIntegerField(default=3)
 
     def __str__(self):
         return f'{self.designation} - {self.site}'
