@@ -1708,8 +1708,8 @@ def extourneMove(request, move_id):
     if move.is_extourne:
         return JsonResponse({'success': False, 'message': 'Ce mouvement a déjà été extourné.'})
         
-    if move.is_transfer or move.is_isolation or move.is_inventory:
-        return JsonResponse({'success': False, 'message': 'Seuls les rapports d\'Entré ou de Sortie simples peuvent être extournés.'})
+    if move.is_transfer or move.is_inventory or (move.is_isolation and move.type != 'Sortie'):
+        return JsonResponse({'success': False, 'message': 'Ce type de mouvement ne peut pas être extourné.'})
         
     try:
         with transaction.atomic():

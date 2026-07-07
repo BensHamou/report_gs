@@ -142,11 +142,13 @@
                         </td>
                         {% if user.role in 'Admin,Gestionaire,Validateur' %}
                             <td class="text-right p-0 m-0" onclick="event.stopPropagation();">
-                                {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_isolation and not move.is_inventory and not move.extourned_by %}
-                                <a href="javascript:void(0);" onclick="confirmExtourne('{{ move.id }}')"
-                                    class="btn p-0 m-0" style="color: #34495e;" title="Extourner (Annuler les effets)">
-                                    <i class="fas fa-undo-alt"></i>
-                                </a>
+                                {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_inventory and not move.extourned_by %}
+                                    {% if not move.is_isolation or move.type == 'Sortie' %}
+                                    <a href="javascript:void(0);" onclick="confirmExtourne('{{ move.id }}')"
+                                        class="btn p-0 m-0" style="color: #34495e;" title="Extourner (Annuler les effets)">
+                                        <i class="fas fa-undo-alt"></i>
+                                    </a>
+                                    {% endif %}
                                 {% endif %}
                                 <a href="javascript:void(0);" onclick="confirmMoveDel('{{ move.id }}', '{{ move.state }}')"
                                     class="btn p-0 me-2

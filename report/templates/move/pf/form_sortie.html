@@ -1278,10 +1278,20 @@
                 }
                 
                 const desiredQte = parseFloat(document.getElementById(`mp_qte_desired_${card.cardId}`).value) || 0;
+                
+                const stockItems = productStock[productId] || [];
+                let availableQte = 0;
+                stockItems.forEach(s => availableQte += parseFloat(s.qte));
+                
                 if (desiredQte <= 0) {
                     valid = false;
                     document.getElementById(`mp_qte_desired_${card.cardId}`).classList.add('is-invalid');
                     swal("Erreur", "Veuillez entrer une quantite valide a sortir.", "error");
+                    return;
+                } else if (desiredQte > availableQte) {
+                    valid = false;
+                    document.getElementById(`mp_qte_desired_${card.cardId}`).classList.add('is-invalid');
+                    swal("Erreur", `La quantité saisie dépasse la quantité disponible (${availableQte.toFixed(2)}).`, "error");
                     return;
                 } else {
                     document.getElementById(`mp_qte_desired_${card.cardId}`).classList.remove('is-invalid');
@@ -1308,10 +1318,20 @@
             let valid = true;
             cart.forEach(product => {
                 const desiredQte = parseFloat(document.getElementById(`pf-qte-${product.id}`).value) || 0;
+                
+                const stockItems = productStock[product.id] || [];
+                let availableQte = 0;
+                stockItems.forEach(s => availableQte += parseFloat(s.qte));
+                
                 if (desiredQte <= 0) {
                     valid = false;
                     document.getElementById(`pf-qte-${product.id}`).classList.add('is-invalid');
                     swal("Erreur", `Veuillez entrer une quantite valide a sortir pour ${product.designation}.`, "error");
+                    return;
+                } else if (desiredQte > availableQte) {
+                    valid = false;
+                    document.getElementById(`pf-qte-${product.id}`).classList.add('is-invalid');
+                    swal("Erreur", `Pour le produit ${product.designation}, la quantité saisie dépasse la quantité disponible (${availableQte.toFixed(2)} Kg).`, "error");
                     return;
                 } else {
                     document.getElementById(`pf-qte-${product.id}`).classList.remove('is-invalid');
