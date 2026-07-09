@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     container_name: APP_STOCK_OLD
     ports:
-      - "8176:8181"
+      - "8181:8181"
     volumes:
       - ./report_gs:/report_gs
       - ./media:/app/media
