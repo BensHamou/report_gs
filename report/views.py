@@ -1708,6 +1708,9 @@ def extourneMove(request, move_id):
     if move.is_extourne:
         return JsonResponse({'success': False, 'message': 'Ce mouvement a déjà été extourné.'})
         
+    if move.id <= 57887:
+        return JsonResponse({'success': False, 'message': 'Les anciens mouvements ne peuvent pas être extournés en raison de données de stock manquantes.'})
+        
     if move.is_transfer or move.is_inventory or (move.is_isolation and move.type != 'Sortie'):
         return JsonResponse({'success': False, 'message': 'Ce type de mouvement ne peut pas être extourné.'})
         

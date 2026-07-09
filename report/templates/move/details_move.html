@@ -45,7 +45,7 @@
                 <i class="fas fa-window-restore d-inline d-sm-none p-3"></i>
             </button>
         {% endif %}
-        {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_inventory and not move.extourned_by %}
+        {% if user.role == 'Admin' and move.state == 'Validé' and not move.is_transfer and not move.is_extourne and not move.is_inventory and not move.extourned_by and move.id > 57887 %}
             {% if not move.is_isolation or move.type == 'Sortie' %}
             <button type="button" class="btn ml-lg-3 mt-lg-0 mt-2" onclick="confirmExtourne('{{ move.id }}')" style="color: #fff; background-color: #34495e; border-color: #2c3e50;" title="Extourner (Annuler les effets)">
                 <span class="d-none d-sm-inline p-3">Extourner</span>
