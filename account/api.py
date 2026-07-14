@@ -201,6 +201,7 @@ def sync_move_out_scans_api(request, move_id):
                         return Response({'success': False, 'message': f"La quantité ({qte}) n'est pas un multiple de {product.qte_per_cond} pour le code {code}."}, status=400)
 
                 emp = Emplacement.objects.get(id=emplacement_id)
+                expiry_date = scan.get('expiry_date') or None
                 
                 ld, created = LineDetail.objects.get_or_create(
                     move_line=move_line,
@@ -210,10 +211,15 @@ def sync_move_out_scans_api(request, move_id):
                         'warehouse_id': emp.warehouse_id,
                         'qte': 0,
                         'palette': 0,
+                        'expiry_date': expiry_date,
                         'create_uid': request.user,
                         'write_uid': request.user,
                     }
                 )
+
+                if not created and expiry_date and not ld.expiry_date:
+                    ld.expiry_date = expiry_date
+                    ld.save()
 
                 dc, dc_created = DetailCode.objects.get_or_create(
                     line_detail=ld,
