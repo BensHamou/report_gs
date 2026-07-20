@@ -194,9 +194,9 @@ def sync_move_out_scans_api(request, move_id):
                     transaction.set_rollback(True)
                     return Response({'success': False, 'message': f"La quantité ({qte}) dépasse la limite de {product.qte_per_pal} par palette pour le code {code}."}, status=400)
                 
-                if product.qte_per_cond:
-                    remainder = qte % product.qte_per_cond
-                    if remainder > 1e-5 and (product.qte_per_cond - remainder) > 1e-5:
+                if product.qte_per_cond and product.qte_per_cond > 0:
+                    ratio = qte / product.qte_per_cond
+                    if abs(ratio - round(ratio)) > 1e-5:
                         transaction.set_rollback(True)
                         return Response({'success': False, 'message': f"La quantité ({qte}) n'est pas un multiple de {product.qte_per_cond} pour le code {code}."}, status=400)
 

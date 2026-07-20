@@ -1468,9 +1468,9 @@ def edit_move_out_line_view(request, move_line_id):
                             if product.qte_per_pal and new_qte_float > product.qte_per_pal:
                                 return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) dépasse la limite de {product.qte_per_pal} par palette."}, status=200)
                             
-                            if product.qte_per_cond:
-                                remainder = new_qte_float % product.qte_per_cond
-                                if remainder > 1e-5 and (product.qte_per_cond - remainder) > 1e-5:
+                            if product.qte_per_cond and product.qte_per_cond > 0:
+                                ratio = new_qte_float / product.qte_per_cond
+                                if abs(ratio - round(ratio)) > 1e-5:
                                     return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) n'est pas un multiple de {product.qte_per_cond}."}, status=200)
 
                             dc.qte = new_qte_float

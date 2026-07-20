@@ -1223,9 +1223,8 @@
 
     function isModuloValid(val, qtePerCond) {
         if (!qtePerCond || qtePerCond <= 0) return true;
-        const eps = 0.001;
-        const rem = val % qtePerCond;
-        return (rem < eps || Math.abs(rem - qtePerCond) < eps);
+        const ratio = val / qtePerCond;
+        return Math.abs(ratio - Math.round(ratio)) < 1e-5;
     }
 
     function validateInputModulo(inputEl, qtePerCond) {
