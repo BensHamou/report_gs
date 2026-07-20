@@ -66,9 +66,7 @@
         const parts = code.split(';');
         for (let part of parts) {
             if (part.startsWith('PAL:')) {
-                const rawVal = part.split(':')[1].split(',')[0];
-                const intVal = parseInt(rawVal, 10);
-                return isNaN(intVal) ? rawVal : String(intVal).padStart(2, '0');
+                return part.split(':')[1].split(',')[0];
             }
         }
         return '/';

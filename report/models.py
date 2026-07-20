@@ -651,11 +651,7 @@ class DetailCode(BaseModel):
             parts = self.code.split(';')
             for part in parts:
                 if part.startswith('PAL:'):
-                    raw_val = part.split(':')[1].split(',')[0]
-                    try:
-                        return f"{int(raw_val):02d}"
-                    except ValueError:
-                        return raw_val
+                    return part.split(':')[1].split(',')[0]
         except Exception:
             pass
         return '/'
@@ -670,11 +666,7 @@ class DetailCode(BaseModel):
                 if part.startswith('Emplacement:'):
                     emp_id = int(part.split(':')[1])
                 elif part.startswith('PAL:'):
-                    raw_val = part.split(':')[1].split(',')[0]
-                    try:
-                        pal_seq = f"{int(raw_val):02d}"
-                    except ValueError:
-                        pal_seq = raw_val
+                    pal_seq = part.split(':')[1].split(',')[0]
             
             if emp_id:
                 from account.models import Emplacement

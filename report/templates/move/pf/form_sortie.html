@@ -1134,7 +1134,7 @@
                         <span class="card-badge card-badge-lot"><i class="fas fa-barcode"></i> Lot: ${item.n_lot}</span>
                         <span class="card-badge card-badge-wh"><i class="fas fa-warehouse"></i> Mag: ${whName}</span>
                         <span class="card-badge card-badge-emp"><i class="fas fa-map-pin"></i> Emp: ${empName}</span>
-                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${String(p.sequence).padStart(2, '0')}</span>
+                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${p.sequence}</span>
                         ${item.expiry_date ? `<span class="card-badge card-badge-expiry"><i class="fas fa-calendar-alt"></i> Exp: ${item.expiry_date}</span>` : ''}
                     </div>
                     <div class="card-right-wrapper">
@@ -1200,7 +1200,7 @@
                         <span class="card-badge card-badge-lot"><i class="fas fa-barcode"></i> Lot: ${item.n_lot}</span>
                         <span class="card-badge card-badge-wh"><i class="fas fa-warehouse"></i> Mag: ${whName}</span>
                         <span class="card-badge card-badge-emp"><i class="fas fa-map-pin"></i> Emp: ${empName}</span>
-                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${String(p.sequence).padStart(2, '0')}</span>
+                        <span class="card-badge card-badge-emp bg-light text-dark"><i class="fas fa-layer-group"></i> Pal: ${p.sequence}</span>
                         ${item.expiry_date ? `<span class="card-badge card-badge-expiry"><i class="fas fa-calendar-alt"></i> Exp: ${item.expiry_date}</span>` : ''}
                     </div>
                     <div class="card-right-wrapper">

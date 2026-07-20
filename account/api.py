@@ -191,11 +191,7 @@ def sync_move_out_scans_api(request, move_id):
 
                 palette_number = '/'
                 if 'PAL:' in code:
-                    raw_val = code.split('PAL:')[-1].split(',')[0].split(';')[0]
-                    try:
-                        palette_number = f"{int(raw_val):02d}"
-                    except ValueError:
-                        palette_number = raw_val
+                    palette_number = code.split('PAL:')[-1].split(',')[0].split(';')[0]
 
                 product = move_line.product
                 if product.qte_per_pal and qte > product.qte_per_pal:
