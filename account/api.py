@@ -189,16 +189,24 @@ def sync_move_out_scans_api(request, move_id):
                 if not move_line:
                     continue
 
+                palette_number = '/'
+                if 'PAL:' in code:
+                    raw_val = code.split('PAL:')[-1].split(',')[0].split(';')[0]
+                    try:
+                        palette_number = f"{int(raw_val):02d}"
+                    except ValueError:
+                        palette_number = raw_val
+
                 product = move_line.product
                 if product.qte_per_pal and qte > product.qte_per_pal:
                     transaction.set_rollback(True)
-                    return Response({'success': False, 'message': f"La quantité ({qte}) dépasse la limite de {product.qte_per_pal} par palette pour le code {code}."}, status=400)
+                    return Response({'success': False, 'message': f"La quantité ({qte}) dépasse la limite de {product.qte_per_pal} par palette pour la palette N° {palette_number} du lot {n_lot}."}, status=400)
                 
                 if product.qte_per_cond and product.qte_per_cond > 0:
                     ratio = qte / product.qte_per_cond
                     if abs(ratio - round(ratio)) > 1e-5:
                         transaction.set_rollback(True)
-                        return Response({'success': False, 'message': f"La quantité ({qte}) n'est pas un multiple de {product.qte_per_cond} pour le code {code}."}, status=400)
+                        return Response({'success': False, 'message': f"La quantité ({qte}) n'est pas un multiple de {product.qte_per_cond} pour la palette N° {palette_number} du lot {n_lot}."}, status=400)
 
                 emp = Emplacement.objects.get(id=emplacement_id)
                 expiry_date = scan.get('expiry_date') or None

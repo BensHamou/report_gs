@@ -249,7 +249,8 @@ class Move(BaseModel):
                                 seq = 1
                                 if "PAL:" in dc.code:
                                     try:
-                                        seq = int(dc.code.split("PAL:")[-1])
+                                        raw_seq = dc.code.split("PAL:")[-1].split(",")[0].split(";")[0]
+                                        seq = int(raw_seq)
                                     except ValueError:
                                         pass
                                 DisponibilityLine.objects.create(
@@ -650,7 +651,11 @@ class DetailCode(BaseModel):
             parts = self.code.split(';')
             for part in parts:
                 if part.startswith('PAL:'):
-                    return part.split(':')[1]
+                    raw_val = part.split(':')[1].split(',')[0]
+                    try:
+                        return f"{int(raw_val):02d}"
+                    except ValueError:
+                        return raw_val
         except Exception:
             pass
         return '/'
@@ -665,7 +670,11 @@ class DetailCode(BaseModel):
                 if part.startswith('Emplacement:'):
                     emp_id = int(part.split(':')[1])
                 elif part.startswith('PAL:'):
-                    pal_seq = part.split(':')[1]
+                    raw_val = part.split(':')[1].split(',')[0]
+                    try:
+                        pal_seq = f"{int(raw_val):02d}"
+                    except ValueError:
+                        pal_seq = raw_val
             
             if emp_id:
                 from account.models import Emplacement
