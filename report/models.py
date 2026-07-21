@@ -161,7 +161,7 @@ class Move(BaseModel):
     
     @property
     def qte(self):
-        return sum(ml.qte for ml in self.move_lines.all()) or 0.0
+        return round(sum(ml.qte for ml in self.move_lines.all()) or 0.0, 2)
     
     @property
     def bl_str(self):
@@ -460,7 +460,8 @@ class MoveLine(BaseModel):
 
     @cached_property
     def qte(self):
-        return self.details.aggregate(total=models.Sum('qte'))['total'] or 0.0
+        val = self.details.aggregate(total=models.Sum('qte'))['total'] or 0.0
+        return round(val, 2)
 
     @cached_property
     def package(self):
