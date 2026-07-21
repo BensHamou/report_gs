@@ -1468,7 +1468,7 @@ def edit_move_out_line_view(request, move_line_id):
                             if product.qte_per_pal and new_qte_float > product.qte_per_pal:
                                 return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) dépasse la limite de {product.qte_per_pal} par palette."}, status=200)
                             
-                            if product.qte_per_cond and product.qte_per_cond > 0:
+                            if product.qte_per_cond and product.qte_per_cond > 0 and not product.accept_sample:
                                 ratio = new_qte_float / product.qte_per_cond
                                 if abs(ratio - round(ratio)) > 1e-5:
                                     return JsonResponse({'success': False, 'message': f"La quantité ({new_qte_float}) n'est pas un multiple de {product.qte_per_cond}."}, status=200)
@@ -1653,7 +1653,8 @@ def create_move_out_view(request):
             'qte_per_pal': p.qte_per_pal or 1.0,
             'image_url': p.image.url if p.image else '',
             'qte_per_cond': p.qte_per_cond or 0.0,
-            'unit': p.packing.unit if p.packing else 'Kg'
+            'unit': p.packing.unit if p.packing else 'Kg',
+            'accept_sample': p.accept_sample
         } for p in pf_products]
         
         mp_data = [{
@@ -1661,7 +1662,8 @@ def create_move_out_view(request):
             'designation': p.designation,
             'qte_per_pal': p.qte_per_pal or 1.0,
             'qte_per_cond': p.qte_per_cond or 0.0,
-            'unit': p.packing.unit if p.packing else 'Kg'
+            'unit': p.packing.unit if p.packing else 'Kg',
+            'accept_sample': p.accept_sample
         } for p in mp_products]
 
         return JsonResponse({'pf_products': pf_data, 'mp_products': mp_data})
@@ -1680,6 +1682,7 @@ def create_move_out_view(request):
     
     context = {
         'sites': sites,
+        'all_sites': Site.objects.all(),
         'families': families,
         'mp_products': [],
         'pf_products': [],

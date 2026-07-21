@@ -580,7 +580,7 @@
     }
 
     const allSites = [
-        {% for site in sites %}
+        {% for site in all_sites %}
         { id: "{{ site.id }}", designation: "{{ site.designation|escapejs }}" },
         {% endfor %}
     ];
@@ -683,7 +683,7 @@
                     const imgUrl = p.image_url ? p.image_url : fallbackImg;
                     const cleanDesig = p.designation.replace(/'/g, "\\'");
                     pfHtml += `
-                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="${p.id}" data-family-id="${p.family_id}" data-designation="${p.designation.toLowerCase()}" onclick="addProductToCart(${p.id}, '${cleanDesig}', '${p.qte_per_pal}', '${imgUrl}', '${p.qte_per_cond}', '${p.unit}')">
+                        <div class="col-lg-3 col-md-3 col-sm-6 col-6 mb-3 text-center product-item" data-product-id="${p.id}" data-family-id="${p.family_id}" data-designation="${p.designation.toLowerCase()}" onclick="addProductToCart(${p.id}, '${cleanDesig}', '${p.qte_per_pal}', '${imgUrl}', '${p.qte_per_cond}', '${p.unit}', ${p.accept_sample})">
                             <div class="p-2 product-card-inner" style="cursor: pointer; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; transition: transform 0.2s, border-color 0.2s;">
                                 <img src="${imgUrl}" 
                                      onerror="this.onerror=null; this.src='${fallbackImg}';"
@@ -700,7 +700,7 @@
                 const mpTemplate = document.getElementById('mp-products-options-template');
                 let mpHtml = '<option value="">-- Choisir Matiere Premiere --</option>';
                 data.mp_products.forEach(p => {
-                    mpHtml += `<option value="${p.id}" data-qte-per-pal="${p.qte_per_pal}" data-qte-per-cond="${p.qte_per_cond}" data-unit="${p.unit}">${p.designation}</option>`;
+                    mpHtml += `<option value="${p.id}" data-qte-per-pal="${p.qte_per_pal}" data-qte-per-cond="${p.qte_per_cond}" data-unit="${p.unit}" data-accept-sample="${p.accept_sample}">${p.designation}</option>`;
                 });
                 mpTemplate.innerHTML = mpHtml;
 
@@ -800,7 +800,7 @@
         });
     }
 
-    function addProductToCart(id, name, qtePerPal, imageUrl, qtePerCond, unit) {
+    function addProductToCart(id, name, qtePerPal, imageUrl, qtePerCond, unit, acceptSample) {
         if (cart.some(p => p.id === id)) {
             removeProductFromCart(id);
             return;
@@ -811,7 +811,8 @@
             qte_per_pal: parseFloat(String(qtePerPal).replace(',', '.')), 
             image_url: imageUrl, 
             qte_per_cond: parseFloat(String(qtePerCond).replace(',', '.')) || 0, 
-            unit: unit || 'Kg' 
+            unit: unit || 'Kg',
+            accept_sample: !!acceptSample
         });
         renderCartTags();
     }
@@ -919,7 +920,7 @@
                                 </div>
                                 <div class="col-6 mb-3">
                                     <label class="form-label font-weight-bold text-primary">Qte à déstocker (Kg)</label>
-                                    <input type="number" step="any" id="pf-qte-${product.id}" class="form-control border-primary" min="0" placeholder="0.0" oninput="onPfInputQte(${product.id}, this.value)" onblur="validateInputModulo(this, ${product.qte_per_cond || 0})">
+                                    <input type="number" step="any" id="pf-qte-${product.id}" class="form-control border-primary" min="0" placeholder="0.0" oninput="onPfInputQte(${product.id}, this.value)" onblur="validateInputModulo(this, ${product.qte_per_cond || 0}, ${product.accept_sample || false})">
                                 </div>
                             </div>
                         </div>
@@ -1045,7 +1046,8 @@
         const mpSelect = document.getElementById(`mp_product_${cardId}`);
         const selectedOption = mpSelect ? mpSelect.selectedOptions[0] : null;
         const qtePerCond = selectedOption ? parseFloat(selectedOption.dataset.qtePerCond) || 0 : 0;
-        validateInputModulo(inputEl, qtePerCond);
+        const acceptSample = selectedOption ? selectedOption.dataset.acceptSample === 'true' : false;
+        validateInputModulo(inputEl, qtePerCond, acceptSample);
     }
 
     function fetchAvailableStockForProduct(productId, qtePerPal) {
@@ -1221,16 +1223,22 @@
         });
     }
 
-    function isModuloValid(val, qtePerCond) {
+    function isModuloValid(val, qtePerCond, acceptSample) {
+        if (acceptSample) return true;
         if (!qtePerCond || qtePerCond <= 0) return true;
         const ratio = val / qtePerCond;
         return Math.abs(ratio - Math.round(ratio)) < 1e-5;
     }
 
-    function validateInputModulo(inputEl, qtePerCond) {
+    function validateInputModulo(inputEl, qtePerCond, acceptSample) {
+        if (acceptSample) {
+            inputEl.classList.remove('is-invalid');
+            inputEl.removeAttribute('title');
+            return;
+        }
         if (!qtePerCond || qtePerCond <= 0) return;
         const val = parseFloat(inputEl.value) || 0;
-        if (!isModuloValid(val, qtePerCond)) {
+        if (!isModuloValid(val, qtePerCond, acceptSample)) {
             inputEl.classList.add('is-invalid');
             inputEl.title = `La quantite doit etre un multiple de ${qtePerCond} Kg`;
         } else {
@@ -1298,7 +1306,8 @@
 
                 const select = document.getElementById(`mp_product_${card.cardId}`);
                 const qtePerCond = select ? parseFloat(select.selectedOptions[0].dataset.qtePerCond) || 0 : 0;
-                if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond)) {
+                const acceptSample = select ? select.selectedOptions[0].dataset.acceptSample === 'true' : false;
+                if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond, acceptSample)) {
                     valid = false;
                     swal("Erreur", `La quantite desiree (${desiredQte} Kg) doit etre un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
                     return;
@@ -1337,7 +1346,7 @@
                 }
 
                 const qtePerCond = product.qte_per_cond || 0;
-                if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond)) {
+                if (qtePerCond > 0 && !isModuloValid(desiredQte, qtePerCond, product.accept_sample)) {
                     valid = false;
                     swal("Erreur", `Pour le produit ${product.designation}, la quantite desiree (${desiredQte} Kg) doit etre un multiple de ${qtePerCond} Kg (conditionnement).`, "error");
                     return;

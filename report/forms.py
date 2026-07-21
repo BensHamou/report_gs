@@ -62,9 +62,17 @@ class ProductForm(BaseModelForm):
         'data-offlabel': "Non" 
     }))
 
+    accept_sample = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'type': 'checkbox',
+        'data-onstyle': 'primary',
+        'data-toggle': 'switchbutton',
+        'data-onlabel': "Oui",
+        'data-offlabel': "Non" 
+    }))
+
     class Meta:
         model = Product
-        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax']
+        fields = ['designation', 'image', 'delais_expiration', 'qte_per_pal', 'qte_per_cond', 'family', 'packing', 'alert_stock', 'alert_stock_max', 'alert_expiration', 'check_minmax', 'accept_sample']
         
 class MProductForm(BaseModelForm):
     

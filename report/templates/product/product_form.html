@@ -130,6 +130,14 @@
                         <small class="text-danger">{{ form.check_minmax.errors }}</small>
                     {% endif %}
                 </div>
+
+                <div class="col-lg-12 col-md-12 mb-1">
+                    <label for="accept_sample" class="form-label" style="color: #5d5d5d;">Accepter Échantillon</label> </br>
+                    {{ form.accept_sample }}
+                    {% if form.accept_sample.errors %}
+                        <small class="text-danger">{{ form.accept_sample.errors }}</small>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="col-lg-6 col-md-12 text-center">
